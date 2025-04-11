@@ -1,0 +1,56 @@
+@import "tailwindcss";
+.bg-container {
+  position: relative;
+  background-image: url("../../../../public/Assets/BackG.png");
+  background-size: cover;
+  background-position: center;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  padding-bottom: 10rem; /* Add significant bottom padding */
+  border-radius: 30px;
+}
+
+.hero-content {
+  text-align: center;
+  color: white;
+  margin-top: 4rem;
+  margin-bottom: 4rem;
+}
+
+.route-container {
+  position: relative;
+  width: 85%;
+  max-width: 1200px;
+  margin-bottom: -300px; /* Overlapping effect */
+  z-index: 10;
+}
+
+.imgWrap {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  width: 50%;
+  height: 20rem;
+  background-image: var(--image-src, none);
+}
+
+  .imgWrap[data-src="../../../../public/Assets/back1.png"] {
+    --image-src: url("../../../../public/Assets/back1.png");
+}
+
+.imgWrap[data-src="../../../../public/Assets/back2.png"] {
+  --image-src: url("../../../../public/Assets/back2.png");
+}
+
+.content {
+  position: absolute;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  justify-items: center;
+}
