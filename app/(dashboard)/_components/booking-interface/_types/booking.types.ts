@@ -6,4 +6,4 @@ export interface BookingFormData {
 
 export interface BookingInterfaceProps {
   onSubmit?: (data: BookingFormData) => void;
-} 
+}

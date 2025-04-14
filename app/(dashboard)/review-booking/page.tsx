@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import BookingLeft from './_components/BookingLeft';
-import BookingRight from './_components/BookingRight';
-import { getTrainDetails } from '@/app/api/api';
-import { TrainDetails } from '@/app/api/types/types';
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import BookingLeft from "./_components/BookingLeft";
+import BookingRight from "./_components/BookingRight";
+import { getTrainDetails } from "@/app/api/api";
+import { TrainDetails } from "@/app/api/types/types";
 
 const ReviewBooking: React.FC = () => {
   const { data: session, status } = useSession();
@@ -19,9 +19,9 @@ const ReviewBooking: React.FC = () => {
   useEffect(() => {
     const fetchTrainDetails = async () => {
       try {
-        const trainId = searchParams.get('trainId');
+        const trainId = searchParams.get("trainId");
         if (!trainId) {
-          setError('Train ID is required');
+          setError("Train ID is required");
           return;
         }
 
@@ -29,10 +29,10 @@ const ReviewBooking: React.FC = () => {
         if (response.success && response.data && response.data.length > 0) {
           setTrain(response.data[0]);
         } else {
-          setError(response.message || 'Train not found');
+          setError(response.message || "Train not found");
         }
       } catch (err) {
-        setError('An error occurred while fetching train details');
+        setError("An error occurred while fetching train details");
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ const ReviewBooking: React.FC = () => {
     fetchTrainDetails();
   }, [searchParams]);
 
-  if (status === 'loading' || loading) {
+  if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -49,8 +49,8 @@ const ReviewBooking: React.FC = () => {
     );
   }
 
-  if (status === 'unauthenticated') {
-    router.push('/auth/signin');
+  if (status === "unauthenticated") {
+    router.push("/auth/signin");
     return null;
   }
 
@@ -65,9 +65,7 @@ const ReviewBooking: React.FC = () => {
   if (!train) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">
-            No train details available
-        </div>
+        <div className="text-gray-500">No train details available</div>
       </div>
     );
   }

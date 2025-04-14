@@ -38,7 +38,10 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error("Auth error:", error);
-          throw error;
+          if (error instanceof Error) {
+            throw error;
+          }
+          throw new Error("Authentication failed");
         }
       },
     }),
@@ -58,6 +61,13 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    redirect: async ({ url, baseUrl }) => {
+      // Redirect to dashboard after login
+      if (url.startsWith("/")) {
+        return `${baseUrl}/dashboard`;
+      }
+      return url;
+    },
   },
   pages: {
     signIn: "/auth/login",
@@ -65,7 +75,16 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   debug: process.env.NODE_ENV === "development",
   secret: process.env.NEXTAUTH_SECRET,
+  events: {
+    async signIn({ user }) {
+      console.log("User signed in:", user.email);
+    },
+    async signOut({ token }) {
+      console.log("User signed out:", token.email);
+    },
+  },
 };

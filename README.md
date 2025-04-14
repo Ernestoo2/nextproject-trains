@@ -34,18 +34,21 @@ app/
 ## Local Development Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone [your-repo-url]
    cd nextthird
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
    Create a `.env.local` file in the root directory:
+
    ```env
    DATABASE_URL=your_mongodb_url
    NEXTAUTH_URL=http://localhost:3000
@@ -54,6 +57,7 @@ app/
    ```
 
 4. **Start the development server**
+
    ```bash
    npm run dev
    ```
@@ -64,10 +68,12 @@ app/
 ## Development Workflow
 
 - **Authentication**: Located in `app/(auth)/`
+
   - Login: `app/(auth)/login`
   - Registration: `app/(auth)/register`
 
 - **Dashboard**: Located in `app/(dashboard)/`
+
   - Train Search: `app/(dashboard)/trains/train-search`
   - User Profile: `app/(dashboard)/user`
   - Bookings: `app/(dashboard)/booking-page`
@@ -97,13 +103,16 @@ app/
 ## Deployment Instructions
 
 ### Prerequisites
+
 - Node.js 18.x or later
 - Vercel account
 - Production database credentials
 - API keys for external services
 
 ### Environment Variables
+
 Create a `.env.production` file with the following variables:
+
 ```env
 DATABASE_URL=your_production_database_url
 NEXTAUTH_URL=https://your-production-domain.com
@@ -113,17 +122,21 @@ NODE_ENV=production
 ```
 
 ### Vercel Deployment Steps
+
 1. Install Vercel CLI:
+
    ```bash
    npm i -g vercel
    ```
 
 2. Login to Vercel:
+
    ```bash
    vercel login
    ```
 
 3. Deploy to Vercel:
+
    ```bash
    vercel --prod
    ```
@@ -133,7 +146,9 @@ NODE_ENV=production
    - Add all environment variables from `.env.production`
 
 ### Post-Deployment
+
 1. Verify the deployment:
+
    - Check the production URL
    - Test all major features
    - Verify authentication flow
@@ -143,6 +158,7 @@ NODE_ENV=production
    - Configure DNS settings
 
 ## Development
+
 ```bash
 # Install dependencies
 npm install
@@ -158,6 +174,7 @@ npm start
 ```
 
 ## Security Considerations
+
 - Keep all API keys and secrets secure
 - Use HTTPS in production
 - Regularly update dependencies

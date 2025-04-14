@@ -1,6 +1,9 @@
-import { ApiResponse, TrainDetails, TravelRoute, initialTravelData } from "./types/types";
-import { Train } from '@/app/utils/mongodb/models/Train';
-import { connectDB } from '@/app/utils/mongodb/connect';
+import {
+  ApiResponse,
+  TrainDetails,
+  TravelRoute,
+  initialTravelData,
+} from "./types/types";
 
 export let trainData: TrainDetails[] = [
   {
@@ -65,7 +68,9 @@ export const getTravelRoutes = (): Promise<ApiResponse<TravelRoute[]>> => {
   });
 };
 
-export const fetchTravelRoutes = async (): Promise<ApiResponse<TravelRoute[]>> => {
+export const fetchTravelRoutes = async (): Promise<
+  ApiResponse<TravelRoute[]>
+> => {
   // Simulating an API request with a delay
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -80,11 +85,13 @@ export const fetchTravelRoutes = async (): Promise<ApiResponse<TravelRoute[]>> =
 
 export const updateTravleRoute = (
   id: number,
-  updatedRoute: Partial<TravelRoute>
+  updatedRoute: Partial<TravelRoute>,
 ): Promise<ApiResponse<TravelRoute[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      travelData = travelData.map((route) => (route.id === id ? { ...route, ...updatedRoute } : route));
+      travelData = travelData.map((route) =>
+        route.id === id ? { ...route, ...updatedRoute } : route,
+      );
       resolve({
         success: true,
         data: travelData,
@@ -94,7 +101,9 @@ export const updateTravleRoute = (
   });
 };
 
-export const deleteTravelRoute = (id: number): Promise<ApiResponse<TravelRoute[]>> => {
+export const deleteTravelRoute = (
+  id: number,
+): Promise<ApiResponse<TravelRoute[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       travelData = travelData.filter((route) => route.id !== id);
@@ -107,93 +116,97 @@ export const deleteTravelRoute = (id: number): Promise<ApiResponse<TravelRoute[]
   });
 };
 
-export const getTrainDetails = async (trainId?: string): Promise<ApiResponse<TrainDetails[]>> => {
+export const getTrainDetails = async (
+  trainId?: string,
+): Promise<ApiResponse<TrainDetails[]>> => {
   try {
-    const url = trainId 
-      ? `/api/trains?trainId=${trainId}`
-      : '/api/trains';
-      
+    const url = trainId ? `/api/trains?trainId=${trainId}` : "/api/trains";
+
     const response = await fetch(url);
     const data = await response.json();
-    
+
     if (!response.ok) {
       return {
         success: false,
-        message: data.message || 'Failed to fetch train details',
-        data: []
+        message: data.message || "Failed to fetch train details",
+        data: [],
       };
     }
 
     return {
-        success: true,
+      success: true,
       data: Array.isArray(data.data) ? data.data : [data.data],
-      message: 'Train details fetched successfully'
+      message: "Train details fetched successfully",
     };
   } catch (error) {
-    console.error('Error fetching train details:', error);
+    console.error("Error fetching train details:", error);
     return {
       success: false,
-      message: 'Failed to fetch train details',
-      data: []
+      message: "Failed to fetch train details",
+      data: [],
     };
   }
 };
 
 // Update these to use fetch calls to API routes instead of direct MongoDB access
-export const addTrainDetails = async (newTrain: TrainDetails): Promise<ApiResponse<TrainDetails[]>> => {
+export const addTrainDetails = async (
+  newTrain: TrainDetails,
+): Promise<ApiResponse<TrainDetails[]>> => {
   try {
-    const response = await fetch('/api/trains', {
-      method: 'POST',
+    const response = await fetch("/api/trains", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(newTrain),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       return {
         success: false,
-        message: data.message || 'Failed to add train details',
-        data: []
+        message: data.message || "Failed to add train details",
+        data: [],
       };
     }
 
     return data;
   } catch (error) {
-    console.error('Error adding train details:', error);
+    console.error("Error adding train details:", error);
     return {
       success: false,
-      message: 'Failed to add train details',
-      data: []
+      message: "Failed to add train details",
+      data: [],
     };
   }
 };
 
-export const deleteTrainDetails = async (id: string): Promise<ApiResponse<TrainDetails[]>> => {
+export const deleteTrainDetails = async (
+  id: string,
+): Promise<ApiResponse<TrainDetails[]>> => {
   try {
     const response = await fetch(`/api/trains/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       return {
         success: false,
-        message: data.message || 'Failed to delete train details',
-        data: []
+        message: data.message || "Failed to delete train details",
+        data: [],
       };
     }
 
     return data;
   } catch (error) {
-    console.error('Error deleting train details:', error);
+    console.error("Error deleting train details:", error);
     return {
       success: false,
-      message: 'Failed to delete train details',
-      data: []
+      message: "Failed to delete train details",
+      data: [],
     };
   }
 };

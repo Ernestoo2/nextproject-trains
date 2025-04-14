@@ -14,6 +14,23 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 },
+      );
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters long" },
+        { status: 400 },
+      );
+    }
+
     await connectDB();
 
     // Check if user already exists
@@ -38,6 +55,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
+        success: true,
         user: {
           id: user._id,
           name: user.name,
@@ -49,8 +67,22 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+
+    // Handle specific MongoDB errors
+    if (error instanceof Error) {
+      if (
+        error.name === "MongoServerError" &&
+        error.message.includes("E11000")
+      ) {
+        return NextResponse.json(
+          { error: "Email already exists" },
+          { status: 400 },
+        );
+      }
+    }
+
     return NextResponse.json(
-      { error: "An error occurred during registration" },
+      { error: "An error occurred during registration. Please try again." },
       { status: 500 },
     );
   }

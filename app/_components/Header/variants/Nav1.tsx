@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,7 +13,7 @@ export function Nav1() {
       <nav className="flex justify-center gap-4 md:gap-16 h-auto">
         <Link
           className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
-            isActive('/') ? 'text-green-600' : 'hover:text-green-600'
+            isActive("/") ? "text-green-600" : "hover:text-green-600"
           }`}
           href="/"
         >
@@ -21,7 +21,9 @@ export function Nav1() {
         </Link>
         <Link
           className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
-            isActive('/trains/train-search') ? 'text-green-600' : 'hover:text-green-600'
+            isActive("/trains/train-search")
+              ? "text-green-600"
+              : "hover:text-green-600"
           }`}
           href="/trains/train-search"
         >
@@ -29,7 +31,7 @@ export function Nav1() {
         </Link>
         <Link
           className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
-            isActive('/user') ? 'text-green-600' : 'hover:text-green-600'
+            isActive("/user") ? "text-green-600" : "hover:text-green-600"
           }`}
           href="/user"
         >

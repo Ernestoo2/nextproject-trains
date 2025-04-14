@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 import React from "react";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { MdAirlineSeatReclineNormal, MdDateRange } from "react-icons/md";
-import Image from 'next/image';
+import Image from "next/image";
 import { TrainDetails } from "@/app/(dashboard)/trains/train-search/_types/train.types";
 
 interface TicketsProps {
@@ -40,11 +40,17 @@ const Tickets: React.FC<TicketsProps> = ({ tickets }) => {
                     <p>{ticket.departureTime}</p>
                   </div>
                   <div className="flex items-center">
-                    <HiOutlineLocationMarker size={16} className="mr-1 text-gray-500" />
+                    <HiOutlineLocationMarker
+                      size={16}
+                      className="mr-1 text-gray-500"
+                    />
                     <p>Platform {ticket.id}</p>
                   </div>
                   <div className="flex items-center">
-                    <MdAirlineSeatReclineNormal size={16} className="mr-1 text-gray-500" />
+                    <MdAirlineSeatReclineNormal
+                      size={16}
+                      className="mr-1 text-gray-500"
+                    />
                     <p>Coach {ticket.id}</p>
                   </div>
                 </div>
@@ -60,4 +66,4 @@ const Tickets: React.FC<TicketsProps> = ({ tickets }) => {
   );
 };
 
-export default Tickets; 
+export default Tickets;

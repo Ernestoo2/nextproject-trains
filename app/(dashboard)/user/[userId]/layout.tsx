@@ -1,6 +1,6 @@
-import Footer from '@/app/_components/Footer/_components/Footer';
-import Header1Ui from '@/app/_components/Header/Header1Ui';
-import React from 'react';
+import Footer from "@/app/_components/Footer/_components/Footer";
+import Header1Ui from "@/app/_components/Header/Header1Ui";
+import React from "react";
 
 export default function UserLayout({
   children,
@@ -9,11 +9,7 @@ export default function UserLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      
-      <main className="flex-grow">
-        {children}
-      </main>
-      
+      <main className="flex-grow">{children}</main>
     </div>
   );
-} 
+}

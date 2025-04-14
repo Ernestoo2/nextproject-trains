@@ -1,10 +1,10 @@
 "use client";
+import Image from "next/image";
 import React, { useState } from "react";
 import mail from "../../../../public/Assets/mailbox.png";
 import { IoIosSend } from "react-icons/io";
-import Image from "next/image";
 
-export default function Newsletter() {
+export default function NewsletterPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 

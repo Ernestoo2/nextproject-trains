@@ -1,6 +1,6 @@
-"use client"
+"use client";
 import QRcode from "../../../../../public/Assets/QRcode.png";
-import  { useState } from "react";
+import { useState } from "react";
 import { TicketDetails } from "../types/booking.types";
 import {
   DEFAULT_TICKET_DETAILS,
@@ -9,7 +9,7 @@ import {
 } from "../constants/booking.constants";
 import Image from "next/image";
 //app\dashboard\Trains\BookingSuccess\_components\BookingSuccess.tsx
-export default function BookingSuccess () {
+export default function BookingSuccess() {
   const [ticketDetails] = useState<TicketDetails>(DEFAULT_TICKET_DETAILS);
 
   return (
@@ -185,4 +185,4 @@ export default function BookingSuccess () {
       </div>
     </div>
   );
-};
+}

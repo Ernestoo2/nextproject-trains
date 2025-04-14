@@ -162,45 +162,44 @@ export const initialTravelData: TravelRoute[] = [
 
 // User Profile Types
 export interface UserProfile {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    address?: string;
-    dob?: string;
-    image?: string;
-    role: "user" | "admin";
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  dob?: string;
+  image?: string;
+  role: "user" | "admin";
 }
 
 // Ticket Types
 export interface Ticket {
-    id: string;
-    trainNumber: string;
-    departure: string;
-    arrival: string;
-    time: string;
-    date: string;
-    gate?: string;
-    seat?: string;
-    status: 'confirmed' | 'pending' | 'cancelled';
-    trainDetails?: TrainDetails;
+  id: string;
+  trainNumber: string;
+  departure: string;
+  arrival: string;
+  time: string;
+  date: string;
+  gate?: string;
+  seat?: string;
+  status: "confirmed" | "pending" | "cancelled";
+  trainDetails?: TrainDetails;
 }
 
 // Payment Types
 export interface PaymentMethod {
-    id: string;
-    name: string;
-    icon: string;
-    description: string;
-    isSelected: boolean;
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  isSelected: boolean;
 }
 
 export interface PaymentHistory {
-    id: string;
-    amount: number;
-    date: string;
-    status: 'completed' | 'pending' | 'failed';
-    method: string;
-    ticketId?: string;
+  id: string;
+  amount: number;
+  date: string;
+  status: "completed" | "pending" | "failed";
+  method: string;
+  ticketId?: string;
 }
-

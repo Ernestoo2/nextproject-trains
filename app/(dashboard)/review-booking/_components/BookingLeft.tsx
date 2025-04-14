@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 import { FaTrash } from "react-icons/fa6";
-import { useSession } from 'next-auth/react';
+import { useSession } from "next-auth/react";
 
 interface Traveler {
   name: string;
@@ -25,7 +25,7 @@ const BookingLeft: React.FC = () => {
   const [nairaRailsID, setNairaRailsID] = useState("");
   const [contactDetails, setContactDetails] = useState({
     phone: "",
-    email: session?.user?.email || ""
+    email: session?.user?.email || "",
   });
 
   const addTraveler = () => {
@@ -67,23 +67,33 @@ const BookingLeft: React.FC = () => {
 
   return (
     <div className="flex-1 space-y-6">
-      <h2 className="text-2xl font-semibold text-[#07561A]">Review your booking</h2>
+      <h2 className="text-2xl font-semibold text-[#07561A]">
+        Review your booking
+      </h2>
 
       {/* Traveler Details */}
       <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-800 text-md">Traveler Details</h3>
+          <h3 className="font-semibold text-gray-800 text-md">
+            Traveler Details
+          </h3>
           <p className="text-sm text-gray-600">
             As per IRCTC guidelines, you can book up to 6 travelers at once.
           </p>
-          <img src="../Assets/plussign.png" className="object-scale-down w-10 h-10" alt="" />
+          <img
+            src="../Assets/plussign.png"
+            className="object-scale-down w-10 h-10"
+            alt=""
+          />
         </div>
 
         <ol className="space-y-4">
           {travelers.map((traveler, index) => (
             <li key={index} className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <span className="font-medium text-gray-800">{traveler.name}</span>
+                <span className="font-medium text-gray-800">
+                  {traveler.name}
+                </span>
                 <button
                   title="button"
                   onClick={() => removeTraveler(index)}
@@ -95,8 +105,12 @@ const BookingLeft: React.FC = () => {
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">{traveler.age}</span>
                 <span className="text-sm text-gray-600">{traveler.gender}</span>
-                <span className="text-sm text-gray-600">{traveler.nationality}</span>
-                <span className="text-sm text-gray-600">{traveler.berthPreference}</span>
+                <span className="text-sm text-gray-600">
+                  {traveler.nationality}
+                </span>
+                <span className="text-sm text-gray-600">
+                  {traveler.berthPreference}
+                </span>
               </div>
             </li>
           ))}
@@ -108,21 +122,27 @@ const BookingLeft: React.FC = () => {
               type="text"
               placeholder="Name of Traveller"
               value={newTraveler.name}
-              onChange={(e) => setNewTraveler({ ...newTraveler, name: e.target.value })}
+              onChange={(e) =>
+                setNewTraveler({ ...newTraveler, name: e.target.value })
+              }
               className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <input
               type="text"
               placeholder="Age"
               value={newTraveler.age}
-              onChange={(e) => setNewTraveler({ ...newTraveler, age: e.target.value })}
+              onChange={(e) =>
+                setNewTraveler({ ...newTraveler, age: e.target.value })
+              }
               className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <div className="relative w-full">
               <select
                 title="Gender"
                 value={newTraveler.gender}
-                onChange={(e) => setNewTraveler({ ...newTraveler, gender: e.target.value })}
+                onChange={(e) =>
+                  setNewTraveler({ ...newTraveler, gender: e.target.value })
+                }
                 className="w-full px-4 py-2 bg-transparent border-t-0 border-b-2 border-gray-300 appearance-none border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option className="text-gray-500" value="" disabled hidden>
@@ -136,14 +156,21 @@ const BookingLeft: React.FC = () => {
               type="text"
               placeholder="Nationality"
               value={newTraveler.nationality}
-              onChange={(e) => setNewTraveler({ ...newTraveler, nationality: e.target.value })}
+              onChange={(e) =>
+                setNewTraveler({ ...newTraveler, nationality: e.target.value })
+              }
               className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <input
               type="text"
               placeholder="Berth Preference"
               value={newTraveler.berthPreference}
-              onChange={(e) => setNewTraveler({ ...newTraveler, berthPreference: e.target.value })}
+              onChange={(e) =>
+                setNewTraveler({
+                  ...newTraveler,
+                  berthPreference: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
@@ -158,7 +185,9 @@ const BookingLeft: React.FC = () => {
 
       {/* Naira Rails Login */}
       <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
-        <h3 className="mb-2 text-lg font-semibold text-gray-800">Naira Rails Login</h3>
+        <h3 className="mb-2 text-lg font-semibold text-gray-800">
+          Naira Rails Login
+        </h3>
         <div className="flex items-center gap-4">
           <input
             type="text"
@@ -179,7 +208,9 @@ const BookingLeft: React.FC = () => {
       {/* Contact Details */}
       <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
         <div className="flex items-center justify-between w-4/5 mb-3">
-          <h3 className="text-lg font-semibold text-gray-800">Contact Details</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Contact Details
+          </h3>
           <p className="text-sm">Your ticket info will be sent here</p>
         </div>
 
@@ -188,14 +219,18 @@ const BookingLeft: React.FC = () => {
             type="text"
             placeholder="Mobile Number"
             value={contactDetails.phone}
-            onChange={(e) => setContactDetails({ ...contactDetails, phone: e.target.value })}
+            onChange={(e) =>
+              setContactDetails({ ...contactDetails, phone: e.target.value })
+            }
             className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <input
             type="email"
             placeholder="Email ID"
             value={contactDetails.email}
-            onChange={(e) => setContactDetails({ ...contactDetails, email: e.target.value })}
+            onChange={(e) =>
+              setContactDetails({ ...contactDetails, email: e.target.value })
+            }
             className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>

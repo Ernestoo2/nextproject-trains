@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
-import Image from 'next/image';
+import Image from "next/image";
 
 interface PaymentMethod {
   id: number;
@@ -41,10 +41,12 @@ const Payment: React.FC<PaymentProps> = ({ onMethodSelect }) => {
   ]);
 
   const handleMethodSelect = (id: number) => {
-    setMethods(methods.map(method => ({
-      ...method,
-      isSelected: method.id === id
-    })));
+    setMethods(
+      methods.map((method) => ({
+        ...method,
+        isSelected: method.id === id,
+      })),
+    );
     onMethodSelect(id);
   };
 
@@ -56,7 +58,9 @@ const Payment: React.FC<PaymentProps> = ({ onMethodSelect }) => {
           <div
             key={method.id}
             className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
-              method.isSelected ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-gray-300"
+              method.isSelected
+                ? "border-green-500 bg-green-50"
+                : "border-gray-200 hover:border-gray-300"
             }`}
             onClick={() => handleMethodSelect(method.id)}
           >
@@ -79,4 +83,4 @@ const Payment: React.FC<PaymentProps> = ({ onMethodSelect }) => {
   );
 };
 
-export default Payment; 
+export default Payment;

@@ -24,6 +24,7 @@ export function AuthContextProvider({
         email,
         password,
         redirect: false,
+        callbackUrl: "/dashboard",
       });
       if (result?.error) {
         setError(result.error);

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { Suspense } from 'react';
-import { TrainDetails } from '@/app/api/types/types';
-import { useSession } from 'next-auth/react';
+import React, { Suspense } from "react";
+import { TrainDetails } from "@/app/api/types/types";
+import { useSession } from "next-auth/react";
 
 interface BookingRightProps {
   train: TrainDetails;
@@ -24,7 +24,7 @@ const BookingRight: React.FC<BookingRightProps> = ({ train }) => {
     duration,
     baseFare = 0,
     tatkalCharges = 0,
-    gst = 0
+    gst = 0,
   } = train;
 
   const totalFare = baseFare + tatkalCharges + gst;
@@ -32,7 +32,9 @@ const BookingRight: React.FC<BookingRightProps> = ({ train }) => {
   return (
     <div className="w-full md:w-1/3 bg-white p-6 rounded-lg shadow">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Boarding Details</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          Boarding Details
+        </h3>
         <div className="flex justify-between items-center">
           <p className="text-gray-600 text-lg font-semibold">{trainName}</p>
           <p className="text-[#07561A]">
@@ -42,7 +44,9 @@ const BookingRight: React.FC<BookingRightProps> = ({ train }) => {
       </div>
 
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Journey Details</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          Journey Details
+        </h3>
         <div className="flex justify-between items-center">
           <div>
             <p className="text-gray-600">{departureStation}</p>
@@ -60,7 +64,9 @@ const BookingRight: React.FC<BookingRightProps> = ({ train }) => {
       </div>
 
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Fare Details</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          Fare Details
+        </h3>
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">Base Fare</span>
@@ -84,7 +90,9 @@ const BookingRight: React.FC<BookingRightProps> = ({ train }) => {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Passenger Details</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          Passenger Details
+        </h3>
         <p className="text-gray-600">{session.user.name}</p>
         <p className="text-sm text-gray-500">{session.user.email}</p>
       </div>
@@ -92,4 +100,4 @@ const BookingRight: React.FC<BookingRightProps> = ({ train }) => {
   );
 };
 
-export default BookingRight; 
+export default BookingRight;

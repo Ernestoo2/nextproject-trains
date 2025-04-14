@@ -29,7 +29,7 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
       await auth.login(email, password);
       if (onSuccess) onSuccess();
 
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred during login";

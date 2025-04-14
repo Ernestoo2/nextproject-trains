@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
-import { User } from 'next-auth';
-import EditProfile from './EditProfile';
+import { User } from "next-auth";
+import EditProfile from "./EditProfile";
 
 interface AccountProps {
   user: User;
@@ -13,11 +13,18 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   const [currentUser, setCurrentUser] = useState(user);
 
   const userDetails = {
-    name: currentUser.name || 'Not set',
-    email: currentUser.email || 'Not set',
-    phone: 'phone' in currentUser ? (currentUser as any).phone || 'Not set' : 'Not set',
-    address: 'address' in currentUser ? (currentUser as any).address || 'Not set' : 'Not set',
-    dob: 'dob' in currentUser ? (currentUser as any).dob || 'Not set' : 'Not set',
+    name: currentUser.name || "Not set",
+    email: currentUser.email || "Not set",
+    phone:
+      "phone" in currentUser
+        ? (currentUser as any).phone || "Not set"
+        : "Not set",
+    address:
+      "address" in currentUser
+        ? (currentUser as any).address || "Not set"
+        : "Not set",
+    dob:
+      "dob" in currentUser ? (currentUser as any).dob || "Not set" : "Not set",
   };
 
   const handleEdit = () => {
@@ -25,7 +32,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   };
 
   const handleSave = (updatedUser: Partial<User>) => {
-    setCurrentUser(prev => ({ ...prev, ...updatedUser }));
+    setCurrentUser((prev) => ({ ...prev, ...updatedUser }));
     setIsEditing(false);
   };
 
@@ -47,7 +54,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Account Details</h2>
-        <button 
+        <button
           onClick={handleEdit}
           className="px-4 py-2 text-sm text-white bg-green-600 rounded hover:bg-green-700"
         >
@@ -60,9 +67,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
             <p className="text-sm font-medium text-gray-500">
               {key.charAt(0).toUpperCase() + key.slice(1)}
             </p>
-            <p className="text-base text-gray-900">
-              {value}
-            </p>
+            <p className="text-base text-gray-900">{value}</p>
           </div>
         ))}
       </div>
@@ -70,4 +75,4 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   );
 };
 
-export default Account; 
+export default Account;

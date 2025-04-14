@@ -38,8 +38,8 @@
   background-image: var(--image-src, none);
 }
 
-  .imgWrap[data-src="../../../../public/Assets/back1.png"] {
-    --image-src: url("../../../../public/Assets/back1.png");
+.imgWrap[data-src="../../../../public/Assets/back1.png"] {
+  --image-src: url("../../../../public/Assets/back1.png");
 }
 
 .imgWrap[data-src="../../../../public/Assets/back2.png"] {

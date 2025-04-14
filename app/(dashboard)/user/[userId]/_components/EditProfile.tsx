@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { User } from 'next-auth';
+import React, { useState, useEffect } from "react";
+import { User } from "next-auth";
 
 interface EditProfileProps {
   user: User;
@@ -9,20 +9,24 @@ interface EditProfileProps {
   onCancel: () => void;
 }
 
-const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => {
+const EditProfile: React.FC<EditProfileProps> = ({
+  user,
+  onSave,
+  onCancel,
+}) => {
   const [formData, setFormData] = useState({
-    name: user.name || '',
-    email: user.email || '',
-    phone: '',
-    address: '',
-    dob: ''
+    name: user.name || "",
+    email: user.email || "",
+    phone: "",
+    address: "",
+    dob: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -30,21 +34,21 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
     e.preventDefault();
     try {
       const response = await fetch(`/api/user/${user.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        throw new Error("Failed to update profile");
       }
 
       const updatedUser = await response.json();
       onSave(updatedUser);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       // Handle error (show toast or error message)
     }
   };
@@ -54,7 +58,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
       <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Name</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Name
+          </label>
           <input
             type="text"
             name="name"
@@ -64,7 +70,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Email
+          </label>
           <input
             type="email"
             name="email"
@@ -74,7 +82,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Phone</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Phone
+          </label>
           <input
             type="tel"
             name="phone"
@@ -84,7 +94,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Address</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Address
+          </label>
           <input
             type="text"
             name="address"
@@ -94,7 +106,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Date of Birth
+          </label>
           <input
             type="date"
             name="dob"
@@ -123,4 +137,4 @@ const EditProfile: React.FC<EditProfileProps> = ({ user, onSave, onCancel }) => 
   );
 };
 
-export default EditProfile; 
+export default EditProfile;

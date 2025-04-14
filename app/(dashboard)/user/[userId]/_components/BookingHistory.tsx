@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { apiService } from '@/app/(dashboard)/trains/_services/api.service';
-import { TrainDetails } from '@/app/(dashboard)/trains/train-search/_types/train.types';
-import React, { useState, useEffect } from 'react';
+import { apiService } from "@/app/(dashboard)/trains/_services/api.service";
+import { TrainDetails } from "@/app/(dashboard)/trains/train-search/_types/train.types";
+import React, { useState, useEffect } from "react";
 
 interface BookingHistoryProps {
   userId: string;
@@ -21,7 +21,7 @@ const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
           setBookings(response.data as unknown as TrainDetails[]);
         }
       } catch (error) {
-        console.error('Error fetching bookings:', error);
+        console.error("Error fetching bookings:", error);
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,9 @@ const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">Duration: {booking.duration}</p>
+                <p className="text-sm text-gray-600">
+                  Duration: {booking.duration}
+                </p>
                 <button className="mt-2 text-sm text-green-600 hover:text-green-700">
                   View Details
                 </button>
@@ -64,4 +66,4 @@ const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
   );
 };
 
-export default BookingHistory; 
+export default BookingHistory;

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { User } from 'next-auth';
+import React from "react";
+import Image from "next/image";
+import { User } from "next-auth";
 
 interface UserProfileProps {
   user: User;
@@ -14,8 +14,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
       <div className="flex flex-col items-center mb-6">
         <div className="w-24 h-24 relative mb-4">
           <Image
-            src={user.image || '/default-avatar.png'}
-            alt={user.name || 'User avatar'}
+            src={user.image || "/default-avatar.png"}
+            alt={user.name || "User avatar"}
             fill
             className="rounded-full object-cover"
           />
@@ -49,4 +49,4 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
   );
 };
 
-export default UserProfile; 
+export default UserProfile;

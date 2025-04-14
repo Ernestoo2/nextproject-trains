@@ -1,9 +1,3 @@
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message: string;
-}
-
 export interface TrainDetails {
   id: number;
   trainName: string;
@@ -32,6 +26,39 @@ export const initialTravelData: TravelRoute[] = [
     id: 1,
     source: "Port Harcourt",
     destination: "Enugu",
-    date: "2024-04-08"
-  }
-]; 
+    date: "2024-04-08",
+  },
+];
+
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+export interface ITrainRoute {
+  station: {
+    _id: string;
+    name: string;
+    code: string;
+  };
+  arrivalTime: string;
+  departureTime: string;
+  day: number;
+}
+
+export interface ITrainClass {
+  _id: string;
+  name: string;
+  code: string;
+}
+
+export interface ITrain {
+  _id: string;
+  trainName: string;
+  trainNumber: string;
+  routes: ITrainRoute[];
+  classes: ITrainClass[];
+  isActive: boolean;
+}

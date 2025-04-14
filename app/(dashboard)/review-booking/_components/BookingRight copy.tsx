@@ -7,7 +7,6 @@ export interface TrainCardProps {
   train: TrainDetails;
 }
 
-
 export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
   const [applyCode, setApplyCode] = useState("");
   const [totalCharge, setTotalCharge] = useState(35000);
@@ -32,9 +31,13 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
       <div className="w-full  space-y-6">
         {/* Boarding Details */}
         <div className="bg-[#07561A1A] p-4 rounded-lg  border-[#07561A] shadow-md">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">Boarding Details</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Boarding Details
+          </h3>
           <div className="flex justify-between items-center">
-            <p className="text-gray-600 text-lg font-semibold">{train.trainName}</p>
+            <p className="text-gray-600 text-lg font-semibold">
+              {train.trainName}
+            </p>
             <p className="text-[#07561A]">
               <span className="font-medium ">Class 2A</span> &bull; Tatkal Quota
             </p>
@@ -43,7 +46,9 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
             <div className="w-full">
               <p className="text-sm font-normal">{train.startDate} </p>
               <p className="text-sm font-medium">{train.departureTime}</p>
-              <p className="text-sm  text-[#6B7280]">{train.departureStation}</p>
+              <p className="text-sm  text-[#6B7280]">
+                {train.departureStation}
+              </p>
             </div>
             <div className="flex flex-col w-full items-center">
               <span className="text-sm text-[#6B7280]">{train.duration}</span>
@@ -55,7 +60,9 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
               <p className="text-sm text-[#6B7280]">{train.arrivalStation}</p>
             </div>
           </div>
-          <button className="text-green-500 hover:underline border px-2 py-1 border-solid border-[#07561A] rounded-md mt-2">Change boarding station</button>
+          <button className="text-green-500 hover:underline border px-2 py-1 border-solid border-[#07561A] rounded-md mt-2">
+            Change boarding station
+          </button>
         </div>
 
         {/* Offers */}
@@ -64,10 +71,9 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <p className="text-gray-600 text-sm flex gap-2">
-
                 <Image src={vector} className="object-scale-down" alt="" />
-
-                50% off up to ₦100 | Use code <span className="font-medium">BOOKNOW</span>
+                50% off up to ₦100 | Use code{" "}
+                <span className="font-medium">BOOKNOW</span>
               </p>
               <button
                 onClick={() => handleApplyOffer(100)}
@@ -78,10 +84,9 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
             </div>
             <div className="flex justify-between items-center">
               <p className="text-gray-600 flex gap-2">
-
                 <Image src={vector} className="object-scale-down" alt="" />
-
-                20% off | Use code <span className="font-medium">FIRSTTIME</span>
+                20% off | Use code{" "}
+                <span className="font-medium">FIRSTTIME</span>
               </p>
               <button
                 onClick={() => handleApplyOffer(200)}
@@ -95,12 +100,10 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
 
         {/* Apply Code */}
         <div className="bg-white p-4 rounded-lg shadow-md">
-
           <h3 className="text-lg font-semibold flex gap-2 text-gray-800 mb-2">
-
             <Image src={vector} className="object-scale-down" alt="" />
-
-            Apply Code</h3>
+            Apply Code
+          </h3>
           <div className="flex w-full items-center gap-4">
             <input
               type="text"
@@ -120,24 +123,28 @@ export const BookingRight: React.FC<TrainCardProps> = ({ train }) => {
 
         {/* Bill Details */}
         <div className="bg-white p-4 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">Bill Details</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Bill Details
+          </h3>
           <p className="text-gray-600">Base Ticket Fare: ₦30,000.00</p>
           <p className="text-gray-600">Total Travelers: 1</p>
           <p className="text-gray-600">Taxes & GST: ₦5,000.00</p>
-          <p className="text-lg font-bold text-gray-800 mt-4">Total Charge: ₦{totalCharge}</p>
+          <p className="text-lg font-bold text-gray-800 mt-4">
+            Total Charge: ₦{totalCharge}
+          </p>
         </div>
 
         {/* Book Now Button */}
         <div className=" w-full flex text-center items-center mx-auto">
-          <Link href="/booking-success" className="w-full mx-auto items-center bg-[#07561A] text-white py-2 rounded-md hover:bg-green-600">
+          <Link
+            href="/booking-success"
+            className="w-full mx-auto items-center bg-[#07561A] text-white py-2 rounded-md hover:bg-green-600"
+          >
             Book Now
           </Link>
         </div>
         <button className="w-full text-red-500  ">Cancel</button>
       </div>
     </div>
-  )
-}
-
-
-
+  );
+};

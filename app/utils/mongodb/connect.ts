@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable");
@@ -29,17 +29,35 @@ export async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      family: 4,
+      retryWrites: true,
+      retryReads: true,
+      connectTimeoutMS: 10000,
+      heartbeatFrequencyMS: 10000,
+      minHeartbeatFrequencyMS: 5000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI!, opts)
+      .then((mongoose) => {
+        console.log("MongoDB connected successfully");
+        return mongoose;
+      })
+      .catch((error) => {
+        console.error("MongoDB connection error:", error);
+        cached.promise = null;
+        throw error;
+      });
   }
 
   try {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error("MongoDB connection failed:", e);
     throw e;
   }
 
