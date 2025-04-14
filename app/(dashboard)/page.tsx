@@ -8,7 +8,7 @@ import Review from "./_components/review-page/page";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import BookingPage from "./_components/booking-interface/page.tsx";
+import BookingPage from "./_components/booking-interface/page";
 
 export default function DashboardContent() {
   const { data: session } = useSession();
