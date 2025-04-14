@@ -32,52 +32,27 @@ class ApiService {
       return {
         success: false,
         data: null as T,
-        error:
-          error instanceof Error ? error.message : "An unknown error occurred",
-        message: "Failed to fetch data",
+        message: error instanceof Error ? error.message : "An unknown error occurred"
       };
     }
   }
 
   // Train Classes
-  async getTrainClasses(
-    params?: SearchParams,
-  ): Promise<ApiResponse<TrainClass[]>> {
-    const queryParams = params
-      ? new URLSearchParams(
-          Object.entries(params).filter(([_, v]) => v !== undefined) as [
-            string,
-            string,
-          ][],
-        ).toString()
-      : "";
-    return this.fetchApi<TrainClass[]>(`/train-classes?${queryParams}`);
+  async getTrainClasses(): Promise<ApiResponse<TrainClass[]>> {
+    const response = await fetch('/api/train-classes');
+    return response.json();
   }
 
   // Trip Types
-  async getTripTypes(params?: SearchParams): Promise<ApiResponse<TripType[]>> {
-    const queryParams = params
-      ? new URLSearchParams(
-          Object.entries(params).filter(([_, v]) => v !== undefined) as [
-            string,
-            string,
-          ][],
-        ).toString()
-      : "";
-    return this.fetchApi<TripType[]>(`/trip-types?${queryParams}`);
+  async getTripTypes(): Promise<ApiResponse<TripType[]>> {
+    const response = await fetch('/api/trip-types');
+    return response.json();
   }
 
   // Stations
-  async getStations(params?: SearchParams): Promise<ApiResponse<Station[]>> {
-    const queryParams = params
-      ? new URLSearchParams(
-          Object.entries(params).filter(([_, v]) => v !== undefined) as [
-            string,
-            string,
-          ][],
-        ).toString()
-      : "";
-    return this.fetchApi<Station[]>(`/stations?${queryParams}`);
+  async getStations(): Promise<ApiResponse<Station[]>> {
+    const response = await fetch('/api/stations');
+    return response.json();
   }
 }
 

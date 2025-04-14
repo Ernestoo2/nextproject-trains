@@ -1,14 +1,25 @@
 export interface TrainDetails {
-  id: number;
+  _id: string;
   trainName: string;
-  runsOn: string;
-  startDate: string;
-  endDate: string;
-  departureTime: string;
-  arrivalTime: string;
-  departureStation: string;
-  arrivalStation: string;
-  duration: string;
+  trainNumber: string;
+  routes: Array<{
+    station: {
+      _id: string;
+      name: string;
+      code: string;
+    };
+    arrivalTime: string;
+    departureTime: string;
+    day: number;
+  }>;
+  classes: Array<{
+    _id: string;
+    name: string;
+    code: string;
+  }>;
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface TrainCardProps {

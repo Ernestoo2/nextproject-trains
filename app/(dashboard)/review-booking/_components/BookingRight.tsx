@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React from "react";
 import { TrainDetails } from "@/app/api/types/types";
 import { useSession } from "next-auth/react";
 

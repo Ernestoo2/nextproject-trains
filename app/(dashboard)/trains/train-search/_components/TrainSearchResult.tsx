@@ -8,6 +8,7 @@ import search from "../../../../../public/Assets/Searchpic.png";
 import { ITrain } from "@/app/utils/mongodb/types";
 import DateSlider from "./DateSlider";
 import TrainCard from "./TrainCard";
+import { TrainDetails } from "../_types/train.types";
 
 type Breakpoint = "mobile" | "tablet" | "desktop";
 
@@ -68,7 +69,7 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
       }
 
       // Validate train data structure
-      const validatedTrains = data.data.map((train: any) => {
+      const validatedTrains = data.data.map((train: TrainDetails) => {
         if (!train || typeof train !== 'object') {
           throw new Error('Invalid train data structure');
         }
@@ -102,7 +103,7 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
 
   useEffect(() => {
     fetchTrains(page);
-  }, [page]);
+  }, [page, fetchTrains]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

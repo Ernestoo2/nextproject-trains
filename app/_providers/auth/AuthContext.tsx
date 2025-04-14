@@ -1,20 +1,36 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { signIn, signOut } from "next-auth/react";
 import type { AuthContextType, User } from "./types";
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  user: null,
+  loading: true,
+  error: null,
+  login: async () => {},
+  logout: async () => {},
+  register: async () => {},
+});
 
-export function AuthContextProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { data: session, status } = useSession();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      setIsAuthenticated(true);
+      setUser(session.user as User);
+    } else {
+      setIsAuthenticated(false);
+      setUser(null);
+    }
+    setLoading(false);
+  }, [status, session]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -29,8 +45,8 @@ export function AuthContextProvider({
       if (result?.error) {
         setError(result.error);
       }
-    } catch (err) {
-      setError("An error occurred during login");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred during login");
     } finally {
       setLoading(false);
     }
@@ -38,10 +54,11 @@ export function AuthContextProvider({
 
   const logout = async () => {
     try {
+      setError(null);
       await signOut({ redirect: false });
       setUser(null);
-    } catch (err) {
-      setError("An error occurred during logout");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred during logout");
     }
   };
 
@@ -64,20 +81,16 @@ export function AuthContextProvider({
         throw new Error(data.error || "Registration failed");
       }
 
-      // Automatically log in after successful registration
       await login(email, password);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred during registration",
-      );
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred during registration");
     } finally {
       setLoading(false);
     }
   };
 
   const value = {
+    isAuthenticated,
     user,
     loading,
     error,
@@ -87,4 +100,4 @@ export function AuthContextProvider({
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};

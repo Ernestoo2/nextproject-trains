@@ -9,7 +9,7 @@ import { getTrainDetails } from "@/app/api/api";
 import { TrainDetails } from "@/app/api/types/types";
 
 const ReviewBooking: React.FC = () => {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [train, setTrain] = useState<TrainDetails | null>(null);
@@ -31,7 +31,8 @@ const ReviewBooking: React.FC = () => {
         } else {
           setError(response.message || "Train not found");
         }
-      } catch (err) {
+      } catch (error) {
+        console.error("Error fetching train details:", error);
         setError("An error occurred while fetching train details");
       } finally {
         setLoading(false);
@@ -41,7 +42,7 @@ const ReviewBooking: React.FC = () => {
     fetchTrainDetails();
   }, [searchParams]);
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -49,7 +50,7 @@ const ReviewBooking: React.FC = () => {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (session === null) {
     router.push("/auth/signin");
     return null;
   }

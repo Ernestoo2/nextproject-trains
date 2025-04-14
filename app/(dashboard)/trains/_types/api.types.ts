@@ -36,8 +36,7 @@ export interface Station extends BaseDocument {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  error?: string;
-  message: string;
+  message?: string;
 }
 
 // API Error Types
@@ -58,4 +57,34 @@ export interface PaginationParams {
 export interface SearchParams extends PaginationParams {
   query?: string;
   filters?: Record<string, any>;
+}
+
+export interface TrainDetails {
+  _id: string;
+  trainName: string;
+  trainNumber: string;
+  routes: Array<{
+    station: {
+      _id: string;
+      name: string;
+      code: string;
+    };
+    arrivalTime: string;
+    departureTime: string;
+    day: number;
+  }>;
+  classes: Array<{
+    _id: string;
+    name: string;
+    code: string;
+  }>;
+  isActive: boolean;
+}
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
 }

@@ -6,6 +6,7 @@ export interface User {
 }
 
 export interface AuthContextType {
+  isAuthenticated: boolean;
   user: User | null;
   loading: boolean;
   error: string | null;
