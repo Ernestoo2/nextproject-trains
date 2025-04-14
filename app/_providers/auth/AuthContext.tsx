@@ -14,7 +14,7 @@ export const AuthContext = createContext<AuthContextType>({
   register: async () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: session, status } = useSession();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
