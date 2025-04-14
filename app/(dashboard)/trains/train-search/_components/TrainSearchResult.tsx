@@ -35,6 +35,22 @@ const useBreakpoint = (): Breakpoint => {
   return breakpoint;
 };
 
+const useDebounce = (value: any, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 interface TrainSearchResultsProps {
   initialLoading?: boolean;
 }
@@ -49,10 +65,13 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const debouncedPage = useDebounce(page, 300);
 
   useBreakpoint();
 
   const fetchTrains = async (pageNum: number) => {
+    if (loading) return; // Prevent multiple simultaneous requests
+
     try {
       setLoading(true);
       setError(null);
@@ -86,12 +105,8 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
         return train;
       });
       
-      if (pageNum === 1) {
-        setTrains(validatedTrains);
-      } else {
-        setTrains(prev => [...prev, ...validatedTrains]);
-      }
-      setHasMore(page < data.pagination.pages);
+      setTrains(prev => pageNum === 1 ? validatedTrains : [...prev, ...validatedTrains]);
+      setHasMore(pageNum < data.pagination.pages);
     } catch (error) {
       console.error('Error fetching trains:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch trains');
@@ -102,8 +117,8 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
   };
 
   useEffect(() => {
-    fetchTrains(page);
-  }, [page, fetchTrains]);
+    fetchTrains(debouncedPage);
+  }, [debouncedPage]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -198,38 +213,30 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
           </h2>
           <hr className="w-full h-1 bg-[#80808080]" />
 
-          {error ? (
-            <div className="p-4 text-red-500 bg-red-50 rounded-md">
-              {error}
+          {loading && page === 1 ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#16A34A]"></div>
             </div>
-          ) : loading && page === 1 ? (
-            Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={`skeleton-${index}`} height={120} className="mb-4" />
-            ))
           ) : trains.length === 0 ? (
             <div className="p-4 text-gray-500 text-center">
               No trains found. Please try a different search.
             </div>
           ) : (
             <div className="space-y-4">
-              {trains.map((train) => {
-                if (!train || !train.trainNumber) {
-                  console.error('Invalid train data:', train);
-                  return null;
-                }
-                return (
-                  <TrainCard 
-                    key={train._id ? train._id.toString() : `train-${train.trainNumber}`} 
-                    train={train} 
-                  />
-                );
-              })}
-              {loading && (
+              {trains.map((train) => (
+                <TrainCard 
+                  key={train._id?.toString() || `train-${train.trainNumber}`}
+                  train={train} 
+                />
+              ))}
+              {loading && page > 1 && (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#16A34A]"></div>
                 </div>
               )}
-              <div ref={loadMoreRef} className="h-10" />
+              {!loading && hasMore && (
+                <div ref={loadMoreRef} className="h-10" />
+              )}
             </div>
           )}
         </div>

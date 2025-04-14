@@ -43,7 +43,7 @@ export default function TrainCard({ train }: TrainCardProps) {
         <div className="flex gap-2 mt-2">
           {train.classes.map((trainClass) => (
             <span
-              key={trainClass._id}
+              key={trainClass._id?.toString() || `class-${trainClass.code}`}
               className="text-xs border rounded-md px-2 py-1 border-[#07561A]"
             >
               {trainClass.name}

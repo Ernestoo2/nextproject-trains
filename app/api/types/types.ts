@@ -1,17 +1,32 @@
-export interface TrainDetails {
-  id: number;
-  trainName: string;
-  runsOn: string;
-  startDate: string;
-  endDate: string;
-  departureTime: string;
+export interface Station {
+  name: string;
+  code: string;
+}
+
+export interface Route {
+  station: Station;
   arrivalTime: string;
-  departureStation: string;
-  arrivalStation: string;
-  duration: string;
-  baseFare?: number;
-  tatkalCharges?: number;
-  gst?: number;
+  departureTime: string;
+}
+
+export interface TrainDetails {
+  _id?: string;
+  trainNumber: string;
+  trainName: string;
+  routes?: {
+    station: {
+      name: string;
+    };
+    departureTime: string;
+    arrivalTime: string;
+  }[];
+  class: string;
+  quota: string;
+  departureStation?: string;
+  arrivalStation?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  duration?: string;
 }
 
 export interface TravelRoute {

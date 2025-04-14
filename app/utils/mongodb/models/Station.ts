@@ -8,5 +8,5 @@ const stationSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-export const Station =
-  mongoose.models.Station || mongoose.model("Station", stationSchema);
+// Ensure the model is registered only once
+export const Station = mongoose.models.Station || mongoose.model("Station", stationSchema);

@@ -82,7 +82,7 @@ export default function TrainTimetable() {
           {train.trainName} ({train.trainNumber})
         </h1>
         <Link
-          href={`/review-booking?trainId=${train._id}`}
+          href={`/trains/review-booking?trainId=${train._id}`}
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
         >
           Book Now

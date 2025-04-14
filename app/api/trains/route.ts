@@ -1,9 +1,10 @@
 // app/api/trains/route.ts
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/utils/mongodb/connect";
-import { Train } from "@/app/utils/mongodb/models/Train";
+import { Train, Station, TrainClass } from "@/app/utils/mongodb/models";
 import { trainData } from "@/app/api/api";
 import mongoose from "mongoose";
+import { ITrain } from "@/app/utils/mongodb/types";
 
 export async function GET(request: Request) {
   try {
@@ -12,13 +13,15 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    await connectDB();
+    // Only connect if not already connected
+    if (!mongoose.connection.readyState) {
+      await connectDB();
+    }
 
     // Handle single train request
     if (trainId) {
       let train;
       
-      // Check if it's a mock data request
       if (!mongoose.Types.ObjectId.isValid(trainId)) {
         train = trainData.find((t) => t.id === Number(trainId));
         if (!train) {
@@ -30,7 +33,6 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, data: train });
       }
 
-      // Handle MongoDB request
       train = await Train.findById(trainId)
         .populate("routes.station", "name code")
         .populate("classes", "name code")
@@ -45,25 +47,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, data: train });
     }
 
-    // Handle paginated train list request
     const skip = (page - 1) * limit;
     const [trains, total] = await Promise.all([
       Train.find({ isActive: true })
-        .populate({
-          path: 'routes.station',
-          select: 'name code'
-        })
-        .populate({
-          path: 'classes',
-          select: 'name code'
-        })
+        .populate("routes.station", "name code")
+        .populate("classes", "name code")
         .skip(skip)
         .limit(limit)
         .lean(),
       Train.countDocuments({ isActive: true })
     ]);
 
-    // If no trains in database, return mock data
     if (trains.length === 0) {
       return NextResponse.json({
         success: true,
@@ -77,12 +71,19 @@ export async function GET(request: Request) {
     }
 
     // Validate populated data before sending
-    const validatedTrains = trains.map(train => {
+    const validatedTrains = trains.map((train) => {
       if (!train.routes || !Array.isArray(train.routes)) {
         console.error('Invalid train routes:', train);
         return null;
       }
-      return train;
+      return {
+        ...train,
+        routes: train.routes.map(route => ({
+          ...route,
+          station: route.station || { name: "Unknown Station", code: "N/A" }
+        })),
+        classes: train.classes || []
+      };
     }).filter(Boolean);
 
     return NextResponse.json({
