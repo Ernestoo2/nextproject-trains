@@ -2,37 +2,65 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 export default function Nav() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path;
+
+  // Get the MongoDB _id from the session
+  const userId = session?.user?.id;
+
+  // Debug session data
+  console.log("Session data:", {
+    session,
+    userId,
+    pathname
+  });
 
   return (
     <div className="w-full py-3 mx-auto text-black">
       <nav className="flex justify-center gap-4 md:gap-16 h-auto">
         <Link
-          className="text-center font-bold text-sm md:text-base lg:text-lg transition-colors hover:text-green-600"
+          className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
+            isActive("/trains/train-search")
+              ? "text-green-600"
+              : "hover:text-green-600"
+          }`}
           href="/trains/train-search"
         >
           Trains Schedule
         </Link>
         {session?.user ? (
           <Link
-            className="text-center font-bold text-sm md:text-base lg:text-lg transition-colors hover:text-green-600"
-            href={`/user/${session.user.id}`}
+            className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
+             isActive(`/user/${userId}`)
+                ? "text-green-600"
+                : "hover:text-green-600"
+            }`}
+            href={`/user/${userId}`}
           >
             My Profile
           </Link>
         ) : (
           <Link
-            className="text-center font-bold text-sm md:text-base lg:text-lg transition-colors hover:text-green-600"
-            href="/auth/login"
+            className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
+              isActive("/auth/login")
+                ? "text-green-600"
+                : "hover:text-green-600"
+            }`}
+            href="/login"
           >
             Login
           </Link>
         )}
         <Link
-          className="text-center font-bold text-sm md:text-base lg:text-lg transition-colors hover:text-green-600"
-          href="/"
+          className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
+            isActive("/dashboard") ? "text-green-600" : "hover:text-green-600"
+          }`}
+          href="/dashboard"
         >
           Home
         </Link>

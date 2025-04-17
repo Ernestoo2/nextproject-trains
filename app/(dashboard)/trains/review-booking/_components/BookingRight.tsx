@@ -15,6 +15,8 @@ interface BookingRightProps {
     gender: string;
     nationality: string;
     berthPreference: string;
+    phoneNumber?: string;
+    address?: string;
   }[];
 }
 
@@ -79,8 +81,13 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
       destination: routeInfo.destination,
       departureTime: routeInfo.departureTime,
       arrivalTime: routeInfo.arrivalTime,
+      baseFare: train.baseFare || basePrice,
       totalAmount: totalPrice,
-      travelers: travelers,
+      travelers: travelers.map(traveler => ({
+        ...traveler,
+        phoneNumber: traveler.phoneNumber || "",
+        address: traveler.address || ""
+      })),
     };
 
     // Store booking details in localStorage for payment page
@@ -89,7 +96,7 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
   };
 
   return (
-    <div className="w-full md:w-1/3 space-y-4">
+    <div className="w-full  space-y-4">
       {/* Boarding Details */}
       <div className="bg-[#F5F5F5] p-4 rounded-lg border-2 border-dashed border-gray-300">
         <div className="flex justify-between items-center">
@@ -120,43 +127,51 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
       {/* Offers */}
       <div className="bg-white p-4 rounded-lg shadow">
         <h3 className="font-medium mb-3">Offers</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div className="flex items-start gap-2">
               <Image
                 src="/Assets/Vector.png"
                 width={16}
                 height={16}
                 alt="check"
+                className="mt-1 flex-shrink-0"
               />
-              <span className="text-sm">50% off up to ₦100 | Use code BOOKNOW</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium">50% off up to ₦100</p>
+                <p className="text-xs text-gray-600">Use code BOOKNOW</p>
+              </div>
             </div>
             <button 
               onClick={() => {
                 setPromoCode("BOOKNOW");
                 handleApplyCode();
               }}
-              className="text-[#07561A] text-sm"
+              className="text-[#07561A] text-sm font-medium hover:text-[#064e15] px-4 py-1 border border-[#07561A] rounded-md"
             >
               Apply
             </button>
           </div>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div className="flex items-start gap-2">
               <Image
                 src="/Assets/Vector.png"
                 width={16}
                 height={16}
                 alt="check"
+                className="mt-1 flex-shrink-0"
               />
-              <span className="text-sm">20% off | Use code FIRSTTIME</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium">20% off</p>
+                <p className="text-xs text-gray-600">Use code FIRSTTIME</p>
+              </div>
             </div>
             <button 
               onClick={() => {
                 setPromoCode("FIRSTTIME");
                 handleApplyCode();
               }}
-              className="text-[#07561A] text-sm"
+              className="text-[#07561A] text-sm font-medium hover:text-[#064e15] px-4 py-1 border border-[#07561A] rounded-md"
             >
               Apply
             </button>
@@ -164,19 +179,19 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
         </div>
 
         {/* Apply Code */}
-        <div className="mt-4">
+        <div className="mt-6">
           <h3 className="font-medium mb-2">Apply Code</h3>
-          <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
             <input
               type="text"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Enter Code"
-              className="flex-1 px-0 py-2 border-t-0 border-b-2 border-x-0 border-gray-300 focus:outline-none focus:border-[#07561A] bg-transparent"
+              className="flex-1 px-3 py-2 border-t-0 border-b-2 border-x-0 border-gray-300 focus:outline-none focus:border-[#07561A] bg-transparent"
             />
             <button
               onClick={handleApplyCode}
-              className="bg-[#07561A] text-white px-6 py-2 rounded-md whitespace-nowrap"
+              className="bg-[#07561A] text-white px-6 py-2 rounded-md whitespace-nowrap hover:bg-[#064e15] transition-colors"
             >
               Apply
             </button>

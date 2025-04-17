@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
-import seedData from "@/app/utils/mongodb/seed";
+import seedData from "@/utils/mongodb/seed";
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     await seedData();
-    return NextResponse.json({
-      success: true,
-      message: "Database seeded successfully",
-    });
+    return NextResponse.json({ message: "Database seeded successfully" });
   } catch (error) {
     console.error("Error seeding database:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to seed database" },
-      { status: 500 },
+      { error: "Failed to seed database" },
+      { status: 500 }
     );
   }
 }

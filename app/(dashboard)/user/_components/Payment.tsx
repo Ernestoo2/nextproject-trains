@@ -13,7 +13,11 @@ interface Payment {
   method: string;
 }
 
-export default function Payment() {
+interface PaymentProps {
+  userId?: string;
+}
+
+export default function Payment({ userId }: PaymentProps) {
   const { data: session } = useSession();
 
   // Mock data - replace with actual API call
@@ -34,7 +38,7 @@ export default function Payment() {
     },
   ];
 
-  if (!session?.user) {
+  if (!session?.user && !userId) {
     return null;
   }
 

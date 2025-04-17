@@ -1,13 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { FORGOT_PASSWORD_CONSTANTS } from "../_constants/forgetPassword_constants";
-
-import {
-  ForgotPasswordFormData,
-  ForgotPasswordProps,
-  ForgotPasswordResponse,
-} from "../types/forgotPassword_types";
 
 export default function ForgetPassword() {
   const [email, setEmail] = useState("");
@@ -54,9 +46,10 @@ export default function ForgetPassword() {
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Forgot your password?
-        </h2>
+          </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we&apos;ll send you a link to reset your password.
+            Enter your email address and we&apos;ll send you a link to reset
+            your password.
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -64,26 +57,28 @@ export default function ForgetPassword() {
             <div>
               <label htmlFor="email" className="sr-only">
                 Email address
-          </label>
-          <input
+              </label>
+              <input
                 id="email"
                 name="email"
-            type="email"
+                type="email"
                 autoComplete="email"
-            required
+                required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+              />
+            </div>
           </div>
 
           {message && (
             <div className="rounded-md bg-green-50 p-4">
               <div className="flex">
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">{message}</p>
+                  <p className="text-sm font-medium text-green-800">
+                    {message}
+                  </p>
                 </div>
               </div>
             </div>
@@ -111,13 +106,13 @@ export default function ForgetPassword() {
         </form>
 
         <div className="text-center">
-        <button
+          <button
             type="button"
             onClick={handleBack}
             className="font-medium text-indigo-600 hover:text-indigo-500"
-        >
+          >
             Back to login
-        </button>
+          </button>
         </div>
       </div>
     </div>

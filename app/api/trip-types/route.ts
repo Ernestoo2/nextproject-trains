@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/app/utils/mongodb/connect";
-import { TripType } from "@/app/utils/mongodb/models/TripType";
+import { connectDB } from "@/utils/mongodb/connect";
+import { TripType } from "@/utils/mongodb/models/TripType";
 
 export async function GET(request: Request) {
   try {

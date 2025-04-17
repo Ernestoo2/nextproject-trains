@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/app/utils/mongodb/connect";
-import { TrainClass } from "@/app/utils/mongodb/models/TrainClass";
+import { connectDB } from "@/utils/mongodb/connect";
+import { TrainClass } from "@/utils/mongodb/models/TrainClass";
 
 export async function GET(request: Request) {
   try {

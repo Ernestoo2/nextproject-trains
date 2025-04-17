@@ -32,26 +32,27 @@ class ApiService {
       return {
         success: false,
         data: null as T,
-        message: error instanceof Error ? error.message : "An unknown error occurred"
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
       };
     }
   }
 
   // Train Classes
   async getTrainClasses(): Promise<ApiResponse<TrainClass[]>> {
-    const response = await fetch('/api/train-classes');
+    const response = await fetch("/api/train-classes");
     return response.json();
   }
 
   // Trip Types
   async getTripTypes(): Promise<ApiResponse<TripType[]>> {
-    const response = await fetch('/api/trip-types');
+    const response = await fetch("/api/trip-types");
     return response.json();
   }
 
   // Stations
   async getStations(): Promise<ApiResponse<Station[]>> {
-    const response = await fetch('/api/stations');
+    const response = await fetch("/api/stations");
     return response.json();
   }
 }

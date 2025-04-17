@@ -1,11 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { User } from "next-auth";
 import EditProfile from "./EditProfile";
+import { UserProfile } from "@/utils/type";
+import { useUser } from "@/_providers/user/UserContext";
+
+
+const { generateNaijaRailsId } = useUser();
 
 interface AccountProps {
-  user: User;
+  user: UserProfile & {
+    createdAt?: string;
+    updatedAt?: string;
+    role?: "user" | "admin";
+     
+  };
 }
 
 const Account: React.FC<AccountProps> = ({ user }) => {
@@ -31,7 +40,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
     setIsEditing(true);
   };
 
-  const handleSave = (updatedUser: Partial<User>) => {
+  const handleSave = (updatedUser: Partial<UserProfile>) => {
     setCurrentUser((prev) => ({ ...prev, ...updatedUser }));
     setIsEditing(false);
   };
@@ -43,7 +52,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   if (isEditing) {
     return (
       <EditProfile
-        user={currentUser}
+        user={{...currentUser}}
         onSave={handleSave}
         onCancel={handleCancel}
       />

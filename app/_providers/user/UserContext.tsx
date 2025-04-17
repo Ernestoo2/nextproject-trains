@@ -33,6 +33,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fullName: session.user.name || "",
           email: session.user.email,
           phone: "",
+          address: "",
           defaultNationality: "Nigerian",
           preferredBerth: "lower",
           lastUpdated: new Date(),

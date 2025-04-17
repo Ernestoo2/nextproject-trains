@@ -9,4 +9,5 @@ const stationSchema = new mongoose.Schema({
 });
 
 // Ensure the model is registered only once
-export const Station = mongoose.models.Station || mongoose.model("Station", stationSchema);
+export const Station =
+  mongoose.models.Station || mongoose.model("Station", stationSchema);

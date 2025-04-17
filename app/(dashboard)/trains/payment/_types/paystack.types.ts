@@ -8,6 +8,7 @@ export interface BookingDetails {
   destination: string;
   departureTime: string;
   arrivalTime: string;
+  baseFare: number;
   totalAmount: number;
   travelers: {
     name: string;
@@ -15,6 +16,8 @@ export interface BookingDetails {
     gender: string;
     nationality: string;
     berthPreference: string;
+    phoneNumber: string;
+    address: string;
   }[];
 }
 

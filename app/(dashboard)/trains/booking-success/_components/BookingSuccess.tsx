@@ -1,16 +1,49 @@
 "use client";
-import QRcode from "../../../../../public/Assets/QRcode.png";
-import { useState } from "react";
-import { TicketDetails } from "../types/booking.types";
-import {
-  DEFAULT_TICKET_DETAILS,
-  BUTTON_LABELS,
-  SUCCESS_MESSAGES,
-} from "../constants/booking.constants";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/app/_providers/user/UserContext";
 import Image from "next/image";
-//app\dashboard\Trains\BookingSuccess\_components\BookingSuccess.tsx
+import QRcode from "../../../../../public/Assets/QRcode.png";
+import { BookingDetails } from "../../payment/_types/paystack.types";
+
 export default function BookingSuccess() {
-  const [ticketDetails] = useState<TicketDetails>(DEFAULT_TICKET_DETAILS);
+  const router = useRouter();
+  const { userProfile } = useUser();
+  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+
+  useEffect(() => {
+    // Try to get booking details from localStorage
+    const storedBookingDetails = localStorage.getItem("lastBookingDetails");
+    if (storedBookingDetails) {
+      setBookingDetails(JSON.parse(storedBookingDetails));
+    }
+  }, []);
+
+  if (!bookingDetails) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold mb-4">No Booking Details Found</h1>
+          <button
+            onClick={() => router.push("/trains/train-search")}
+            className="bg-[#07561A] text-white px-6 py-2 rounded-md"
+          >
+            Search Trains
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handlePrintTicket = () => {
+    window.print();
+  };
+
+  const handleDownloadTicket = () => {
+    // TODO: Implement ticket download functionality
+    alert("Download functionality coming soon!");
+  };
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center p-6">
@@ -35,10 +68,10 @@ export default function BookingSuccess() {
           </div>
         </div>
         <h1 className="text-2xl font-semibold text-[#16A34A]">
-          {SUCCESS_MESSAGES.TITLE}
+          Booking Successful!
         </h1>
         <p className="text-sm text-[#6B7280] mt-2">
-          {SUCCESS_MESSAGES.SUBTITLE}
+          Your e-ticket has been sent to your email address
         </p>
       </div>
 
@@ -48,108 +81,95 @@ export default function BookingSuccess() {
         <div className="w-full lg:w-2/3 border border-[#D1D5DB] bg-white rounded-md p-6">
           <div className="flex w-full justify-between items-center font-semibold text-[#374151]">
             <span>
-              PNR No:{" "}
+              Naija Rails ID:{" "}
               <span className="text-xs sm:text-sm md:text-base font-medium">
-                {ticketDetails.pnr}
+                {userProfile?.naijaRailsId}
               </span>
             </span>
             <span className="text-right">
-              Transaction ID:{" "}
+              Booking Reference:{" "}
               <span className="text-xs sm:text-sm md:text-base font-medium">
-                {ticketDetails.transactionId}
+                {bookingDetails.trainId}
               </span>
             </span>
           </div>
 
-          <h2 className="text-lg font-bold mt-4">{ticketDetails.train}</h2>
+          <h2 className="text-lg font-bold mt-4">
+            {bookingDetails.trainNumber} - {bookingDetails.trainName}
+          </h2>
 
           {/* Date and Locations */}
           <div className="flex justify-between mt-4">
             <div>
+              <p className="text-xs sm:text-sm md:text-base">
+                {bookingDetails.departureTime}
+              </p>
               <p className="text-xs sm:text-sm md:text-base font-medium">
-                {ticketDetails.date.departure}
-              </p>
-              <p className="text-xs sm:text-sm md:text-base">
-                {ticketDetails.time.departure}
-              </p>
-              <p className="text-xs sm:text-sm md:text-base">
-                {ticketDetails.locations.departure}
+                {bookingDetails.source}
               </p>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-xs sm:text-sm md:text-base text-[#9CA3AF]">
-                8 hours
+                Journey
               </span>
               <hr className="border-t border-[#D1D5DB] w-24 mt-2" />
             </div>
             <div className="text-right">
+              <p className="text-xs sm:text-sm md:text-base">
+                {bookingDetails.arrivalTime}
+              </p>
               <p className="text-xs sm:text-sm md:text-base font-medium">
-                {ticketDetails.date.arrival}
-              </p>
-              <p className="text-xs sm:text-sm md:text-base">
-                {ticketDetails.time.arrival}
-              </p>
-              <p className="text-xs sm:text-sm md:text-base">
-                {ticketDetails.locations.arrival}
+                {bookingDetails.destination}
               </p>
             </div>
           </div>
 
-          {/* Email and Traveller Details */}
-          <div className="flex justify-between items-center">
-            <p className="text-sm font-medium mt-6">
-              E-Tickets has been sent to:
-            </p>
-            <p className="text-xs sm:text-sm md:text-base pt-4 text-right whitespace-pre-line">
-              {ticketDetails.email}
-            </p>
-          </div>
-
+          {/* Traveler Details */}
           <div className="mt-6">
-            <h3 className="text-lg font-medium">Traveller Details</h3>
-            <span>
-              <p className="text-sm">{ticketDetails.traveller.name}</p>
-            </span>
-
-            <div className="flex flex-col sm:flex-row justify-between">
-              <div>
-                <span className="flex text-xs sm:text-sm md:text-base space-x-2">
-                  <p>Age: </p>
-                  <p>{ticketDetails.traveller.age}</p>
-                </span>
-                <span className="flex text-xs sm:text-sm md:text-base space-x-2">
-                  <p>Gender: </p>
-                  <p>{ticketDetails.traveller.gender}</p>
-                </span>
-              </div>
-
-              <div className="text-right">
-                <span className="flex space-x-2">
-                  <p className="text-xs sm:text-sm md:text-base">
-                    Booking Status:{" "}
-                  </p>
-                  <p className="text-xs sm:text-sm md:text-base">
-                    {ticketDetails.traveller.status}
-                  </p>
-                </span>
-                <span className="flex space-x-2">
-                  <p className="text-xs sm:text-sm md:text-base">
-                    Seat/Coach No:
-                  </p>
-                  <p className="text-xs sm:text-sm md:text-base">
-                    {ticketDetails.traveller.seat}
-                  </p>
-                </span>
-              </div>
+            <h3 className="text-lg font-medium">Traveler Details</h3>
+            <div className="mt-4 space-y-4">
+              {bookingDetails.travelers.map((traveler, index) => (
+                <div key={index} className="p-4 border rounded-lg">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Passenger {index + 1}</span>
+                    <span className="text-gray-600">{traveler.name}</span>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    {traveler.age} years • {traveler.gender} • {traveler.nationality} • {traveler.berthPreference} berth
+                  </div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    Phone: {traveler.phoneNumber}
+                  </div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    Address: {traveler.address}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Total Fare */}
-          <div className="mt-6 flex justify-between border-t border-[#D1D5DB] pt-4">
-            <span className="text-sm font-medium">Total Fare</span>
-            <span className="block text-lg font-bold">
-              ₹{ticketDetails.fare}
-            </span>
+          {/* Booking Details */}
+          <div className="mt-6">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Class & Quota:</span>
+              <span>Class {bookingDetails.class} • {bookingDetails.quota} Quota</span>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-gray-600">Base Fare (per passenger):</span>
+              <span>₦{bookingDetails.baseFare.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-gray-600">Number of Passengers:</span>
+              <span>{bookingDetails.travelers.length}</span>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-gray-600">Total Base Fare:</span>
+              <span>₦{(bookingDetails.baseFare * bookingDetails.travelers.length).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center mt-2 font-bold">
+              <span>Total Amount:</span>
+              <span className="text-[#07561A]">₦{bookingDetails.totalAmount.toLocaleString()}</span>
+            </div>
           </div>
         </div>
 
@@ -161,19 +181,28 @@ export default function BookingSuccess() {
             </div>
           </div>
           <p className="text-sm mt-4 text-center text-[#6B7280]">
-            {SUCCESS_MESSAGES.QR_CODE_INFO}
+            Scan this QR code at the station for quick access
           </p>
 
           {/* Buttons */}
           <div className="mt-6 w-full flex flex-col gap-3">
-            <button className="w-full bg-white text-black border border-[#07561A] py-2 px-4 rounded-md text-sm font-medium">
-              {BUTTON_LABELS.PRINT_TICKET}
+            <button
+              onClick={handlePrintTicket}
+              className="w-full bg-white text-black border border-[#07561A] py-2 px-4 rounded-md text-sm font-medium"
+            >
+              Print Ticket
             </button>
-            <button className="w-full bg-[#07561A] text-white py-2 px-4 rounded-md text-sm font-medium">
-              {BUTTON_LABELS.BOOK_ANOTHER}
+            <button
+              onClick={() => router.push("/trains/train-search")}
+              className="w-full bg-[#07561A] text-white py-2 px-4 rounded-md text-sm font-medium"
+            >
+              Book Another Train
             </button>
-            <button className="w-full bg-[#07561A] text-white py-2 px-4 rounded-md text-sm font-medium">
-              {BUTTON_LABELS.DOWNLOAD_TICKET}
+            <button
+              onClick={handleDownloadTicket}
+              className="w-full bg-[#07561A] text-white py-2 px-4 rounded-md text-sm font-medium"
+            >
+              Download Ticket
             </button>
           </div>
         </div>

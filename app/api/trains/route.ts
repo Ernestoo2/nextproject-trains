@@ -1,10 +1,10 @@
 // app/api/trains/route.ts
 import { NextResponse } from "next/server";
-import { connectDB } from "@/app/utils/mongodb/connect";
-import { Train, Station, TrainClass } from "@/app/utils/mongodb/models";
-import { trainData } from "@/app/api/api";
+import { connectDB } from "@/utils/mongodb/connect";
+import { Train, Station, TrainClass } from "@/utils/mongodb/models";
+import { trainData } from "@/api/api";
 import mongoose from "mongoose";
-import { ITrain } from "@/app/utils/mongodb/types";
+import { ITrain } from "@/utils/mongodb/types";
 
 export async function GET(request: Request) {
   try {
@@ -21,13 +21,13 @@ export async function GET(request: Request) {
     // Handle single train request
     if (trainId) {
       let train;
-      
+
       if (!mongoose.Types.ObjectId.isValid(trainId)) {
-        train = trainData.find((t) => t.id === Number(trainId));
+        train = trainData.find((t) => t._id === trainId);
         if (!train) {
           return NextResponse.json(
             { success: false, message: "Train not found" },
-            { status: 404 }
+            { status: 404 },
           );
         }
         return NextResponse.json({ success: true, data: train });
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       if (!train) {
         return NextResponse.json(
           { success: false, message: "Train not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
       return NextResponse.json({ success: true, data: train });
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         .skip(skip)
         .limit(limit)
         .lean(),
-      Train.countDocuments({ isActive: true })
+      Train.countDocuments({ isActive: true }),
     ]);
 
     if (trains.length === 0) {
@@ -65,26 +65,28 @@ export async function GET(request: Request) {
         pagination: {
           total: trainData.length,
           page,
-          pages: Math.ceil(trainData.length / limit)
-        }
+          pages: Math.ceil(trainData.length / limit),
+        },
       });
     }
 
     // Validate populated data before sending
-    const validatedTrains = trains.map((train) => {
-      if (!train.routes || !Array.isArray(train.routes)) {
-        console.error('Invalid train routes:', train);
-        return null;
-      }
-      return {
-        ...train,
-        routes: train.routes.map(route => ({
-          ...route,
-          station: route.station || { name: "Unknown Station", code: "N/A" }
-        })),
-        classes: train.classes || []
-      };
-    }).filter(Boolean);
+    const validatedTrains = trains
+      .map((train) => {
+        if (!train.routes || !Array.isArray(train.routes)) {
+          console.error("Invalid train routes:", train);
+          return null;
+        }
+        return {
+          ...train,
+          routes: train.routes.map((route) => ({
+            ...route,
+            station: route.station || { name: "Unknown Station", code: "N/A" },
+          })),
+          classes: train.classes || [],
+        };
+      })
+      .filter(Boolean);
 
     return NextResponse.json({
       success: true,
@@ -92,14 +94,14 @@ export async function GET(request: Request) {
       pagination: {
         total,
         page,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error("Error fetching trains:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch trains" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

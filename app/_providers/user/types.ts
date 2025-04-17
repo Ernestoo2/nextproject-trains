@@ -3,6 +3,7 @@ export interface UserProfile {
   fullName: string;
   email: string;
   phone: string;
+  address: string;
   defaultNationality: string;
   preferredBerth: string;
   lastUpdated: Date;

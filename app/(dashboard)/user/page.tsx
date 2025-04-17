@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import HeaderUi from "../../_components/Header/HeaderUi";
-import FooterPage from "@/app/_components/Footer";
 import Account from "./_components/Account";
 import Tickets from "./_components/Tickets";
 import Payment from "./_components/Payment";
@@ -14,8 +12,31 @@ export default function UserPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (status === "loading") {
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!session?.user?.email) return;
+      
+      try {
+        const response = await fetch('/api/user/profile');
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        const data = await response.json();
+        setUserData(data.user);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [session?.user?.email]);
+
+  if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
@@ -24,11 +45,8 @@ export default function UserPage() {
   }
 
   if (!session?.user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Please sign in to view your account.</p>
-      </div>
-    );
+    router.push('/auth/signin');
+    return null;
   }
 
   return (
@@ -94,7 +112,7 @@ export default function UserPage() {
 
         {/* Content Section */}
         <div className="max-w-7xl mx-auto p-6 mt-6">
-          {activeTab === "account" && <Account />}
+          {activeTab === "account" && userData && <Account user={userData} />}
           {activeTab === "tickets" && <Tickets />}
           {activeTab === "payment" && <Payment />}
         </div>

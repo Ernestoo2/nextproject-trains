@@ -4,17 +4,22 @@ import { useSession } from "next-auth/react";
 import { signIn, signOut } from "next-auth/react";
 import type { AuthContextType, User } from "./types";
 
-export const AuthContext = createContext<AuthContextType>({
+const defaultContext: AuthContextType = {
   isAuthenticated: false,
   user: null,
-  loading: true,
+  loading: false,
   error: null,
   login: async () => {},
-  logout: async () => {},
   register: async () => {},
-});
+  logout: async () => {},
+  updateProfile: async () => {},
+};
 
-export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthContext = createContext<AuthContextType>(defaultContext);
+
+export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { data: session, status } = useSession();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -46,7 +51,11 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setError(result.error);
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred during login");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during login",
+      );
     } finally {
       setLoading(false);
     }
@@ -58,7 +67,11 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
       await signOut({ redirect: false });
       setUser(null);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred during logout");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during logout",
+      );
     }
   };
 
@@ -83,7 +96,40 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       await login(email, password);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred during registration");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during registration",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    try {
+      setLoading(true);
+      if (!user) {
+        throw new Error("No user logged in");
+      }
+
+      // Update user data in your backend/database
+      const updatedUser: User = {
+        ...user,
+        ...data,
+        id: user.id, // Ensure id is always present
+        name: user.name, // Ensure name is always present
+        email: user.email, // Ensure email is always present
+        role: user.role, // Ensure role is always present
+      };
+
+      setUser(updatedUser);
+
+      // Store updated user data in localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -97,6 +143,7 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
     login,
     logout,
     register,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

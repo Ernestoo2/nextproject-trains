@@ -5,7 +5,9 @@ import { BookingDetails } from "../_types/paystack.types";
 
 type PaymentContextType = {
   bookingDetails: BookingDetails | null;
-  setBookingDetails: React.Dispatch<React.SetStateAction<BookingDetails | null>>;
+  setBookingDetails: React.Dispatch<
+    React.SetStateAction<BookingDetails | null>
+  >;
 };
 
 const PaymentContext = createContext<PaymentContextType>({
@@ -13,8 +15,12 @@ const PaymentContext = createContext<PaymentContextType>({
   setBookingDetails: () => null,
 });
 
-export const PaymentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+export const PaymentProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(
+    null,
+  );
 
   const value = {
     bookingDetails,
@@ -22,9 +28,7 @@ export const PaymentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <PaymentContext.Provider value={value}>
-      {children}
-    </PaymentContext.Provider>
+    <PaymentContext.Provider value={value}>{children}</PaymentContext.Provider>
   );
 };
 
@@ -34,4 +38,4 @@ export function usePayment(): PaymentContextType {
     throw new Error("usePayment must be used within a PaymentProvider");
   }
   return context;
-} 
+}

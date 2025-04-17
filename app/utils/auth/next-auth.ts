@@ -1,8 +1,26 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "../mongodb/connect";
-import { compare } from "bcryptjs";
 import { User } from "../mongodb/models/User";
+import { compare } from "bcryptjs";
+import { JWT } from "next-auth/jwt";
+
+interface ExtendedToken extends JWT {
+  id: string;
+  naijaRailsId: string  ;
+  role: string ;
+
+}
+
+interface ExtendedSession extends Session {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    naijaRailsId: string;
+    role?: string ;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,78 +31,74 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Invalid credentials");
-          }
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
+        }
 
+        try {
           await connectDB();
-          const user = await User.findOne({ email: credentials.email });
+
+          const user = await User.findOne({ email: credentials.email }).select(
+            "+password",
+          );
 
           if (!user || !user.password) {
-            throw new Error("User not found");
+            throw new Error("No user found with this email");
           }
 
-          const isValid = await compare(credentials.password, user.password);
-          if (!isValid) {
+          const isPasswordValid = await compare(
+            credentials.password,
+            user.password,
+          );
+
+          if (!isPasswordValid) {
             throw new Error("Invalid password");
           }
 
+          // Return user without sensitive data
+          const { password: _, ...userWithoutPassword } = user.toObject();
           return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-            role: user.role,
+            ...userWithoutPassword,
+            id: userWithoutPassword._id.toString(), // Convert MongoDB _id to string
           };
         } catch (error) {
           console.error("Auth error:", error);
-          if (error instanceof Error) {
-            throw error;
-          }
           throw new Error("Authentication failed");
         }
       },
     }),
   ],
   callbacks: {
-    jwt: async ({ token, user }) => {
+    async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        // Include MongoDB _id and other user data in the token
         token.id = user.id;
+        token.naijaRailsId = user.naijaRailsId;
+        token.role = user.role || "user";
+        token.email = user.email;
+        token.name = user.name;
       }
-      return token;
+      return token as ExtendedToken;
     },
-    session: async ({ session, token }) => {
-      if (session.user) {
+    async session({ session, token }) {
+      if (token && session.user) {
+        // Include MongoDB _id and other user data in the session
         session.user.id = token.id as string;
+        session.user.naijaRailsId = token.naijaRailsId as string;
         session.user.role = token.role as string;
+        session.user.email = token.email || "";
+        session.user.name = token.name || "";
       }
-      return session;
-    },
-    redirect: async ({ url, baseUrl }) => {
-      // Redirect to dashboard after login
-      if (url.startsWith("/")) {
-        return `${baseUrl}/dashboard`;
-      }
-      return url;
+      return session as ExtendedSession;
     },
   },
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
+    signIn: "/login",
+    signOut: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  debug: process.env.NODE_ENV === "development",
   secret: process.env.NEXTAUTH_SECRET,
-  events: {
-    async signIn({ user }) {
-      console.log("User signed in:", user.email);
-    },
-    async signOut({ token }) {
-      console.log("User signed out:", token.email);
-    },
-  },
 };

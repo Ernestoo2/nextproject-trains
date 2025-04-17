@@ -5,8 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BookingLeft from "./_components/BookingLeft";
 import BookingRight from "./_components/BookingRight";
-import { getTrainDetails } from "@/app/api/api";
-import { TrainDetails } from "@/app/api/types/types";
+import { getTrainDetails } from "@/api/api";
+import { TrainDetails } from "@/api/types/types";
 
 const ReviewBooking: React.FC = () => {
   const { data: session } = useSession();

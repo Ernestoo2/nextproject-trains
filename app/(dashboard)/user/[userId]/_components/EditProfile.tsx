@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User } from "next-auth";
+import { UserProfile } from "@/utils/type";
 
 interface EditProfileProps {
-  user: User;
-  onSave: (updatedUser: Partial<User>) => void;
+  user: UserProfile;
+  onSave: (updatedUser: Partial<UserProfile>) => void;
   onCancel: () => void;
 }
 

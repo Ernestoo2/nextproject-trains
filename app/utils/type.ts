@@ -169,7 +169,9 @@ export interface UserProfile {
   address?: string;
   dob?: string;
   image?: string;
-  role: "user" | "admin";
+  role?: "user" | "admin";
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
 }
 
 // Ticket Types

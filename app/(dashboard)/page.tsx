@@ -23,8 +23,8 @@ export default function DashboardContent() {
   return (
     <div>
       <PageRoute />
-      <BackImageUi /> 
-      <BookingPage/>
+      <BackImageUi />
+      <BookingPage />
       <Review />
       <Image src={image} alt="image for trains" />
       <NewsletterPage />

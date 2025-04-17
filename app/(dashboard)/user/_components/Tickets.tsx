@@ -4,7 +4,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { MdAirlineSeatReclineNormal, MdDateRange } from "react-icons/md";
-import { Ticket, PaymentHistory } from "@/app/utils/type";
+import { Ticket, PaymentHistory } from "@/utils/type";
 
 interface TicketsProps {
   userId?: string;

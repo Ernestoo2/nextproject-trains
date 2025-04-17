@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/app/_providers/user/UserContext";
 import { BookingDetails, PaystackPopupConfig } from "./_types/paystack.types";
 
 interface PaystackPopType {
@@ -19,6 +20,7 @@ declare global {
 
 export default function PaymentPage() {
   const { data: session } = useSession();
+  const { userProfile } = useUser();
   const router = useRouter();
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +67,7 @@ export default function PaymentPage() {
       const handler = window.PaystackPop.setup({
         key: publicKey,
         email: session.user.email,
-        amount: Math.round(bookingDetails.totalAmount * 100), // Convert to kobo and ensure integer
+        amount: Math.round(bookingDetails.totalAmount * 100),
         currency: "NGN",
         reference: `TR-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
         metadata: {
@@ -85,6 +87,8 @@ export default function PaymentPage() {
         },
         callback: (response: any) => {
           console.log("Payment successful!", response);
+          // Store booking details for success page
+          localStorage.setItem("lastBookingDetails", JSON.stringify(bookingDetails));
           localStorage.removeItem("bookingDetails");
           router.push("/trains/booking-success");
         },
@@ -145,34 +149,47 @@ export default function PaymentPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Complete Your Payment</h1>
         
-        {/* Booking Summary */}
+        {/* User Profile Details */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-medium mb-4">Booking Summary</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Train</span>
-              <span>{bookingDetails.trainNumber} - {bookingDetails.trainName}</span>
+          <div className="flex justify-between items-center font-semibold text-[#374151]">
+            <span>
+              Naija Rails ID:{" "}
+              <span className="text-sm font-medium">
+                {userProfile?.naijaRailsId}
+              </span>
+            </span>
+            <span className="text-right">
+              Booking Reference:{" "}
+              <span className="text-sm font-medium">
+                {bookingDetails.trainId}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Train Details */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-medium mb-4">Train Details</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-medium">{bookingDetails.trainNumber} - {bookingDetails.trainName}</h3>
+                <p className="text-sm text-[#07561A]">Class {bookingDetails.class} • {bookingDetails.quota} Quota</p>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Route</span>
-              <span>{bookingDetails.source} → {bookingDetails.destination}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Time</span>
-              <span>{bookingDetails.departureTime} → {bookingDetails.arrivalTime}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Class & Quota</span>
-              <span>Class {bookingDetails.class} • {bookingDetails.quota} Quota</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Passengers</span>
-              <span>{bookingDetails.travelers.length}</span>
-            </div>
-            <div className="pt-3 border-t">
-              <div className="flex justify-between font-medium">
-                <span>Total Amount</span>
-                <span>₦{bookingDetails.totalAmount.toLocaleString()}</span>
+
+            <div className="flex justify-between items-center mt-4">
+              <div>
+                <p className="text-sm">{bookingDetails.departureTime}</p>
+                <p className="text-sm font-medium">{bookingDetails.source}</p>
+              </div>
+              <div className="text-center">
+                <span className="text-xs text-gray-500">Journey</span>
+                <div className="w-24 h-0.5 bg-gray-300 my-1"></div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm">{bookingDetails.arrivalTime}</p>
+                <p className="text-sm font-medium">{bookingDetails.destination}</p>
               </div>
             </div>
           </div>
@@ -189,17 +206,51 @@ export default function PaymentPage() {
                   <span className="text-gray-600">{traveler.name}</span>
                 </div>
                 <div className="mt-2 text-sm text-gray-600">
-                  {traveler.age} years • {traveler.gender} • {traveler.nationality} • {traveler.berthPreference} berth
+                  {traveler.age} years • {traveler.gender} • {traveler.nationality}
+                </div>
+                <div className="mt-1 text-sm text-gray-600">
+                  Phone: {traveler.phoneNumber}
+                </div>
+                <div className="mt-1 text-sm text-gray-600">
+                  Address: {traveler.address}
+                </div>
+                <div className="mt-1 text-sm text-gray-600">
+                  Berth Preference: {traveler.berthPreference}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
+        {/* Payment Summary */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-medium mb-4">Payment Summary</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Base Fare (per passenger)</span>
+              <span>₦{bookingDetails.baseFare.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Number of Passengers</span>
+              <span>{bookingDetails.travelers.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total Base Fare</span>
+              <span>₦{(bookingDetails.baseFare * bookingDetails.travelers.length).toLocaleString()}</span>
+            </div>
+            <div className="pt-3 border-t">
+              <div className="flex justify-between font-medium">
+                <span>Total Amount</span>
+                <span className="text-lg text-[#07561A]">₦{bookingDetails.totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Payment Button */}
         <button
           onClick={handlePayment}
-          className="w-full bg-[#07561A] text-white py-3 rounded-lg font-medium hover:bg-[#064516] transition-colors"
+          className="w-full bg-[#07561A] text-white py-3 rounded-lg font-medium hover:bg-[#064e15] transition-colors"
         >
           Pay ₦{bookingDetails.totalAmount.toLocaleString()}
         </button>

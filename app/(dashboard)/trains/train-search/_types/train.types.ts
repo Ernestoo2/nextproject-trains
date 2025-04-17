@@ -1,3 +1,9 @@
+import { Document } from 'mongoose';
+import type { Station } from "@/utils/mongodb/models/Station";
+import type { Schedule } from "@/utils/mongodb/models/Schedule";
+import type { Train } from "@/utils/mongodb/models/Train";
+import type { ISchedule } from "@/utils/mongodb/models/Schedule";
+
 export interface TrainDetails {
   _id: string;
   trainName: string;
@@ -90,3 +96,69 @@ export const initialTravelData: TravelRoute[] = [
     Class: "Business",
   },
 ];
+
+export interface TrainClass {
+  code: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface StationInfo {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+  state: string;
+}
+
+export interface SearchParams {
+  from: string;
+  to: string;
+  date: string;
+}
+
+export interface StationRouteCardProps {
+  id: string;
+  trainNumber: string;
+  trainName: string;
+  departureTime: string;
+  arrivalTime: string;
+  date: Date;
+  status: string;
+  platform?: string;
+  availableSeats: {
+    [key: string]: number;
+  };
+  fare?: {
+    [key: string]: number;
+  };
+}
+
+export interface SearchResponse {
+  success: boolean;
+  data?: ScheduleWithDetails[];
+  error?: string;
+}
+
+export interface ScheduleWithDetails extends Omit<ISchedule, 'train'> {
+  train: Train;
+  fromStation: Station;
+  toStation: Station;
+}
+
+export interface Station {
+  _id: string;
+  name: string;
+  code: string;
+  city: string;
+  state: string;
+}
+
+export interface Train {
+  _id: string;
+  name: string;
+  number: string;
+  type: string;
+  capacity: number;
+}

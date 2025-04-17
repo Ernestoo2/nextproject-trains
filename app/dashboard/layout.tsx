@@ -1,9 +1,9 @@
 // app/(dashboard)/layout.tsx
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
+import { authOptions } from "@/utils/auth/next-auth";
+import Header1Ui from "../_components/Header/Header1Ui";
 import FooterPage from "../_components/Footer";
-import HeaderPage from "../_components/Header/page";
-import { authOptions } from "@/app/utils/auth/next-auth";
 
 export default async function DashboardLayout({
   children,
@@ -18,7 +18,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="">
-      <HeaderPage />
+      <Header1Ui />
       <main className="">{children}</main>
       <FooterPage />
     </div>

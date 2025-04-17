@@ -11,7 +11,7 @@ export default function Endside() {
           Login
         </Link>
         <Link
-          href="/signup"
+          href="/sign-up"
           className="flex justify-center items-center w-1/2 h-10 text-xs md:text-sm lg:text-lg text-white bg-[#07561A] rounded-lg font-medium font-Sora transition-transform transform hover:scale-105"
         >
           Sign Up

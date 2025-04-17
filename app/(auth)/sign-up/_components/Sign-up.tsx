@@ -5,7 +5,7 @@ import { FaApple, FaFacebook, FaGoogle } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
 import { useContext } from "react";
-import { AuthContext } from "@/app/_providers/auth/AuthContext";
+import { AuthContext } from "@/_providers/auth/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function SignUp() {
@@ -46,7 +46,20 @@ export default function SignUp() {
         throw new Error("Authentication context not available");
       }
 
+      // Generate Naija Rails ID
+      const naijaRailsId = `NR${Date.now().toString().slice(-8)}`;
+
+      // Register with additional user data
       await auth.register(`${firstName} ${lastName}`, email, password);
+
+      // Update user profile with additional data
+      await auth.updateProfile({
+        phone: phoneNumber,
+        naijaRailsId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       setSuccessMessage("Account created successfully!");
 
       // Reset form fields immediately after successful registration

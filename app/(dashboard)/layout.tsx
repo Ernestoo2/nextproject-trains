@@ -1,8 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/utils/auth/next-auth";
-import HeaderPage from "@/app/_components/Header/page";
-import FooterPage from "@/app/_components/Footer";
+import { authOptions } from "@/utils/auth/next-auth";
 
 export default async function DashboardLayout({
   children,
@@ -17,9 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <HeaderPage />
       <main className="flex-grow">{children}</main>
-      <FooterPage />
     </div>
   );
 }

@@ -1,11 +1,15 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import train from "../../../../public/Assets/Train1.png";
 
 // React.FC<BookingInterfacesProps>
 export default function BookingPage() {
+  const [departure, setDeparture] = useState("");
+  const [arrival, setArrival] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+
   return (
     <div className="flex flex-col w-full h-auto max-w-5xl p-6 mx-auto rounded-lg shadow-md md:flex-row md:items-center md:justify-between">
       {/* Left Side: Text and Inputs */}
@@ -37,6 +41,8 @@ export default function BookingPage() {
             <input
               type="text"
               id="departure"
+              value={departure}
+              onChange={(e) => setDeparture(e.target.value)}
               className="w-full border-t-0 border-b-2 border-x-0 focus:outline-none focus:border-green-600"
               placeholder="Elelewon Railway Station"
             />
@@ -51,6 +57,8 @@ export default function BookingPage() {
             <input
               type="text"
               id="arrival"
+              value={arrival}
+              onChange={(e) => setArrival(e.target.value)}
               className="w-full border-t-0 border-b-2 border-x-0 focus:outline-none focus:border-green-600"
               placeholder="Umuahia Junction"
             />
@@ -62,8 +70,8 @@ export default function BookingPage() {
             <input
               type="date"
               id="date"
-              defaultValue={new Date().toISOString().split("T")[0]}
-              placeholder="Wed, 16 Nov 2022"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               className="w-full text-gray-500 border-t-0 border-b-2 border-x-0 focus:outline-none focus:border-green-600"
             />
           </div>
@@ -72,7 +80,7 @@ export default function BookingPage() {
         {/* Search Button */}
         <div className="flex items-center w-full mx-auto text-center">
           <Link
-            href="/trains/train-search"
+            href={`/trains/train-search?from=${encodeURIComponent(departure)}&to=${encodeURIComponent(arrival)}&date=${encodeURIComponent(date)}`}
             className="w-full px-6 py-3 text-white transition bg-green-600 rounded-md hover:bg-green-700"
           >
             Search for trains

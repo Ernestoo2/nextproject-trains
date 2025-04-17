@@ -2,36 +2,80 @@
 
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import HeaderUi from "../../../_components/Header/HeaderUi";
-import FooterPage from "@/app/_components/Footer";
+import HeaderUi from "@/_components/Header/HeaderUi";
+import FooterPage from "@/_components/Footer";
 import Account from "../_components/Account";
 import Tickets from "../_components/Tickets";
 import Payment from "../_components/Payment";
 import Image from "next/image";
-import { UserProfile } from "@/app/utils/type";
+import { UserProfile } from "@/utils/type";
+import { useParams, useRouter } from "next/navigation";
+import ErrorBoundary from "@/_components/ErrorBoundary";
 
-interface UserPageProps {
-  params: {
-    userId: string;
-  };
-}
-
-export default function UserPage({ params }: UserPageProps) {
+export default function UserPage() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState("account");
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  
+  // Use the useParams hook to get the userId
+  const params = useParams();
+  const userId = params?.userId as string;
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
-  // TODO: Fetch user data based on userId
+  // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
-      const response = await fetch(`/api/user/${params.userId}`);
+      // If userId is undefined or "undefined", use the session user's ID
+      const effectiveUserId = userId === "undefined" ? session?.user?.id : userId;
+      
+      if (!effectiveUserId) {
+        setError("User ID is missing");
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        console.log("Fetching user with ID:", effectiveUserId);
+        const response = await fetch(`/api/user/${effectiveUserId}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("User not found");
+          } else {
+            setError(`Error: ${response.statusText}`);
+          }
+          setIsLoading(false);
+          return;
+        }
+        
       const data = await response.json();
+        console.log("User data received:", data);
       setUser(data);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setError("Failed to fetch user data");
+      } finally {
+        setIsLoading(false);
+      }
     };
-    fetchUser();
-  }, [params.userId]);
 
-  if (status === "loading") {
+    if (status !== "loading") {
+    fetchUser();
+    }
+  }, [userId, session, status]);
+
+  if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
@@ -39,8 +83,32 @@ export default function UserPage({ params }: UserPageProps) {
     );
   }
 
-  // For now, use session user data
-  const displayUser = user || session?.user;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.href = "/"}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Transform session user to UserProfile type if needed
+  const sessionUser: UserProfile | null = session?.user ? {
+    id: session.user.id || userId,
+    name: session.user.name || '',
+    email: session.user.email || '',
+    image: session.user.image || undefined,
+    role: 'user',
+  } : null;
+
+  const displayUser = user || sessionUser;
 
   if (!displayUser) {
     return (
@@ -51,6 +119,7 @@ export default function UserPage({ params }: UserPageProps) {
   }
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen flex flex-col">
       <HeaderUi />
       <main className="flex-grow">
@@ -115,11 +184,12 @@ export default function UserPage({ params }: UserPageProps) {
         {/* Content Section */}
         <div className="max-w-7xl mx-auto p-6 mt-6">
           {activeTab === "account" && <Account user={displayUser} />}
-          {activeTab === "tickets" && <Tickets userId={params.userId} />}
-          {activeTab === "payment" && <Payment userId={params.userId} />}
+            {activeTab === "tickets" && <Tickets userId={displayUser.id} />}
+            {activeTab === "payment" && <Payment userId={displayUser.id} />}
         </div>
       </main>
       <FooterPage />
     </div>
+    </ErrorBoundary>
   );
 }

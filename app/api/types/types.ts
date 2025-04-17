@@ -27,6 +27,7 @@ export interface TrainDetails {
   departureTime?: string;
   arrivalTime?: string;
   duration?: string;
+  baseFare?: number;
 }
 
 export interface TravelRoute {
@@ -67,6 +68,7 @@ export interface ITrainClass {
   _id: string;
   name: string;
   code: string;
+  baseFare: string;
 }
 
 export interface ITrain {

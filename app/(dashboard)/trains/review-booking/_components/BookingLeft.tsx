@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useUser } from "@/app/_providers/user/UserContext";
-
+import { useUser } from "@/_providers/user/UserContext";
+ 
 interface Traveler {
   name: string;
   age: string;
   gender: string;
   nationality: string;
   berthPreference: string;
+  phoneNumber: string;
+  address: string;
 }
 
 const BookingLeft: React.FC = () => {
@@ -22,6 +24,8 @@ const BookingLeft: React.FC = () => {
     gender: "male",
     nationality: "Nigerian",
     berthPreference: "lower",
+    phoneNumber: "",
+    address: "",
   });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -46,6 +50,8 @@ const BookingLeft: React.FC = () => {
         name: userProfile.fullName,
         nationality: userProfile.defaultNationality,
         berthPreference: userProfile.preferredBerth,
+        phoneNumber: userProfile.phone || "",
+        address: userProfile.address || "",
       }));
     }
   }, [userProfile]);
@@ -62,6 +68,8 @@ const BookingLeft: React.FC = () => {
       gender: "male",
       nationality: userProfile?.defaultNationality || "Nigerian",
       berthPreference: userProfile?.preferredBerth || "lower",
+      phoneNumber: userProfile?.phone || "",
+      address: userProfile?.address || "",
     });
   };
 
@@ -75,12 +83,13 @@ const BookingLeft: React.FC = () => {
       phone: profileForm.phone,
       defaultNationality: profileForm.defaultNationality,
       preferredBerth: profileForm.preferredBerth,
+      address: newTraveler.address,
     });
     setIsEditingProfile(false);
   };
 
   return (
-    <div className="w-full md:w-2/3">
+    <div className="w-full ">
       {/* Naija Rails Profile */}
       <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 mb-6">
         <div className="flex justify-between items-center mb-4">

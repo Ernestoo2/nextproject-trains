@@ -7,52 +7,68 @@ import {
 
 export let trainData: TrainDetails[] = [
   {
-    id: 1,
+    _id: "1",
     trainName: "12430 - PH ENUGU",
-    runsOn: "Everyday",
-    startDate: "Nov 16",
+    runsOn: "Monday",
+    startDate: "Nov 10",
     endDate: "Nov 17",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
+    departureTime: "10:00 am",
+    arrivalTime: "6:00 pm",
+    trainNumber: "12430",
+    class: "Non-AC",
+    quota: "First Class",
+    baseFare: 800,
+    departureStation: "Lagos, Lagos",
+    arrivalStation: "Ibadan, Oyo",
     duration: "8 hours",
   },
   {
-    id: 2,
+    _id: "2",
     trainName: "12320 - EBLE",
-    runsOn: "Everyday",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
-    duration: "8 hours 50 minutes",
-  },
-  {
-    id: 3,
-    trainName: "12320 - EBLE",
-    runsOn: "Everyday",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
+    runsOn: "Tuesday",
+    startDate: "Nov 12",
+    endDate: "Nov 19",
+    departureTime: "8:00 pm",
+    arrivalTime: "4:00 am",
+    trainNumber: "12320",
+    class: "AC",
+    quota: "Economy",
+    baseFare: 1200,
     departureStation: "Port Harcourt, Rivers",
     arrivalStation: "Enugu, Enugu",
     duration: "8 hours 30 minutes",
   },
   {
-    id: 4,
-    trainName: "12320 - EBLE",
-    runsOn: "Everyday",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
+    _id: "3",
+    trainName: "14560 - KADUNA",
+    runsOn: "Wednesday",
+    startDate: "Nov 14",
+    endDate: "Nov 21",
+    departureTime: "12:00 pm",
+    arrivalTime: "8:00 pm",
+    trainNumber: "14560",
+    class: "Non-AC",
+    quota: "Second Class",
+    baseFare: 600,
+    departureStation: "Abuja, FCT",
+    arrivalStation: "Kaduna, Kaduna",
     duration: "8 hours 20 minutes",
+  },
+  {
+    _id: "4",
+    trainName: "16780 - LAGOS",
+    runsOn: "Thursday",
+    startDate: "Nov 16",
+    endDate: "Nov 23",
+    departureTime: "9:00 am",
+    arrivalTime: "5:00 pm",
+    trainNumber: "16780",
+    class: "AC",
+    quota: "First Class",
+    baseFare: 1500,
+    departureStation: "Ibadan, Oyo",
+    arrivalStation: "Lagos, Lagos",
+    duration: "8 hours 40 minutes",
   },
 ];
 let travelData: TravelRoute[] = initialTravelData;
@@ -84,13 +100,13 @@ export const fetchTravelRoutes = async (): Promise<
 };
 
 export const updateTravleRoute = (
-  id: number,
+  id: string,
   updatedRoute: Partial<TravelRoute>,
 ): Promise<ApiResponse<TravelRoute[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       travelData = travelData.map((route) =>
-        route.id === id ? { ...route, ...updatedRoute } : route,
+        route._id === "id" ? { ...route, ...updatedRoute } : route,
       );
       resolve({
         success: true,
@@ -102,11 +118,11 @@ export const updateTravleRoute = (
 };
 
 export const deleteTravelRoute = (
-  id: number,
+  id: string,
 ): Promise<ApiResponse<TravelRoute[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      travelData = travelData.filter((route) => route.id !== id);
+      travelData = travelData.filter((route) => route._id !== id);
       resolve({
         success: true,
         data: travelData,

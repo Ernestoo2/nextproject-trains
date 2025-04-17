@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getTrainDetails } from "@/app/api/api";
-import { ApiResponse, TrainDetails } from "@/app/api/types/types";
+import { getTrainDetails } from "@/api/api";
+import { ApiResponse, TrainDetails } from "@/api/types/types";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/utils/auth/next-auth";
+import { authOptions } from "@/utils/auth/next-auth";
 
 export async function GET(
   request: Request,

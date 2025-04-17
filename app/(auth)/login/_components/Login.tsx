@@ -7,8 +7,8 @@ import { useState } from "react";
 import { LOGIN_CONSTANTS } from "./_constants/login_constants";
 import { LoginFormProps } from "./_types/login_type";
 import { useContext } from "react";
-import { AuthContext } from "@/app/_providers/auth/AuthContext";
 import { useRouter } from "next/navigation";
+import { AuthContext } from "@/_providers/auth/AuthContext";
 
 export default function Login({ onSuccess, onError }: LoginFormProps) {
   const [email, setEmail] = useState("");
