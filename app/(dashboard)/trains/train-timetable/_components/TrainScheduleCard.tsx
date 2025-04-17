@@ -1,28 +1,34 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
-import { FaClock, FaTrain } from 'react-icons/fa'; 
+import { FaClock, FaTrain } from 'react-icons/fa';
+import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+
+interface Station {
+  name: string;
+  code: string;
+  city: string;
+  state: string;
+}
+
+interface TrainClass {
+  _id: string;
+  name: string;
+  code: string;
+  baseFare: number;
+  availableSeats: number;
+}
 
 interface TrainScheduleCardProps {
   trainNumber: string;
   trainName: string;
   departureTime: string;
   arrivalTime: string;
-  departureStation: {
-    name: string;
-    city: string;
-  };
-  arrivalStation: {
-    name: string;
-    city: string;
-  };
+  departureStation: Station;
+  arrivalStation: Station;
   duration: string;
-  availableClasses: Array<{
-    name: string;
-    code: string;
-    baseFare: number;
-    availableSeats: number;
-  }>;
-  status: string;
+  availableClasses: TrainClass[];
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
 export function TrainScheduleCard({
@@ -36,6 +42,21 @@ export function TrainScheduleCard({
   availableClasses,
   status
 }: TrainScheduleCardProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'SCHEDULED':
+        return 'text-green-600';
+      case 'IN_PROGRESS':
+        return 'text-blue-600';
+      case 'COMPLETED':
+        return 'text-gray-600';
+      case 'CANCELLED':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   return (
     <Card className="p-6 mb-4 hover:shadow-lg transition-shadow">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
@@ -43,7 +64,7 @@ export function TrainScheduleCard({
           <FaTrain className="text-2xl text-green-600" />
           <div>
             <h3 className="text-lg font-semibold">{trainNumber} - {trainName}</h3>
-            <p className="text-sm text-gray-500">{status}</p>
+            <p className={`text-sm ${getStatusColor(status)}`}>{status}</p>
           </div>
         </div>
 
@@ -52,7 +73,7 @@ export function TrainScheduleCard({
           <div className="text-left">
             <p className="text-xl font-bold">{departureTime}</p>
             <p className="text-sm text-gray-600">{departureStation.name}</p>
-            <p className="text-xs text-gray-500">{departureStation.city}</p>
+            <p className="text-xs text-gray-500">{departureStation.city}, {departureStation.state}</p>
           </div>
 
           {/* Duration */}
@@ -71,7 +92,7 @@ export function TrainScheduleCard({
           <div className="text-right">
             <p className="text-xl font-bold">{arrivalTime}</p>
             <p className="text-sm text-gray-600">{arrivalStation.name}</p>
-            <p className="text-xs text-gray-500">{arrivalStation.city}</p>
+            <p className="text-xs text-gray-500">{arrivalStation.city}, {arrivalStation.state}</p>
           </div>
         </div>
 
@@ -88,6 +109,16 @@ export function TrainScheduleCard({
               </div>
             ))}
           </div>
+          {status === 'SCHEDULED' && (
+            <Link 
+              href={`/trains/review-booking?scheduleId=${trainNumber}&class=${availableClasses[0]?.code}`}
+              className="mt-4 w-full block"
+            >
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                Book Now
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </Card>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaUser } from "react-icons/fa6";
-import { TrainClass, PassengerDetails } from "@/app/types/route.types";
+import { TrainClass, PassengerDetails } from "@/types/route.types";
 
 interface PassengerClassSelectorProps {
   availableClasses: TrainClass[];

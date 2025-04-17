@@ -3,7 +3,8 @@ import React from 'react';
 import { TrainScheduleCard } from './_components/TrainScheduleCard';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ScheduleWithDetails } from '../train-search/_types/train.types';
+import { ScheduleWithDetails } from '@/types/route.types';
+import { FaSpinner } from 'react-icons/fa';
 
 export default function TrainTimetablePage() {
   const searchParams = useSearchParams();
@@ -31,55 +32,16 @@ export default function TrainTimetablePage() {
       }
     }
 
-    fetchSchedules();
+    if (searchParams.get('fromStationId') && searchParams.get('toStationId') && searchParams.get('date')) {
+      fetchSchedules();
+    } else {
+      setLoading(false);
+      setError('Please provide all required search parameters');
+    }
   }, [searchParams]);
 
-  // If no real schedules are found, use mock data
-  const displaySchedules = schedules.length > 0 ? schedules : [
-    {
-      _id: "12430",
-      trainNumber: "12430",
-      trainName: "PH ENUGU Express",
-      departureTime: "10:00",
-      arrivalTime: "18:00",
-      departureStation: {
-        name: "Lagos Central",
-        city: "Lagos",
-      },
-      arrivalStation: {
-        name: "Ibadan Junction",
-        city: "Ibadan",
-      },
-      duration: "8h 0m",
-      availableClasses: [
-        {
-          _id: "1",
-          name: "First Class AC",
-          code: "1A",
-          baseFare: 2000,
-          availableSeats: 24,
-        },
-        {
-          _id: "2",
-          name: "Second Class AC",
-          code: "2A",
-          baseFare: 1500,
-          availableSeats: 48,
-        },
-        {
-          _id: "3",
-          name: "Standard Class",
-          code: "SC",
-          baseFare: 300,
-          availableSeats: 120,
-        },
-      ],
-      status: "SCHEDULED",
-    },
-  ];
-
-  const fromStation = searchParams.get('fromStationName') || 'Lagos';
-  const toStation = searchParams.get('toStationName') || 'Ibadan';
+  const fromStation = searchParams.get('fromStationName') || 'Unknown Station';
+  const toStation = searchParams.get('toStationName') || 'Unknown Station';
   const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
 
   return (
@@ -98,16 +60,22 @@ export default function TrainTimetablePage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Loading schedules...</p>
+        <div className="flex justify-center items-center py-12">
+          <FaSpinner className="animate-spin text-4xl text-green-600 mr-3" />
+          <p className="text-gray-600">Loading schedules...</p>
         </div>
       ) : error ? (
         <div className="text-center py-8">
           <p className="text-red-500">{error}</p>
         </div>
+      ) : schedules.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-gray-600">No schedules found for this route and date.</p>
+          <p className="text-sm text-gray-500 mt-2">Try selecting a different date or route.</p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {displaySchedules.map((schedule) => (
+          {schedules.map((schedule) => (
             <TrainScheduleCard
               key={schedule._id}
               trainNumber={schedule.trainNumber}

@@ -16,4 +16,11 @@ export interface PopulatedSchedule extends Omit<ISchedule, 'route' | 'train'> {
     train: (Pick<ITrain, '_id' | 'trainName' | 'trainNumber'>) | null;
     __v: number; // Change from optional (__v?: number) to required (__v: number)
   }
-  
+
+  export type cls = {
+    _id: mongoose.Types.ObjectId;
+    name: string;
+    code: string;
+    baseFare: number;
+  }
+

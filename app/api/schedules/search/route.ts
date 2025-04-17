@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/utils/mongodb/connect";
-import { Schedule } from "@/utils/mongodb/models/Schedule";
-import { Route } from "@/utils/mongodb/models/Route";
 import mongoose from "mongoose";
-import { ApiResponse } from "@/utils/mongodb/types";
-import { ScheduleWithDetails } from "@/types/route.types";
+import { connectDB } from "@/utils/mongodb/connect";
+import { Route } from "@/utils/mongodb/models/Route";
+import { Schedule } from "@/utils/mongodb/models/Schedule";
+import { Station } from "@/utils/mongodb/models/Station";
+import { cls } from "./type";
+
+type ApiResponse<T> = {
+  success: boolean;
+  data: T | null;
+  message: string;
+};
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    console.log("Starting schedule search...");
+    const { searchParams } = new URL(request.url);
     const fromStationId = searchParams.get("fromStationId");
     const toStationId = searchParams.get("toStationId");
     const date = searchParams.get("date");
     const classType = searchParams.get("classType");
 
-    console.log("Search params:", { fromStationId, toStationId, date, classType });
+    console.log("Search parameters:", {
+      fromStationId,
+      toStationId,
+      date,
+      classType,
+    });
 
     // Validate required parameters
     if (!fromStationId || !toStationId || !date) {
@@ -22,17 +34,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json<ApiResponse<null>>({
         success: false,
         data: null,
-        message: "Missing required parameters: fromStationId, toStationId, and date are required",
+        message: "Missing required parameters",
       });
     }
 
-    // Validate ObjectIds
+    // Validate station IDs
     if (!mongoose.Types.ObjectId.isValid(fromStationId) || !mongoose.Types.ObjectId.isValid(toStationId)) {
       console.log("Invalid station IDs");
       return NextResponse.json<ApiResponse<null>>({
         success: false,
         data: null,
-        message: "Invalid station IDs provided",
+        message: "Invalid station IDs",
       });
     }
 
@@ -41,8 +53,8 @@ export async function GET(request: NextRequest) {
 
     // First, find the route between these stations
     const route = await Route.findOne({
-      fromStation: fromStationId,
-      toStation: toStationId,
+      fromStation: new mongoose.Types.ObjectId(fromStationId),
+      toStation: new mongoose.Types.ObjectId(toStationId),
       isActive: true,
     }).populate(['fromStation', 'toStation', 'availableClasses']);
 
@@ -56,21 +68,25 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Build the query for schedules
+    // Parse and validate the date
     const searchDate = new Date(date);
-    const startOfDay = new Date(searchDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(searchDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    searchDate.setHours(0, 0, 0, 0);
 
+    if (isNaN(searchDate.getTime())) {
+      console.log("Invalid date format");
+      return NextResponse.json<ApiResponse<null>>({
+        success: false,
+        data: null,
+        message: "Invalid date format",
+      });
+    }
+
+    // Construct query
     const query: any = {
       route: route._id,
+      date: searchDate,
       isActive: true,
-      date: {
-        $gte: startOfDay,
-        $lt: endOfDay,
-      },
-      status: 'SCHEDULED'
+      status: "SCHEDULED",
     };
 
     // Add class filter if specified
@@ -79,6 +95,14 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("MongoDB query:", JSON.stringify(query, null, 2));
+
+    // Count total schedules in DB for debugging
+    const totalSchedules = await Schedule.countDocuments({});
+    console.log("Total schedules in DB:", totalSchedules);
+
+    // Count schedules for this specific route
+    const routeSchedules = await Schedule.countDocuments({ route: route._id });
+    console.log("Schedules for this route:", routeSchedules);
 
     // Find schedules with populated data
     const schedules = await Schedule.find(query)
@@ -97,67 +121,69 @@ export async function GET(request: NextRequest) {
       })
       .sort({ departureTime: 1 });
 
-    console.log("Found schedules:", schedules.length);
+    console.log(`Found ${schedules.length} schedules for the route`);
 
     if (schedules.length === 0) {
-      console.log("No schedules found for the given criteria");
-      return NextResponse.json<ApiResponse<ScheduleWithDetails[]>>({
+      return NextResponse.json<ApiResponse<typeof Schedule[]>>({
         success: true,
         data: [],
         message: "No schedules found for the given criteria",
       });
     }
 
-    // Transform the results
-    const results: ScheduleWithDetails[] = schedules.map((schedule) => {
-      // Calculate fares for each class
-      const fares = schedule.route.availableClasses.reduce((acc: Record<string, number>, cls: any) => {
-        acc[cls.code] = Math.round(cls.baseFare * (schedule.route.distance / 100));
-        return acc;
-      }, {});
+    // Transform schedules into the required format
+    const transformedSchedules = schedules.map(schedule => {
+      console.log(`Processing schedule ${schedule._id}`);
+      const route = schedule.route;
+      if (!route) {
+        console.log(`No route found for schedule ${schedule._id}`);
+        return null;
+      }
 
       return {
-        _id: schedule._id.toString(),
-        trainNumber: schedule.train.trainNumber,
-        trainName: schedule.train.trainName,
+        _id: schedule._id,
+        trainNumber: schedule.train?.trainNumber || '',
+        trainName: schedule.train?.trainName || '',
         departureStation: {
-          name: schedule.route.fromStation.name,
-          code: schedule.route.fromStation.code,
-          city: schedule.route.fromStation.city,
-          state: schedule.route.fromStation.state,
+          name: route.fromStation.name,
+          code: route.fromStation.code,
+          city: route.fromStation.city,
+          state: route.fromStation.state,
         },
         arrivalStation: {
-          name: schedule.route.toStation.name,
-          code: schedule.route.toStation.code,
-          city: schedule.route.toStation.city,
-          state: schedule.route.toStation.state,
+          name: route.toStation.name,
+          code: route.toStation.code,
+          city: route.toStation.city,
+          state: route.toStation.state,
         },
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        duration: schedule.duration || schedule.route.estimatedDuration,
-        availableClasses: schedule.route.availableClasses.map((trainClass: any) => ({
-          _id: trainClass._id.toString(),
-          name: trainClass.name,
-          code: trainClass.code,
-          baseFare: fares[trainClass.code],
-          availableSeats: schedule.availableSeats.get(trainClass.code) || 0,
+      departureTime: schedule.departureTime,
+      arrivalTime: schedule.arrivalTime,
+        duration: schedule.duration,
+        availableClasses: route.availableClasses.map((cls: cls) => ({
+          _id: cls._id,
+          name: cls.name,
+          code: cls.code,
+          baseFare: cls.baseFare,
+          availableSeats: schedule.availableSeats[cls.code] || 0,
         })),
-        status: schedule.status,
-        platform: schedule.platform || null,
+      status: schedule.status,
+        platform: schedule.platform,
       };
-    });
+    }).filter(Boolean);
 
-    return NextResponse.json<ApiResponse<ScheduleWithDetails[]>>({
+    console.log(`Transformed ${transformedSchedules.length} schedules`);
+
+    return NextResponse.json<ApiResponse<any>>({
       success: true,
-      data: results,
+      data: transformedSchedules,
       message: "Schedules found successfully",
     });
   } catch (error) {
-    console.error("Error searching schedules:", error);
+    console.error("Error in schedule search:", error);
     return NextResponse.json<ApiResponse<null>>({
       success: false,
       data: null,
-      message: error instanceof Error ? error.message : "Internal server error",
+      message: error instanceof Error ? error.message : "An error occurred while searching for schedules",
     });
   }
 } 

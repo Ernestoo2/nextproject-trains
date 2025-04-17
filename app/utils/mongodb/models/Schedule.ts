@@ -53,8 +53,7 @@ const scheduleSchema = new mongoose.Schema({
     index: true,
   },
   availableSeats: {
-    type: Map,
-    of: Number,
+    type: Object,
     default: {},
   },
   status: {
@@ -73,8 +72,7 @@ const scheduleSchema = new mongoose.Schema({
     default: null,
   },
   fare: {
-    type: Map,
-    of: Number,
+    type: Object,
     default: {},
   }
 }, { 

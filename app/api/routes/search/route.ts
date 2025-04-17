@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/utils/mongodb/connect";
 import { Route } from "@/utils/mongodb/models/Route";
 import { Station } from "@/utils/mongodb/models/Station";
@@ -26,6 +26,45 @@ interface RouteType extends Document {
   baseFare: number;
   estimatedDuration: string;
   availableClasses: TrainClassType[];
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const fromStationId = searchParams.get("fromStationId");
+    const toStationId = searchParams.get("toStationId");
+
+    if (!fromStationId || !toStationId) {
+      return NextResponse.json({
+        success: false,
+        message: "Missing required parameters",
+      }, { status: 400 });
+    }
+
+    await connectDB();
+
+    const routes = await Route.find({
+      fromStation: fromStationId,
+      toStation: toStationId,
+      isActive: true
+    })
+    .populate('fromStation', 'name code city state')
+    .populate('toStation', 'name code city state')
+    .populate('availableClasses', 'name code baseFare');
+
+    return NextResponse.json({
+      success: true,
+      data: routes,
+      message: "Routes retrieved successfully"
+    });
+
+  } catch (error) {
+    console.error("Error in route search:", error);
+    return NextResponse.json({
+      success: false,
+      message: error instanceof Error ? error.message : "An error occurred while searching for routes"
+    }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
