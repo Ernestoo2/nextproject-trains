@@ -6,15 +6,14 @@ export interface ISchedule extends Document {
   departureTime: string;
   arrivalTime: string;
   date: Date;
-  availableSeats: {
-    FC: number;
-    BC: number;
-    SC: number;
-  };
+  availableSeats: Record<string, number>;
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  duration?: string;
+  platform?: string;
+  fare?: Record<string, number>;
 }
 
 const scheduleSchema = new mongoose.Schema({
@@ -31,10 +30,22 @@ const scheduleSchema = new mongoose.Schema({
   departureTime: {
     type: String,
     required: true,
+    validate: {
+      validator: function(v: string) {
+        return /^([01]\d|2[0-3]):([0-5]\d)$/.test(v);
+      },
+      message: "Time must be in HH:mm format"
+    }
   },
   arrivalTime: {
     type: String,
     required: true,
+    validate: {
+      validator: function(v: string) {
+        return /^([01]\d|2[0-3]):([0-5]\d)$/.test(v);
+      },
+      message: "Time must be in HH:mm format"
+    }
   },
   date: {
     type: Date,
@@ -42,9 +53,9 @@ const scheduleSchema = new mongoose.Schema({
     index: true,
   },
   availableSeats: {
-    FC: { type: Number, default: 50 }, // First Class
-    BC: { type: Number, default: 100 }, // Business Class
-    SC: { type: Number, default: 200 }, // Standard Class
+    type: Map,
+    of: Number,
+    default: {},
   },
   status: {
     type: String,
@@ -57,11 +68,52 @@ const scheduleSchema = new mongoose.Schema({
     default: true,
     index: true,
   },
-}, { timestamps: true });
+  platform: {
+    type: String,
+    default: null,
+  },
+  fare: {
+    type: Map,
+    of: Number,
+    default: {},
+  }
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Virtual for duration
+scheduleSchema.virtual('duration').get(function() {
+  const [depHours, depMinutes] = this.departureTime.split(':').map(Number);
+  const [arrHours, arrMinutes] = this.arrivalTime.split(':').map(Number);
+  
+  let hoursDiff = arrHours - depHours;
+  let minutesDiff = arrMinutes - depMinutes;
+  
+  if (minutesDiff < 0) {
+    hoursDiff--;
+    minutesDiff += 60;
+  }
+  if (hoursDiff < 0) {
+    hoursDiff += 24;
+  }
+  
+  return `${hoursDiff}h ${minutesDiff}m`;
+});
 
 // Create compound indexes for common queries
 scheduleSchema.index({ train: 1, route: 1, date: 1 }, { unique: true });
-scheduleSchema.index({ 'route.fromStation': 1, 'route.toStation': 1, date: 1 });
+scheduleSchema.index({ route: 1, date: 1 });
 scheduleSchema.index({ departureTime: 1 });
+scheduleSchema.index({ status: 1, isActive: 1 });
+
+// Add a pre-save middleware to ensure date is properly formatted
+scheduleSchema.pre('save', function(next) {
+  if (this.date instanceof Date) {
+    this.date.setHours(0, 0, 0, 0); // Set time to midnight for consistent dates
+  }
+  next();
+});
 
 export const Schedule = mongoose.models.Schedule || mongoose.model<ISchedule>("Schedule", scheduleSchema); 

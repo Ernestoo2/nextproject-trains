@@ -1,156 +1,238 @@
+import mongoose from "mongoose";
 import { connectDB } from "./connect";
-import { Station } from "./models/Station";
-import { TrainClass } from "./models/TrainClass";
-import { Train } from "./models/Train";
 import { Route } from "./models/Route";
 import { Schedule } from "./models/Schedule";
-import mongoose from "mongoose";
+import { Station } from "./models/Station";
+import { Train } from "./models/Train";
+import { TrainClass } from "./models/TrainClass";
 
-async function seedData() {
+interface ScheduleSeedData {
+  train: mongoose.Types.ObjectId;
+  route: mongoose.Types.ObjectId;
+  departureTime: string;
+  arrivalTime: string;
+  date: Date;
+  availableSeats: Record<string, number>;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  isActive: boolean;
+}
+
+interface RouteSeedData {
+  fromStation: mongoose.Types.ObjectId;
+  toStation: mongoose.Types.ObjectId;
+  distance: number;
+  baseFare: number;
+  estimatedDuration: string;
+  availableClasses: mongoose.Types.ObjectId[];
+  isActive: boolean;
+}
+
+export async function seedData() {
   try {
+    console.log('Starting database seed operation...');
     await connectDB();
+    console.log('Connected to database successfully');
 
     // Clear existing data
-    await Promise.all([
-      Station.deleteMany({}),
-      TrainClass.deleteMany({}),
-      Train.deleteMany({}),
-      Route.deleteMany({}),
-      Schedule.deleteMany({}),
-    ]);
+    try {
+      console.log('Clearing existing data...');
+      await Promise.all([
+        Station.deleteMany({}),
+        TrainClass.deleteMany({}),
+        Train.deleteMany({}),
+        Route.deleteMany({}),
+        Schedule.deleteMany({})
+      ]);
+      console.log('Existing data cleared successfully');
+    } catch (error) {
+      console.error('Error clearing existing data:', error);
+      throw error;
+    }
 
     // Create stations
-    const stations = await Station.create([
-      { name: "Mumbai Central", code: "MMCT", city: "Mumbai", state: "Maharashtra" },
-      { name: "New Delhi", code: "NDLS", city: "Delhi", state: "Delhi" },
-      { name: "Chennai Central", code: "MAS", city: "Chennai", state: "Tamil Nadu" },
-      { name: "Howrah", code: "HWH", city: "Kolkata", state: "West Bengal" },
-      { name: "Bangalore City", code: "SBC", city: "Bangalore", state: "Karnataka" },
-    ]);
+    try {
+      console.log('Creating stations...');
+      const stations = await Station.create([
+        { name: 'Abuja', code: 'ABJ', city: 'Abuja', state: 'Federal Capital Territory', isActive: true },
+        { name: 'Kano', code: 'KAN', city: 'Kano', state: 'Kano', isActive: true },
+        { name: 'Port Harcourt', code: 'PHC', city: 'Port Harcourt', state: 'Rivers', isActive: true },
+        { name: 'Ibadan', code: 'IBD', city: 'Ibadan', state: 'Oyo', isActive: true },
+        { name: 'Kaduna', code: 'KAD', city: 'Kaduna', state: 'Kaduna', isActive: true },
+        { name: 'Enugu', code: 'ENU', city: 'Enugu', state: 'Enugu', isActive: true }
+      ]);
+      console.log('Stations created successfully:', stations.length);
+    } catch (error) {
+      console.error('Error creating stations:', error);
+      throw error;
+    }
 
     // Create train classes
-    const trainClasses = await TrainClass.create([
-      { name: "First Class AC", code: "1A", baseFare: 2000, isActive: true },
-      { name: "Second Class AC", code: "2A", baseFare: 1500, isActive: true },
-      { name: "Third Class AC", code: "3A", baseFare: 1000, isActive: true },
-      { name: "Sleeper Class", code: "SL", baseFare: 500, isActive: true },
-    ]);
+    try {
+      console.log('Creating train classes...');
+      const trainClasses = await TrainClass.create([
+        { name: 'First Class AC', code: '1A', baseFare: 2000, isActive: true },
+        { name: 'Second Class AC', code: '2A', baseFare: 1500, isActive: true },
+        { name: 'Third Class AC', code: '3A', baseFare: 1000, isActive: true },
+        { name: 'Sleeper Class', code: 'SL', baseFare: 500, isActive: true },
+        { name: 'Standard Class', code: 'SC', baseFare: 300, isActive: true }
+      ]);
+      console.log('Train classes created successfully:', trainClasses.length);
+    } catch (error) {
+      console.error('Error creating train classes:', error);
+      throw error;
+    }
 
     // Create trains
-    const trains = await Train.create([
-      {
-        trainName: "Rajdhani Express",
-        trainNumber: "12951",
-        classes: trainClasses.map((tc) => tc._id),
-        isActive: true,
-      },
-      {
-        trainName: "Shatabdi Express",
-        trainNumber: "12001",
-        classes: trainClasses.map((tc) => tc._id),
-        isActive: true,
-      },
-      {
-        trainName: "Duronto Express",
-        trainNumber: "12223",
-        classes: trainClasses.map((tc) => tc._id),
-        isActive: true,
-      },
-    ]);
+    try {
+      console.log('Creating trains...');
+      const trains = await Train.create([
+        {
+          trainName: 'Nigerian Express',
+          trainNumber: 'NE001',
+          routes: [],
+          classes: [],
+          isActive: true
+        },
+        {
+          trainName: 'Capital Limited',
+          trainNumber: 'CL002',
+          routes: [],
+          classes: [],
+          isActive: true
+        }
+      ]);
+      console.log('Trains created successfully:', trains.length);
 
-    // Create routes (bi-directional)
-    const routes = [];
-    for (let i = 0; i < stations.length; i++) {
-      for (let j = i + 1; j < stations.length; j++) {
-        const distance = Math.floor(Math.random() * 1000) + 500; // Random distance between 500-1500 km
-        const baseFare = Math.floor(distance * 2); // Base fare proportional to distance
-        const estimatedDuration = Math.floor(distance / 60); // Rough estimate: 60 km/h average speed
-
-        // Create route from station i to j
-        routes.push({
-          fromStation: stations[i]._id,
-          toStation: stations[j]._id,
-          distance,
-          baseFare,
-          estimatedDuration,
-          availableClasses: trainClasses.map((tc) => tc._id),
-          isActive: true,
-        });
-
-        // Create reverse route from station j to i
-        routes.push({
-          fromStation: stations[j]._id,
-          toStation: stations[i]._id,
-          distance,
-          baseFare,
-          estimatedDuration,
-          availableClasses: trainClasses.map((tc) => tc._id),
-          isActive: true,
-        });
+      // Update trains with classes
+      const trainClasses = await TrainClass.find({ isActive: true });
+      for (const train of trains) {
+        train.classes = trainClasses.map(tc => tc._id);
+        await train.save();
       }
-    }
-    await Route.create(routes);
+      console.log('Trains updated with classes successfully');
 
-    // Generate schedules for the next 14 days
-    const schedules = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+      // Create routes
+      try {
+        console.log('Creating routes...');
+        const stations = await Station.find({ isActive: true });
+        const trainClasses = await TrainClass.find({ isActive: true });
+        const routes: RouteSeedData[] = [];
 
-    for (let day = 0; day < 14; day++) {
-      const currentDate = new Date(today);
-      currentDate.setDate(today.getDate() + day);
+        // Create bi-directional routes between all stations
+        for (let i = 0; i < stations.length; i++) {
+          for (let j = i + 1; j < stations.length; j++) {
+            const distance = Math.floor(Math.random() * 1000) + 500;
+            const baseFare = Math.floor(distance * 2);
+            const hours = Math.floor(distance / 100);
+            const minutes = Math.floor((distance % 100) / 100 * 60);
+            const estimatedDuration = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-      // For each route, create 2-4 schedules per day
-    for (const route of routes) {
-        const numSchedules = Math.floor(Math.random() * 3) + 2; // 2-4 schedules per day
+            // Create route from station i to j
+            routes.push({
+              fromStation: stations[i]._id,
+              toStation: stations[j]._id,
+              distance,
+              baseFare,
+              estimatedDuration,
+              availableClasses: trainClasses.map(tc => tc._id),
+              isActive: true
+            });
 
-        for (let i = 0; i < numSchedules; i++) {
-          // Generate random departure time between 6 AM and 10 PM
-          const departureHour = Math.floor(Math.random() * 16) + 6; // 6 AM to 10 PM
-          const departureMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, or 45
+            // Create route from station j to i
+            routes.push({
+              fromStation: stations[j]._id,
+              toStation: stations[i]._id,
+              distance,
+              baseFare,
+              estimatedDuration,
+              availableClasses: trainClasses.map(tc => tc._id),
+              isActive: true
+            });
+          }
+        }
 
-          const departureTime = new Date(currentDate);
-          departureTime.setHours(departureHour, departureMinute, 0, 0);
+        const createdRoutes = await Route.create(routes);
+        console.log('Routes created successfully:', createdRoutes.length);
 
-          // Calculate arrival time based on route duration
-          const arrivalTime = new Date(departureTime);
-          arrivalTime.setHours(
-            departureTime.getHours() + route.estimatedDuration
-          );
+        // Update trains with routes
+        for (const train of trains) {
+          const trainRoutes = createdRoutes.map(route => ({
+            route: route._id,
+            arrivalTime: '08:00',
+            departureTime: '08:30'
+          }));
 
-          // Generate random available seats for each class
-          const availableSeats = {};
-          for (const classId of route.availableClasses) {
-            const trainClass = trainClasses.find(
-              (tc) => tc._id.toString() === classId.toString()
-            );
-            if (trainClass) {
-              availableSeats[trainClass.code] = Math.floor(Math.random() * 50) + 10; // 10-60 seats
+          train.routes = trainRoutes;
+          await train.save();
+        }
+        console.log('Trains updated with routes successfully');
+
+        // Create schedules
+        try {
+          console.log('Creating schedules...');
+          const schedules: ScheduleSeedData[] = [];
+
+          // Create schedules for the next 14 days
+          for (let i = 0; i < 14; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() + i);
+            date.setHours(0, 0, 0, 0); // Set time to midnight for consistent dates
+
+            for (const route of createdRoutes) {
+              for (const train of trains) {
+                // Create available seats for each class
+                const availableSeats: Record<string, number> = {};
+                for (const classId of train.classes) {
+                  const trainClass = await TrainClass.findById(classId);
+                  if (trainClass) {
+                    availableSeats[trainClass.code] = Math.floor(Math.random() * 50) + 10;
+                  }
+                }
+
+                // Create morning schedule
+                schedules.push({
+                  train: train._id,
+                  route: route._id,
+                  departureTime: '08:00',
+                  arrivalTime: '12:00',
+                  date: date,
+                  availableSeats,
+                  status: 'SCHEDULED',
+                  isActive: true
+                });
+
+                // Create afternoon schedule
+                schedules.push({
+                  train: train._id,
+                  route: route._id,
+                  departureTime: '14:00',
+                  arrivalTime: '18:00',
+                  date: date,
+                  availableSeats,
+                  status: 'SCHEDULED',
+                  isActive: true
+                });
+              }
             }
           }
 
-          schedules.push({
-            train: trains[Math.floor(Math.random() * trains.length)]._id,
-            route: route._id,
-            departureTime,
-            arrivalTime,
-            date: currentDate,
-            availableSeats,
-            status: "SCHEDULED",
-            isActive: true,
-          });
+          const createdSchedules = await Schedule.create(schedules);
+          console.log('Schedules created successfully:', createdSchedules.length);
+          return { success: true };
+        } catch (error) {
+          console.error('Error creating schedules:', error);
+          throw error;
         }
+      } catch (error) {
+        console.error('Error creating/updating routes:', error);
+        throw error;
       }
+    } catch (error) {
+      console.error('Error creating/updating trains:', error);
+      throw error;
     }
-
-    await Schedule.create(schedules);
-
-    console.log("Database seeded successfully!");
-    return { success: true };
   } catch (error) {
-    console.error("Error seeding database:", error);
+    console.error('Error in seed operation:', error);
     throw error;
   }
 }
-
-export { seedData };

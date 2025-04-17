@@ -9,7 +9,13 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: trainClasses,
+      trainClasses: trainClasses.map(cls => ({
+        _id: cls._id.toString(),
+        name: cls.name,
+        code: cls.code,
+        baseFare: cls.baseFare,
+        isActive: cls.isActive,
+      })),
       message: "Train classes fetched successfully",
     });
   } catch (error) {

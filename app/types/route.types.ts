@@ -10,7 +10,7 @@ export interface Station {
 }
 
 export interface TrainClass {
-  id: string;
+  _id: string;
   name: string;
   code: string;
   baseFare: number;
@@ -32,11 +32,26 @@ export interface Trip {
   routeId: string;
   trainId: string;
   departureTime: string;
+  date: string;
   arrivalTime: string;
   availableSeats: {
     [className: string]: number;
   };
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  route: {
+    id: string;
+    fromStation: string;
+    toStation: string;
+    distance: number;
+    baseFare: number;
+    estimatedDuration: string;
+    availableClasses: string;
+  } | undefined;
+  train: {
+    id: string;
+    trainName: string;
+    trainNumber: string;
+} | undefined
 }
 
 export interface PassengerDetails {

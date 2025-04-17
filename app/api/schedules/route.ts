@@ -2,68 +2,70 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/utils/mongodb/connect';
 import { Schedule } from '@/utils/mongodb/models/Schedule';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const fromStation = searchParams.get('fromStation');
-    const toStation = searchParams.get('toStation');
-    const date = searchParams.get('date');
-    const status = searchParams.get('status');
-
-    // Build query with proper MongoDB filtering
-    const query: any = { isActive: true };
-
-    // Add station filtering to the database query
-    if (fromStation) {
-      query['route.fromStation'] = fromStation;
-    }
-    if (toStation) {
-      query['route.toStation'] = toStation;
-    }
-
-    // Add date filtering
-    if (date) {
-      const startDate = new Date(date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(date);
-      endDate.setHours(23, 59, 59, 999);
-      
-      query.date = {
-        $gte: startDate,
-        $lte: endDate
-      };
-    }
-
-    // Add status filtering
-    if (status && status !== 'all') {
-      query.status = status;
-    }
-
+    console.log("Starting schedules fetch...");
     await connectDB();
-    
-    // Use lean() for better performance when we don't need Mongoose documents
-    const schedules = await Schedule.find(query)
+    console.log("Connected to database");
+
+    const schedules = await Schedule.find({ isActive: true })
       .populate({
         path: 'train',
-        select: 'trainName trainNumber -_id'
+        select: 'trainName trainNumber',
       })
       .populate({
         path: 'route',
-        populate: {
-          path: 'fromStation toStation',
-          select: 'name code -_id'
-        },
-        select: 'fromStation toStation distance estimatedDuration baseFare -_id'
+        select: 'fromStation toStation distance baseFare estimatedDuration availableClasses',
+        populate: [
+          { path: 'fromStation', select: 'name code city state' },
+          { path: 'toStation', select: 'name code city state' },
+          { path: 'availableClasses', select: 'name code baseFare' }
+        ]
       })
-      .select('-__v')
-      .lean()
       .sort({ departureTime: 1 });
 
-    return NextResponse.json(schedules);
+    console.log(`Found ${schedules.length} schedules`);
+    
+    if (schedules.length === 0) {
+      // Let's check if we have any schedules at all
+      const totalSchedules = await Schedule.countDocuments();
+      console.log(`Total schedules in database: ${totalSchedules}`);
+      
+      // Let's check if we have any schedules without the isActive filter
+      const allSchedules = await Schedule.find({});
+      console.log(`Total schedules without isActive filter: ${allSchedules.length}`);
+    }
+
+    return NextResponse.json({
+      success: true,
+      schedules: schedules.map(schedule => ({
+        _id: schedule._id.toString(),
+        trainNumber: schedule.train.trainNumber,
+        trainName: schedule.train.trainName,
+        departureStation: schedule.route.fromStation,
+        arrivalStation: schedule.route.toStation,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        date: schedule.date,
+        availableClasses: schedule.route.availableClasses.map((cls: any) => ({
+          _id: cls._id.toString(),
+          name: cls.name,
+          code: cls.code,
+          baseFare: cls.baseFare,
+          availableSeats: schedule.availableSeats[cls.code] || 0,
+        })),
+        status: schedule.status,
+      })),
+      message: schedules.length > 0 ? "Schedules fetched successfully" : "No schedules found"
+    });
   } catch (error) {
-    console.error('Error fetching schedules:', error);
+    console.error("Error fetching schedules:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch schedules' },
+      {
+        success: false,
+        message: "Failed to fetch schedules",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

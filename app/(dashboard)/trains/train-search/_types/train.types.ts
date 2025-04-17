@@ -98,6 +98,7 @@ export const initialTravelData: TravelRoute[] = [
 ];
 
 export interface TrainClass {
+  _id?: string;
   code: string;
   name: string;
   description?: string;
@@ -113,9 +114,13 @@ export interface StationInfo {
 }
 
 export interface SearchParams {
-  from: string;
-  to: string;
-  date: string;
+  fromStationId?: string;
+  toStationId?: string;
+  date?: string;
+  classType?: string;
+  adultCount?: number;
+  childCount?: number;
+  infantCount?: number;
 }
 
 export interface StationRouteCardProps {
@@ -141,10 +146,33 @@ export interface SearchResponse {
   error?: string;
 }
 
-export interface ScheduleWithDetails extends Omit<ISchedule, 'train'> {
-  train: Train;
-  fromStation: Station;
-  toStation: Station;
+export interface ScheduleWithDetails {
+  _id: string;
+  trainNumber: string;
+  trainName: string;
+  departureTime: string;
+  arrivalTime: string;
+  departureStation: {
+    name: string;
+    code: string;
+    city: string;
+    state: string;
+  };
+  arrivalStation: {
+    name: string;
+    code: string;
+    city: string;
+    state: string;
+  };
+  duration: string;
+  availableClasses: Array<{
+    _id: string;
+    name: string;
+    code: string;
+    baseFare: number;
+    availableSeats: number;
+  }>;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
 export interface Station {

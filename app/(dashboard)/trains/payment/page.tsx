@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/app/_providers/user/UserContext";
+import { useUser } from "@/_providers/user/UserContext";
 import { BookingDetails, PaystackPopupConfig } from "./_types/paystack.types";
 
 interface PaystackPopType {

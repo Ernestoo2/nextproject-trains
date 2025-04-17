@@ -1,5 +1,5 @@
 interface TrainClass {
-  id: string;
+  _id: string;
   name: string;
   code: string;
   baseFare: number;
@@ -38,7 +38,7 @@ export function PassengerClassSelector({
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         >
           {availableClasses.map((cls) => (
-            <option key={cls.id} value={cls.code}>
+            <option key={cls._id} value={cls.code}>
               {cls.name}
             </option>
           ))}

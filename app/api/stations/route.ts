@@ -1,14 +1,31 @@
- import { Station } from "@/utils/mongodb/models";
+import { Station } from "@/utils/mongodb/models";
 import { NextResponse } from "next/server";
- 
+import { connectDB } from "@/utils/mongodb/connect";
+
 export async function GET() {
   try {
-    const stations = await Station.find({ isActive: true }).select('name code');
-    return NextResponse.json({ stations });
+    await connectDB();
+    const stations = await Station.find({ isActive: true }).select('name code city state');
+    return NextResponse.json({ 
+      success: true,
+      stations: stations.map(station => ({
+        _id: station._id.toString(),
+        name: station.name,
+        code: station.code,
+        city: station.city,
+        state: station.state,
+        isActive: station.isActive
+      })),
+      message: "Stations fetched successfully"
+    });
   } catch (error) {
     console.error("Error fetching stations:", error);
     return NextResponse.json(
-      { error: "Failed to fetch stations" },
+      { 
+        success: false, 
+        message: "Failed to fetch stations",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

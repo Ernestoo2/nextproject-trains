@@ -22,8 +22,12 @@ export interface IRoute {
   fromStation: IStation;
   toStation: IStation;
   distance: number;
+  baseFare: number;
   estimatedDuration: string;
+  availableClasses: ITrainClass[];
   isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface ITrainRoute {
@@ -37,7 +41,11 @@ export interface ITrain {
   _id: string;
   trainName: string;
   trainNumber: string;
+  routes: ITrainRoute[];
+  classes: ITrainClass[];
   isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface ISchedule {
@@ -58,16 +66,37 @@ export interface ISchedule {
   updatedAt: Date;
 }
 
-// Search result types (for train search, different from dashboard)
+// Search result types
 export interface ITrainSearchResult {
   _id: string;
   trainNumber: string;
   trainName: string;
-  departureStation: string;
-  arrivalStation: string;
+  departureStation: {
+    _id: string;
+    name: string;
+    code: string;
+  };
+  arrivalStation: {
+    _id: string;
+    name: string;
+    code: string;
+  };
   departureTime: string;
   arrivalTime: string;
   duration: string;
-  availableClasses: string[];
-  baseFare: number;
+  availableClasses: Array<{
+    _id: string;
+    name: string;
+    code: string;
+    baseFare: number;
+    availableSeats: number;
+  }>;
+  status: ISchedule['status'];
+}
+
+// API Response type
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
 }

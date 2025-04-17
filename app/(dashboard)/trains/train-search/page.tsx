@@ -4,49 +4,86 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StationRouteCard } from "./_components/StationRouteCard";
 import { SearchParams, SearchResponse, ScheduleWithDetails } from "./_types/train.types";
- import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
- import { Schedule } from '@/models/Schedule';
-import { connectDB } from "@/utils/mongodb/connect";
+
+// Remove direct Mongoose imports
+// import { Schedule } from '@/models/Schedule';
+// import { connectDB } from "@/utils/mongodb/connect";
+
+// Replace with API call
 async function getSchedules(params: SearchParams): Promise<ScheduleWithDetails[]> {
   try {
-    await connectDB();
+    const { fromStationId, toStationId, date, classType } = params;
     
-    const { from, to, date } = params;
-    const searchDate = new Date(date);
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (fromStationId) queryParams.append('fromStationId', fromStationId);
+    if (toStationId) queryParams.append('toStationId', toStationId);
+    if (date) queryParams.append('date', date);
+    if (classType) queryParams.append('classType', classType);
     
-    // Set time to start of day for date comparison
-    searchDate.setHours(0, 0, 0, 0);
+    // Call the API
+    const response = await fetch(`/api/schedules/search?${queryParams.toString()}`);
     
-    const schedules = await Schedule.find({
-      'fromStation.name': from,
-      'toStation.name': to,
-      date: {
-        $gte: searchDate,
-        $lt: new Date(searchDate.getTime() + 24 * 60 * 60 * 1000)
-      },
-      isActive: true
-    })
-    .populate('train')
-    .populate('fromStation')
-    .populate('toStation')
-    .sort({ departureTime: 1 });
-
-    return schedules as ScheduleWithDetails[];
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error('API returned error:', data.message);
+      return [];
+    }
+    
+    return data.data || [];
   } catch (error) {
     console.error('Error fetching schedules:', error);
     return [];
   }
 }
 
-export default async function TrainSearchPage({
-  searchParams
-}: {
-  searchParams: SearchParams;
-}) {
-  const schedules = await getSchedules(searchParams);
+export default function TrainSearchPage() {
+  const searchParams = useSearchParams();
+  const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    async function fetchSchedules() {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const params: SearchParams = {
+          fromStationId: searchParams.get('fromStationId') || '',
+          toStationId: searchParams.get('toStationId') || '',
+          date: searchParams.get('date') || new Date().toISOString().split('T')[0],
+          classType: searchParams.get('classType') || '',
+          adultCount: parseInt(searchParams.get('adultCount') || '1'),
+          childCount: parseInt(searchParams.get('childCount') || '0'),
+          infantCount: parseInt(searchParams.get('infantCount') || '0')
+        };
+        
+        const results = await getSchedules(params);
+        setSchedules(results);
+      } catch (err) {
+        console.error('Error fetching schedules:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSchedules();
+  }, [searchParams]);
+  
+  const fromStationName = searchParams.get('fromStationName') || 'Unknown';
+  const toStationName = searchParams.get('toStationName') || 'Unknown';
+  const searchDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -54,12 +91,20 @@ export default async function TrainSearchPage({
       
       <div className="mb-4">
         <p className="text-gray-600">
-          Showing trains from {searchParams.from} to {searchParams.to} on{' '}
-          {new Date(searchParams.date).toLocaleDateString()}
+          Showing trains from {fromStationName} to {toStationName} on{' '}
+          {new Date(searchDate).toLocaleDateString()}
         </p>
       </div>
 
-      {schedules.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading schedules...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-red-500">Error: {error}</p>
+        </div>
+      ) : schedules.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500">No trains found for this route and date.</p>
         </div>
