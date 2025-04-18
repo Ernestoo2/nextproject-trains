@@ -29,6 +29,10 @@ interface TrainScheduleCardProps {
   duration: string;
   availableClasses: TrainClass[];
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  schedule: any;
+  train: any;
+  selectedClass: string;
+  date: string;
 }
 
 export function TrainScheduleCard({
@@ -40,7 +44,11 @@ export function TrainScheduleCard({
   arrivalStation,
   duration,
   availableClasses,
-  status
+  status,
+  schedule,
+  train,
+  selectedClass,
+  date
 }: TrainScheduleCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -111,7 +119,7 @@ export function TrainScheduleCard({
           </div>
           {status === 'SCHEDULED' && (
             <Link 
-              href={`/trains/review-booking?scheduleId=${trainNumber}&class=${availableClasses[0]?.code}`}
+              href={`/trains/review-booking?scheduleId=${schedule._id}&trainId=${train._id}&class=${selectedClass}&date=${date}`}
               className="mt-4 w-full block"
             >
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white">

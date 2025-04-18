@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/app/_providers/user/UserContext";
+import { useUser } from "@/_providers/user/UserContext";
 import Image from "next/image";
 import QRcode from "../../../../../public/Assets/QRcode.png";
 import { BookingDetails } from "../../payment/_types/paystack.types";

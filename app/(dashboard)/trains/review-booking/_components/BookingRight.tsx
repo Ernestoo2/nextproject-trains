@@ -6,9 +6,33 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { BookingDetails } from "../../payment/_types/paystack.types";
+import { searchParams } from "@/app/utils/searchParams";
 
 interface BookingRightProps {
-  train: TrainDetails;
+  schedule: {
+    _id: string;
+    train: {
+      trainNumber: string;
+      trainName: string;
+    };
+    departureTime: string;
+    arrivalTime: string;
+    route: {
+      fromStation: {
+        name: string;
+        code: string;
+      };
+      toStation: {
+        name: string;
+        code: string;
+      };
+      distance: number;
+      estimatedDuration: string;
+      baseFare: number;
+    };
+    availableSeats: Record<string, number>;
+    status: string;
+  };
   travelers: {
     name: string;
     age: string;
@@ -20,7 +44,7 @@ interface BookingRightProps {
   }[];
 }
 
-const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
+const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
   const { data: session } = useSession();
   const [promoCode, setPromoCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
@@ -30,58 +54,33 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
     return null;
   }
 
-  const basePrice = 30000;
-  const taxAndGST = 5000;
-  const totalPrice = basePrice + taxAndGST - appliedDiscount;
+  const baseFare = schedule.route.baseFare;
+  const taxAndGST = Math.round(baseFare * 0.18); // 18% tax
+  const totalPrice = baseFare + taxAndGST - appliedDiscount;
 
   const handleApplyCode = () => {
     if (promoCode.toUpperCase() === "BOOKNOW") {
-      setAppliedDiscount(basePrice * 0.5); // 50% off
+      setAppliedDiscount(baseFare * 0.5); // 50% off
     } else if (promoCode.toUpperCase() === "FIRSTTIME") {
-      setAppliedDiscount(basePrice * 0.2); // 20% off
+      setAppliedDiscount(baseFare * 0.2); // 20% off
     } else {
       alert("Invalid promo code");
       setAppliedDiscount(0);
     }
   };
 
-  const getRouteInfo = () => {
-    if (!train.routes || train.routes.length === 0) {
-      return {
-        source: train.departureStation || "N/A",
-        destination: train.arrivalStation || "N/A",
-        departureTime: train.departureTime || "N/A",
-        arrivalTime: train.arrivalTime || "N/A",
-        duration: train.duration || "N/A",
-      };
-    }
-
-    const firstRoute = train.routes[0];
-    const lastRoute = train.routes[train.routes.length - 1];
-
-    return {
-      source: firstRoute.station.name,
-      destination: lastRoute.station.name,
-      departureTime: firstRoute.departureTime,
-      arrivalTime: lastRoute.arrivalTime,
-      duration: "8 hours", // Calculate this based on times if needed
-    };
-  };
-
-  const routeInfo = getRouteInfo();
-
   const handleBookNow = () => {
     const bookingDetails: BookingDetails = {
-      trainId: train._id || "",
-      trainNumber: train.trainNumber,
-      trainName: train.trainName,
-      class: train.class,
-      quota: train.quota,
-      source: routeInfo.source,
-      destination: routeInfo.destination,
-      departureTime: routeInfo.departureTime,
-      arrivalTime: routeInfo.arrivalTime,
-      baseFare: train.baseFare || basePrice,
+      trainId: schedule.train._id,
+      trainNumber: schedule.train.trainNumber,
+      trainName: schedule.train.trainName,
+      class: searchParams.get("class") || "",
+      quota: "General",
+      source: schedule.route.fromStation.name,
+      destination: schedule.route.toStation.name,
+      departureTime: schedule.departureTime,
+      arrivalTime: schedule.arrivalTime,
+      baseFare: schedule.route.baseFare,
       totalAmount: totalPrice,
       travelers: travelers.map(traveler => ({
         ...traveler,
@@ -90,38 +89,34 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
       })),
     };
 
-    // Store booking details in localStorage for payment page
     localStorage.setItem("bookingDetails", JSON.stringify(bookingDetails));
     router.push("/trains/payment");
   };
 
   return (
-    <div className="w-full  space-y-4">
+    <div className="w-full space-y-4">
       {/* Boarding Details */}
       <div className="bg-[#F5F5F5] p-4 rounded-lg border-2 border-dashed border-gray-300">
         <div className="flex justify-between items-center">
           <div>
-            <p className="font-medium">{train.trainNumber} - {train.trainName}</p>
-            <p className="text-[#07561A]">Class {train.class} • {train.quota} Quota</p>
+            <p className="font-medium">{schedule.train.trainNumber} - {schedule.train.trainName}</p>
+            <p className="text-[#07561A]">Class {searchParams.get("class")} • General Quota</p>
           </div>
         </div>
         <div className="flex justify-between items-center mt-2">
           <div>
-            <p className="text-sm">{routeInfo.departureTime}</p>
-            <p className="text-sm text-gray-600">{routeInfo.source}</p>
+            <p className="text-sm">{schedule.departureTime}</p>
+            <p className="text-sm text-gray-600">{schedule.route.fromStation.name}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-500">{routeInfo.duration}</p>
+            <p className="text-sm text-gray-500">{schedule.route.estimatedDuration}</p>
             <div className="w-24 h-0.5 bg-gray-300 my-1"></div>
           </div>
           <div className="text-right">
-            <p className="text-sm">{routeInfo.arrivalTime}</p>
-            <p className="text-sm text-gray-600">{routeInfo.destination}</p>
+            <p className="text-sm">{schedule.arrivalTime}</p>
+            <p className="text-sm text-gray-600">{schedule.route.toStation.name}</p>
           </div>
         </div>
-        <button className="mt-3 text-[#07561A] text-sm border border-[#07561A] px-4 py-1 rounded-md">
-          Change boarding station
-        </button>
       </div>
 
       {/* Offers */}
@@ -145,30 +140,6 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
             <button 
               onClick={() => {
                 setPromoCode("BOOKNOW");
-                handleApplyCode();
-              }}
-              className="text-[#07561A] text-sm font-medium hover:text-[#064e15] px-4 py-1 border border-[#07561A] rounded-md"
-            >
-              Apply
-            </button>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-            <div className="flex items-start gap-2">
-              <Image
-                src="/Assets/Vector.png"
-                width={16}
-                height={16}
-                alt="check"
-                className="mt-1 flex-shrink-0"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium">20% off</p>
-                <p className="text-xs text-gray-600">Use code FIRSTTIME</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => {
-                setPromoCode("FIRSTTIME");
                 handleApplyCode();
               }}
               className="text-[#07561A] text-sm font-medium hover:text-[#064e15] px-4 py-1 border border-[#07561A] rounded-md"
@@ -205,14 +176,14 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span>Base Ticket Fare:</span>
-            <span>₦{basePrice.toLocaleString()}</span>
+            <span>₦{baseFare.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Total Travelers:</span>
-            <span>{travelers.length}</span>
+            <span>{travelers.length || 1}</span>
           </div>
           <div className="flex justify-between">
-            <span>Taxes & GST:</span>
+            <span>Taxes & GST (18%):</span>
             <span>₦{taxAndGST.toLocaleString()}</span>
           </div>
           {appliedDiscount > 0 && (
@@ -230,7 +201,7 @@ const BookingRight: React.FC<BookingRightProps> = ({ train, travelers }) => {
 
       <button 
         onClick={handleBookNow}
-        className="w-full bg-[#07561A] text-white py-3 rounded-lg font-medium"
+        className="w-full bg-[#07561A] text-white py-3 rounded-lg font-medium hover:bg-[#064e15] transition-colors"
       >
         Book Now
       </button>

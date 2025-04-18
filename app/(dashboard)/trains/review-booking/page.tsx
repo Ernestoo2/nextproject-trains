@@ -5,41 +5,48 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BookingLeft from "./_components/BookingLeft";
 import BookingRight from "./_components/BookingRight";
-import { getTrainDetails } from "@/api/api";
-import { TrainDetails } from "@/api/types/types";
+import { Schedule } from "@/utils/mongodb/models/Schedule";
 
 const ReviewBooking: React.FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [train, setTrain] = useState<TrainDetails | null>(null);
+  const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTrainDetails = async () => {
+    const fetchScheduleDetails = async () => {
       try {
-        const trainId = searchParams.get("trainId");
-        if (!trainId) {
-          setError("Train ID is required");
+        const scheduleId = searchParams.get("scheduleId");
+        const selectedClass = searchParams.get("class");
+        const date = searchParams.get("date");
+
+        if (!scheduleId || !selectedClass || !date) {
+          setError("Missing required parameters");
           return;
         }
 
-        const response = await getTrainDetails(trainId);
-        if (response.success && response.data && response.data.length > 0) {
-          setTrain(response.data[0]);
+        const response = await fetch(`/api/schedules/${scheduleId}?class=${selectedClass}&date=${date}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch schedule details");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          setSchedule(data.schedule);
         } else {
-          setError(response.message || "Train not found");
+          setError(data.message || "Schedule not found");
         }
       } catch (error) {
-        console.error("Error fetching train details:", error);
-        setError("An error occurred while fetching train details");
+        console.error("Error fetching schedule details:", error);
+        setError("An error occurred while fetching schedule details");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTrainDetails();
+    fetchScheduleDetails();
   }, [searchParams]);
 
   if (loading) {
@@ -63,10 +70,10 @@ const ReviewBooking: React.FC = () => {
     );
   }
 
-  if (!train) {
+  if (!schedule) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">No train details available</div>
+        <div className="text-gray-500">No schedule details available</div>
       </div>
     );
   }
@@ -75,7 +82,7 @@ const ReviewBooking: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         <BookingLeft />
-        <BookingRight train={train} travelers={[]} />
+        <BookingRight schedule={schedule} travelers={[]} />
       </div>
     </div>
   );

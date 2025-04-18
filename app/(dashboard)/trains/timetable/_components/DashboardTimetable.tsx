@@ -1,20 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { ISchedule, IStation } from '@/app/utils/mongodb/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ISchedule, IStation } from '@/utils/mongodb/types';
 import { format } from 'date-fns';
-import { Badge } from '@/app/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/components/ui/select'; 
-import { Button } from '@/app/components/ui/button';
+} from '@/components/ui/select'; 
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { DatePicker } from '@/app/components/ui/date-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface FilterState {
   fromStation: string;

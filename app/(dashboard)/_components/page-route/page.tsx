@@ -64,16 +64,10 @@ export default function RoutePage() {
       const response = await fetch("/api/stations");
       if (!response.ok) throw new Error('Failed to fetch stations');
       const data = await response.json();
-      if (data.stations) {
-        const mappedStations = data.stations.map((station: any) => ({
-          id: station._id.toString(),
-          name: station.name,
-          code: station.code,
-          city: station.city,
-          state: station.state,
-          isActive: station.isActive,
-        }));
-        setStations(mappedStations);
+      if (data.success && data.data) {
+        setStations(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to load stations');
       }
     } catch (err) {
       console.error("Error fetching stations:", err);
