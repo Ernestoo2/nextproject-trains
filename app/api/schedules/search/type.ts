@@ -2,6 +2,7 @@ import { IRoute, IStation } from "@/utils/mongodb/types";
 import { ITrain, ITrainClass } from "@/api/types/types";
 import { Schedule, ISchedule } from "@/utils/mongodb/models/Schedule";
 import mongoose from "mongoose"; // Import mongoose for ObjectId validation
+import { connectDB } from "@/utils/mongodb/connect";
 
 // Define a more specific type for the populated schedule
 export interface PopulatedSchedule extends Omit<ISchedule, 'route' | 'train'> {

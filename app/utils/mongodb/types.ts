@@ -1,4 +1,3 @@
-import { Document } from "mongoose";
 
 export interface IStation {
   _id: string;

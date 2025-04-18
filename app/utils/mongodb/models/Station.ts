@@ -10,6 +10,6 @@ const stationSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Ensure the model is registered only once
+// Remove any explicit index creation since we're using unique: true
 export const Station =
   mongoose.models.Station || mongoose.model("Station", stationSchema);

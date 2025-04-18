@@ -1,52 +1,49 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { PaymentHistory } from "../_types/payment-history.types";
-import { getPaymentHistory, savePaymentHistory } from "../_services/payment-history.service";
+import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { PaymentHistory } from "../_types/payment-history.types";
+import { getPaymentHistory } from "../_services/payment-history.service";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Clock, CreditCard, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
-export default function PaymentHistoryComponent() {
+interface PaymentHistoryProps {
+  userId?: string;
+}
+
+export default function PaymentHistoryComponent({ userId }: PaymentHistoryProps) {
   const { data: session } = useSession();
   const [payments, setPayments] = useState<PaymentHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const paymentRef = useRef<PaymentHistory[]>([]);
+  const updateRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      if (!session?.user?.id) return;
-      
-      try {
-        const history = await getPaymentHistory(session.user.id);
-        setPayments(history);
-        paymentRef.current = history;
-      } catch (err) {
-        setError("Failed to load payment history");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPayments();
-  }, [session?.user?.id]);
-
-  const addPayment = async (payment: PaymentHistory) => {
+  const fetchPayments = async () => {
+    const currentUserId = session?.user?.id || userId;
+    if (!currentUserId) return;
+    
     try {
-      const success = await savePaymentHistory(payment);
-      if (success) {
-        setPayments(prev => {
-          const updated = [payment, ...prev];
-          paymentRef.current = updated;
-          return updated;
-        });
-      }
+      const history = await getPaymentHistory(currentUserId);
+      setPayments(history);
     } catch (err) {
-      console.error("Failed to save payment:", err);
+      setError("Failed to load payment history");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPayments();
+  }, [session?.user?.id, userId]);
+
+  // Expose the update function through the ref
+  useEffect(() => {
+    updateRef.current = fetchPayments;
+  }, [session?.user?.id, userId]);
+
+  if (!session?.user && !userId) {
+    return null;
+  }
 
   if (loading) {
     return (

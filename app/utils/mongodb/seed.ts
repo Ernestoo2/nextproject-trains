@@ -29,13 +29,10 @@ interface RouteSeedData {
 
 export async function seedData() {
   try {
-    console.log('Starting database seed operation...');
     await connectDB();
-    console.log('Connected to database successfully');
 
     // Clear existing data
     try {
-      console.log('Clearing existing data...');
     await Promise.all([
       Station.deleteMany({}),
       TrainClass.deleteMany({}),
@@ -43,15 +40,12 @@ export async function seedData() {
       Route.deleteMany({}),
         Schedule.deleteMany({})
     ]);
-      console.log('Existing data cleared successfully');
     } catch (error) {
-      console.error('Error clearing existing data:', error);
-      throw error;
+      throw new Error("DataSeedingError: failed to clear existing data.");
     }
 
     // Create stations
     try {
-      console.log('Creating stations...');
     const stations = await Station.create([
         { name: 'Abuja', code: 'ABJ', city: 'Abuja', state: 'Federal Capital Territory', isActive: true },
         { name: 'Kano', code: 'KAN', city: 'Kano', state: 'Kano', isActive: true },
@@ -60,15 +54,12 @@ export async function seedData() {
         { name: 'Kaduna', code: 'KAD', city: 'Kaduna', state: 'Kaduna', isActive: true },
         { name: 'Enugu', code: 'ENU', city: 'Enugu', state: 'Enugu', isActive: true }
       ]);
-      console.log('Stations created successfully:', stations.length);
     } catch (error) {
-      console.error('Error creating stations:', error);
-      throw error;
+      throw new Error("DataSeedingError: failed to create stations.");
     }
 
     // Create train classes
     try {
-      console.log('Creating train classes...');
     const trainClasses = await TrainClass.create([
         { name: 'First Class AC', code: '1A', baseFare: 2000, isActive: true },
         { name: 'Second Class AC', code: '2A', baseFare: 1500, isActive: true },
@@ -76,15 +67,12 @@ export async function seedData() {
         { name: 'Sleeper Class', code: 'SL', baseFare: 500, isActive: true },
         { name: 'Standard Class', code: 'SC', baseFare: 300, isActive: true }
       ]);
-      console.log('Train classes created successfully:', trainClasses.length);
     } catch (error) {
-      console.error('Error creating train classes:', error);
-      throw error;
+      throw new Error("DataSeedingError: failed to create train classes.");
     }
 
     // Create trains
-    try {
-      console.log('Creating trains...');
+    try { 
     const trains = await Train.create([
       {
           trainName: 'Nigerian Express',
@@ -101,19 +89,16 @@ export async function seedData() {
           isActive: true
         }
       ]);
-      console.log('Trains created successfully:', trains.length);
 
       // Update trains with classes
       const trainClasses = await TrainClass.find({ isActive: true });
       for (const train of trains) {
         train.classes = trainClasses.map(tc => tc._id);
         await train.save();
-      }
-      console.log('Trains updated with classes successfully');
+      } 
 
       // Create routes
       try {
-        console.log('Creating routes...');
         const stations = await Station.find({ isActive: true });
         const trainClasses = await TrainClass.find({ isActive: true });
         const routes: RouteSeedData[] = [];
@@ -151,8 +136,7 @@ export async function seedData() {
       }
     }
 
-        const createdRoutes = await Route.create(routes);
-        console.log('Routes created successfully:', createdRoutes.length);
+        const createdRoutes = await Route.create(routes); 
 
         // Update trains with routes
         for (const train of trains) {
@@ -164,46 +148,31 @@ export async function seedData() {
 
           train.routes = trainRoutes;
           await train.save();
-        }
-        console.log('Trains updated with routes successfully');
+        } 
 
         // Create schedules
-        try {
-          console.log('Creating schedules...');
+        try { 
           const schedules: ScheduleSeedData[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-          console.log('Today:', today.toISOString());
 
           for (let i = 0; i < 14; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
             date.setHours(0, 0, 0, 0);
-            console.log(`Creating schedules for date: ${date.toISOString()}`);
 
             for (const train of trains) {
-              console.log(`Creating schedules for train: ${train.trainName} (${train.trainNumber})`);
               // Create schedules for all routes of the train
               for (const routeRef of train.routes) {
                 if (!routeRef) {
-                  console.log('Skipping undefined route reference');
                   continue;
                 }
 
                 // Get the full route document with populated station data
                 const route = await Route.findById(routeRef.route).populate('fromStation').populate('toStation');
                 if (!route) {
-                  console.log('Route not found:', routeRef.route);
                   continue;
                 }
-                console.log(`Found route from ${(route.fromStation as any).name} to ${(route.toStation as any).name}`);
-                console.log(`Route details: ${JSON.stringify({
-                  fromStation: route.fromStation,
-                  toStation: route.toStation,
-                  distance: route.distance,
-                  baseFare: route.baseFare,
-                  estimatedDuration: route.estimatedDuration
-                }, null, 2)}`);
 
                 // Generate random departure time between 6:00 and 20:00
                 const depHour = Math.floor(Math.random() * 14) + 6; // 6 to 20
@@ -217,7 +186,6 @@ export async function seedData() {
                 depTime.setMinutes(depTime.getMinutes() + minutes);
                 depTime.setHours(depTime.getHours() + hours);
                 const arrivalTime = `${depTime.getHours().toString().padStart(2, '0')}:${depTime.getMinutes().toString().padStart(2, '0')}`;
-                console.log(`Generated times - Departure: ${departureTime}, Arrival: ${arrivalTime}`);
 
                 // Create available seats for each class
                 const availableSeatsObj: Record<string, number> = {};
@@ -225,7 +193,6 @@ export async function seedData() {
                   const trainClass = await TrainClass.findById(classId);
             if (trainClass) {
                     availableSeatsObj[trainClass.code] = Math.floor(Math.random() * 50) + 50; // 50-100 seats per class
-                    console.log(`Set ${availableSeatsObj[trainClass.code]} seats for class ${trainClass.code}`);
             }
           }
 
@@ -238,29 +205,22 @@ export async function seedData() {
                   availableSeats: availableSeatsObj,
                   status: 'SCHEDULED',
                   isActive: true
-                });
-                console.log('Added schedule to batch');
-              }
-            }
-          }
+          });
+        }
+      }
+    }
 
-          console.log('Total schedules to create:', schedules.length);
           const createdSchedules = await Schedule.create(schedules);
-          console.log('Schedules created successfully:', createdSchedules.length);
         } catch (error) {
-          console.error('Error creating schedules:', error);
-          throw error;
+          throw new Error("DataSeedingError: failed to create schedules.");
         }
       } catch (error) {
-        console.error('Error in seed operation:', error);
-        throw error;
+        throw new Error("DataSeedingError: error during route creation.");
       }
     } catch (error) {
-      console.error('Error in seed operation:', error);
-      throw error;
+      throw new Error("DataSeedingError: error during train creation process.");
     }
   } catch (error) {
-    console.error('Error in seed operation:', error);
-    throw error;
+    throw new Error("DataSeedingError: seed operation failed.");
   }
 }

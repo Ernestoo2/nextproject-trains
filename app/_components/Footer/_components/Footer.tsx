@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { FaGithubSquare, FaInstagramSquare } from "react-icons/fa";
 import { FaLinkedin, FaSquareFacebook } from "react-icons/fa6";
 import { ImSkype } from "react-icons/im";
@@ -72,9 +73,9 @@ export default function Footer() {
               "Career",
               "Customer Service",
             ].map((link) => (
-              <a key={link} href="/" className="text-base hover:underline">
+              <Link key={link} href="/" className="text-base hover:underline">
                 {link}
-              </a>
+              </Link>
             ))}
           </div>
 

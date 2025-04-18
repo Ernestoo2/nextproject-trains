@@ -47,41 +47,16 @@ export async function PUT(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
-    // Check authentication
-    const session = await getServerSession();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Connect to database
     await connectDB();
-
-    // Find user or create default profile
-    let user = await User.findOne({ email: session.user.email });
-
-    // If user doesn't exist, create a default profile
-    if (!user) {
-      const naijaRailsId = `NR${Math.floor(Math.random() * 10000000000)
-        .toString()
-        .padStart(10, "0")}`;
-      user = await User.create({
-        email: session.user.email,
-        name: session.user.name || "",
-        naijaRailsId,
-        role: "user",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
-
-    return NextResponse.json({ user });
+    const users = await User.find().select("-password").sort({ name: 1 });
+    return NextResponse.json({ users });
   } catch (error) {
-    console.error("Profile fetch error:", error);
+    console.error("Error fetching user profiles:", error);
     return NextResponse.json(
-      { error: "Failed to fetch profile" },
-      { status: 500 },
+      { error: "Failed to fetch user profiles" },
+      { status: 500 }
     );
   }
 }

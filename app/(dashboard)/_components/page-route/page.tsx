@@ -54,17 +54,23 @@ export default function RoutePage() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/stations");
-      if (!response.ok) throw new Error('Failed to fetch stations');
-      const data = await response.json();
-      if (data.success && data.data) {
-        setStations(data.data);
-      } else {
-        throw new Error(data.message || 'Failed to load stations');
+      const response = await fetch("/api/stations", { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const data = await response.json();
+      console.log("Fetched stations data:", data);
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load stations');
+      }
+      if (!Array.isArray(data.data)) {
+        throw new Error('Invalid stations data format');
+      }
+      setStations(data.data);
     } catch (err) {
       console.error("Error fetching stations:", err);
       setError(err instanceof Error ? err.message : "Failed to load stations");
+      setStations([]);
     } finally {
       setLoading(false);
     }
