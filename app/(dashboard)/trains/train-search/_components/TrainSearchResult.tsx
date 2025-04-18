@@ -1,17 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
-import Image from "next/image";
-import Link from "next/link";
+import React, { useState, useEffect  } from "react"; 
+import Image from "next/image"; 
 import search from "../../../../../public/Assets/Searchpic.png";
 import search1 from "../../../../../public/Assets/Searchpic2.png";
-import { ITrain } from "@/app/utils/mongodb/types";
 import DateSlider from "./DateSlider";
-import TrainCard from "./TrainCard";
-import { TrainDetails } from "../_types/train.types";
 import StationRouteCard from "./StationRouteCard";
-
+import { ScheduleWithDetails } from "../_types/train.types";
 type Breakpoint = "mobile" | "tablet" | "desktop";
 
 const useBreakpoint = (): Breakpoint => {
@@ -56,31 +50,7 @@ const useDebounce = (value: any, delay: number) => {
 interface TrainSearchResultsProps {
   initialLoading?: boolean;
 }
-
-interface Station {
-  _id: string;
-  name: string;
-  code: string;
-}
-
-interface Schedule {
-  _id: string;
-  train: {
-    _id: string;
-    trainName: string;
-    trainNumber: string;
-  };
-  departureTime: string;
-  arrivalTime: string;
-  date: string;
-  availableSeats: {
-    FC?: number;
-    BC?: number;
-    SC?: number;
-  };
-  fromStation: Station;
-  toStation: Station;
-}
+ 
 
 const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
   initialLoading = false,
@@ -88,7 +58,7 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
   const [selectedDate, setSelectedDate] = useState<string>("Wed 16");
   const [fromStation, setFromStation] = useState<string>("Port Harcourt");
   const [toStation, setToStation] = useState<string>("Enugu");
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);
   const [loading, setLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,16 +195,8 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
             <div className="space-y-4">
               {schedules.map((schedule) => (
                 <StationRouteCard
-                  key={schedule._id}
-                  fromStation={schedule.fromStation.name}
-                  toStation={schedule.toStation.name}
-                  departureTime={schedule.departureTime}
-                  arrivalTime={schedule.arrivalTime}
-                  duration={calculateDuration(schedule.departureTime, schedule.arrivalTime)}
-                  trainName={schedule.train.trainName}
-                  trainNumber={schedule.train.trainNumber}
-                  date={schedule.date}
-                  availableSeats={schedule.availableSeats}
+                  key={schedule._id} 
+                  schedule={schedule }
                 />
               ))}
             </div>

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { connectDB } from "@/utils/mongodb/connect";
 import { Route } from "@/utils/mongodb/models/Route";
 import { Schedule } from "@/utils/mongodb/models/Schedule";
-import { Station } from "@/utils/mongodb/models/Station";
+import { Station, Train, TrainClass } from "@/utils/mongodb/models";
 import { cls } from "./type";
 
 type ApiResponse<T> = {
@@ -81,6 +81,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Ensure Train model is registered before querying
+    if (!mongoose.models.Train) {
+      console.log("Registering Train model...");
+      // The model will be registered when imported from @/utils/mongodb/models
+    }
+
     // Construct query
     const query: any = {
       route: route._id,
@@ -109,14 +115,15 @@ export async function GET(request: NextRequest) {
       .populate({
         path: "train",
         select: "trainName trainNumber",
+        model: Train
       })
       .populate({
         path: "route",
         select: "fromStation toStation distance baseFare estimatedDuration availableClasses",
         populate: [
-          { path: "fromStation", select: "name code city state" },
-          { path: "toStation", select: "name code city state" },
-          { path: "availableClasses", select: "name code baseFare" }
+          { path: "fromStation", select: "name code city state", model: Station },
+          { path: "toStation", select: "name code city state", model: Station },
+          { path: "availableClasses", select: "name code baseFare", model: TrainClass }
         ]
       })
       .sort({ departureTime: 1 });

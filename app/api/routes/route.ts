@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/utils/mongodb/connect";
 import { Route } from "@/utils/mongodb/models/Route";
+import { cls } from "../schedules/search/type";
 
 export async function GET() {
   try {
@@ -27,7 +28,7 @@ export async function GET() {
         distance: route.distance,
         baseFare: route.baseFare,
         estimatedDuration: route.estimatedDuration,
-        availableClasses: route.availableClasses.map((cls: any) => ({
+        availableClasses: route.availableClasses.map((cls: cls) => ({
           _id: cls._id.toString(),
           name: cls.name,
           code: cls.code,

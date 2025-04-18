@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TrainScheduleCard } from '../../train-timetable/_components/TrainScheduleCard';
-import { ScheduleWithDetails } from '@/types/route.types';
+import { ScheduleWithDetails } from '../_types/train.types';
 
 export default function TrainSearchTimetable() {
   const searchParams = useSearchParams();
@@ -85,6 +85,9 @@ export default function TrainSearchTimetable() {
           duration={schedule.duration}
           availableClasses={schedule.availableClasses}
           status={schedule.status}
+          schedule={schedule} 
+          selectedClass={schedule.selectedClass}
+          date={schedule.date}
         />
       ))}
     </div>

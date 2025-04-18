@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { FaPlane, FaTrain, FaClock, FaMapMarkerAlt, FaRoute, FaTicketAlt } from "react-icons/fa";
+import { FaTrain} from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import FromToSelector from "./_components/rout-selectors/FromToSelector";
 import Tripselector from "./_components/rout-selectors/Tripselector";
@@ -13,14 +13,12 @@ import {
   TrainClass, 
   Route, 
   PassengerDetails, 
-  RouteState,
-  Trip
+  RouteState, 
 } from "@/types/route.types";
-import { TripType, RouteSummary, DisplayRoute } from "./_type";
+import { TripType  } from "./_type";
 
 export default function RoutePage() {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState<"trains" | "flights">("trains");
   const [stations, setStations] = useState<StationType []>([]);
   const [selectedTripType, setSelectedTripType] = useState<TripType>(TRIP_TYPES.ONE_WAY);
   const [routeState, setRouteState] = useState<RouteState>({
@@ -37,20 +35,15 @@ export default function RoutePage() {
 
   const [selectedFromStationId, setSelectedFromStationId] = useState<string>("");
   const [selectedToStationId, setSelectedToStationId] = useState<string>("");
-  const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [selectedFrom, setSelectedFrom] = useState<StationType | null>(null);
-  const [selectedTo, setSelectedTo] = useState<StationType | null>(null);
-  const [isSeeding, setIsSeeding] = useState(false);
+  const [selectedTo, setSelectedTo] = useState<StationType | null>(null); 
   const [dates, setDates] = useState({
     departure: new Date().toISOString().split('T')[0],
     return: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
-
-  const [routeSummaries, setRouteSummaries] = useState<Trip[]>([]);
-  const [loadingSummary, setLoadingSummary] = useState(false);
 
   const [trainClasses, setTrainClasses] = useState<TrainClass[]>([]);
 

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/utils/mongodb/connect";
-import { Route } from "@/models/Route";
-import { Schedule } from "@/models/Schedule";
-import { Station } from "@/models/Station";
-import { TrainClass } from "@/models/TrainClass";
-
+import { Route } from "@/utils/mongodb/models/Route";
+import { Schedule } from "@/utils/mongodb/models/Schedule";
+ 
 export async function GET() {
   try {
     // Connect to the database first to ensure models are registered

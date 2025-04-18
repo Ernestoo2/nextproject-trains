@@ -1,5 +1,3 @@
-import Footer from "@/app/_components/Footer/_components/Footer";
-import Header1Ui from "@/app/_components/Header/Header1Ui";
 import React from "react";
 
 export default function UserLayout({

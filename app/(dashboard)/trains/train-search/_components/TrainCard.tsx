@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Train } from "@/utils/mongodb/models";
+import Link from "next/link"; 
 
 interface TrainCardProps {
   train: {

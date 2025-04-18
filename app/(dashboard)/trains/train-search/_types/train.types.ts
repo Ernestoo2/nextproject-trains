@@ -1,8 +1,6 @@
-import { Document } from 'mongoose';
-import type { Station } from "@/utils/mongodb/models/Station";
-import type { Schedule } from "@/utils/mongodb/models/Schedule";
+import { Route } from "@/types/route.types";
+import type { Station } from "@/utils/mongodb/models/Station"; 
 import type { Train } from "@/utils/mongodb/models/Train";
-import type { ISchedule } from "@/utils/mongodb/models/Schedule";
 
 export interface TrainDetails {
   _id: string;
@@ -98,11 +96,11 @@ export const initialTravelData: TravelRoute[] = [
 ];
 
 export interface TrainClass {
-  _id?: string;
-  code: string;
+  _id: string;
   name: string;
-  description?: string;
-  isActive: boolean;
+  code: string;
+  baseFare: number;
+  availableSeats: number;
 }
 
 export interface StationInfo {
@@ -146,33 +144,51 @@ export interface SearchResponse {
   error?: string;
 }
 
-export interface ScheduleWithDetails {
+export interface Schedule {
   _id: string;
-  trainNumber: string;
-  trainName: string;
+  train: Train;
+  departureStation: Station;
+  arrivalStation: Station;
   departureTime: string;
   arrivalTime: string;
-  departureStation: {
-    name: string;
-    code: string;
-    city: string;
-    state: string;
-  };
-  arrivalStation: {
-    name: string;
-    code: string;
-    city: string;
-    state: string;
-  };
   duration: string;
-  availableClasses: Array<{
-    _id: string;
-    name: string;
-    code: string;
-    baseFare: number;
-    availableSeats: number;
-  }>;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  date: string;
+  platform?: string;
+  status: ScheduleStatus;
+  availableClasses: TrainClass[];
+}
+
+export type ScheduleStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+// This is the type that includes flattened train details
+export interface ScheduleWithDetails extends Omit<Schedule, 'train'> {
+  trainNumber: string;
+  trainName: string;
+  trainId: string;
+}
+
+export interface BookingDetails {
+  scheduleId: string;
+  trainId: string;
+  trainNumber: string;
+  trainName: string;
+  departureStation: Station;
+  arrivalStation: Station;
+  departureTime: string;
+  arrivalTime: string;
+  class: string;
+  baseFare: number;
+  taxAndGST: number;
+  promoDiscount: number;
+  totalPrice: number;
+  date: string;
+}
+
+export interface PromoCode {
+  code: string;
+  discount: number;
+  maxDiscount?: number;
+  type: 'PERCENTAGE' | 'FIXED';
 }
 
 export interface Station {
@@ -187,6 +203,17 @@ export interface Train {
   _id: string;
   name: string;
   number: string;
-  type: string;
-  capacity: number;
+  trainName: string;
+  trainNumber: string;
+  routes: Array<{
+    route: Route;
+    arrivalTime: string;
+    departureTime: string;
+  }>;
+  classes: Array<{
+    _id: string;
+    name: string;
+    code: string;
+  }>;
+  isActive: boolean;
 }

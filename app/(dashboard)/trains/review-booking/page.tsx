@@ -4,8 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BookingLeft from "./_components/BookingLeft";
-import BookingRight from "./_components/BookingRight";
-import { Schedule } from "@/utils/mongodb/models/Schedule";
+import BookingRight from "./_components/BookingRight"; 
 
 const ReviewBooking: React.FC = () => {
   const { data: session } = useSession();

@@ -3,11 +3,9 @@
 import React, { useState } from "react";
 import EditProfile from "./EditProfile";
 import { UserProfile } from "@/utils/type";
-import { useUser } from "@/_providers/user/UserContext";
+ 
 
-
-const { generateNaijaRailsId } = useUser();
-
+ 
 interface AccountProps {
   user: UserProfile & {
     createdAt?: string;

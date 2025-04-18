@@ -56,34 +56,37 @@ export interface Schedule extends Document {
   fare?: Record<string, number>;
 }
 
-export interface ScheduleWithDetails {
-  _id: string;
-  trainNumber: string;
-  trainName: string;
-  departureStation: {
-    name: string;
-    code: string;
-    city: string;
-    state: string;
-  };
-  arrivalStation: {
-    name: string;
-    code: string;
-    city: string;
-    state: string;
-  };
-  departureTime: string;
-  arrivalTime: string;
-  duration: string;
-  availableClasses: Array<{
+export interface TrainScheduleCardProps {
+  schedule: {
     _id: string;
-    name: string;
-    code: string;
-    baseFare: number;
-    availableSeats: number;
-  }>;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  platform?: string;
+    train: {
+      trainNumber: string;
+      trainName: string;
+    };
+    departureTime: string;
+    arrivalTime: string;
+    route: {
+      fromStation: {
+        name: string;
+        code: string;
+      };
+      toStation: {
+        name: string;
+        code: string;
+      };
+    };
+    duration: string;
+    availableClasses: Array<{
+      _id: string;
+      name: string;
+      code: string;
+      baseFare: number;
+      availableSeats: number;
+    }>;
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  };
+  selectedClass: string;
+  date: string;
 }
 
 export interface SearchParams {

@@ -14,8 +14,7 @@ interface Traveler {
   address: string;
 }
 
-const BookingLeft: React.FC = () => {
-  const { data: session } = useSession();
+const BookingLeft: React.FC = () => { 
   const { userProfile, updateUserProfile } = useUser();
   const [travelers, setTravelers] = useState<Traveler[]>([]);
   const [newTraveler, setNewTraveler] = useState<Traveler>({

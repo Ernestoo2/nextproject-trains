@@ -1,24 +1,28 @@
 export interface BookingDetails {
+  scheduleId: string;
   trainId: string;
   trainNumber: string;
   trainName: string;
-  class: string;
-  quota: string;
-  source: string;
-  destination: string;
+  departureStation: {
+    name: string;
+    code: string;
+    city: string;
+    state: string;
+  };
+  arrivalStation: {
+    name: string;
+    code: string;
+    city: string;
+    state: string;
+  };
   departureTime: string;
   arrivalTime: string;
+  class: string;
   baseFare: number;
-  totalAmount: number;
-  travelers: {
-    name: string;
-    age: string;
-    gender: string;
-    nationality: string;
-    berthPreference: string;
-    phoneNumber: string;
-    address: string;
-  }[];
+  taxAndGST: number;
+  promoDiscount: number;
+  totalPrice: number;
+  date: string;
 }
 
 export interface PaystackPopupConfig {

@@ -1,55 +1,26 @@
-import React from 'react';
+"use client";
+ 
+import { ScheduleWithDetails, TrainClass } from '@/(dashboard)/trains/train-search/_types/train.types';
 import { Card } from "@/components/ui/card";
-import { FaClock, FaTrain } from 'react-icons/fa';
 import { Button } from "@/components/ui/button";
-import Link from 'next/link';
-
-interface Station {
-  name: string;
-  code: string;
-  city: string;
-  state: string;
-}
-
-interface TrainClass {
-  _id: string;
-  name: string;
-  code: string;
-  baseFare: number;
-  availableSeats: number;
-}
+import Link from "next/link";
+import { Clock, Train } from "lucide-react";
 
 interface TrainScheduleCardProps {
-  trainNumber: string;
-  trainName: string;
-  departureTime: string;
-  arrivalTime: string;
-  departureStation: Station;
-  arrivalStation: Station;
-  duration: string;
-  availableClasses: TrainClass[];
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  schedule: any;
-  train: any;
+  schedule: ScheduleWithDetails;
   selectedClass: string;
   date: string;
 }
 
 export function TrainScheduleCard({
-  trainNumber,
-  trainName,
-  departureTime,
-  arrivalTime,
-  departureStation,
-  arrivalStation,
-  duration,
-  availableClasses,
-  status,
   schedule,
-  train,
   selectedClass,
   date
 }: TrainScheduleCardProps) {
+  // Use the first available class if selectedClass is not provided
+  const defaultClass = schedule.availableClasses[0]?.code || '';
+  const classToUse = selectedClass || defaultClass;
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
@@ -65,68 +36,102 @@ export function TrainScheduleCard({
     }
   };
 
+  if (!schedule) {
+    return null;
+  }
+
   return (
-    <Card className="p-6 mb-4 hover:shadow-lg transition-shadow">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-        <div className="flex items-center gap-3">
-          <FaTrain className="text-2xl text-green-600" />
-          <div>
-            <h3 className="text-lg font-semibold">{trainNumber} - {trainName}</h3>
-            <p className={`text-sm ${getStatusColor(status)}`}>{status}</p>
+    <Card className="p-4 sm:p-6 mb-4 hover:shadow-lg transition-shadow">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
+        {/* Train Header Section */}
+        <div className="md:w-1/3 space-y-2">
+          <div className="flex items-center gap-3">
+            <Train className="text-xl sm:text-2xl text-green-600" />
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold">
+                {schedule.trainNumber} - {schedule.trainName}
+              </h3>
+              <p className={`text-xs sm:text-sm ${getStatusColor(schedule.status)}`}>
+                {schedule.status}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          {/* Departure Info */}
-          <div className="text-left">
-            <p className="text-xl font-bold">{departureTime}</p>
-            <p className="text-sm text-gray-600">{departureStation.name}</p>
-            <p className="text-xs text-gray-500">{departureStation.city}, {departureStation.state}</p>
-          </div>
-
-          {/* Duration */}
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex items-center gap-2">
-              <FaClock className="text-gray-400" />
-              <span className="text-sm text-gray-500">{duration}</span>
-            </div>
-            <div className="w-full h-0.5 bg-gray-200 relative my-2">
-              <div className="absolute w-2 h-2 bg-gray-400 rounded-full -top-1 left-0" />
-              <div className="absolute w-2 h-2 bg-gray-400 rounded-full -top-1 right-0" />
-            </div>
-          </div>
-
-          {/* Arrival Info */}
-          <div className="text-right">
-            <p className="text-xl font-bold">{arrivalTime}</p>
-            <p className="text-sm text-gray-600">{arrivalStation.name}</p>
-            <p className="text-xs text-gray-500">{arrivalStation.city}, {arrivalStation.state}</p>
-          </div>
-        </div>
-
-        {/* Classes and Fares */}
-        <div className="w-full md:w-auto">
-          <div className="flex flex-col gap-2">
-            {availableClasses.map((cls) => (
-              <div key={cls.code} className="flex items-center justify-between gap-4 text-sm">
-                <span className="font-medium">{cls.name}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600">₦{cls.baseFare}</span>
-                  <span className="text-gray-500">({cls.availableSeats} seats)</span>
-                </div>
+        {/* Journey Details */}
+        <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            {/* Departure */}
+            <div className="space-y-1">
+              <p className="text-lg sm:text-xl font-bold">{schedule.departureTime}</p>
+              <div>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {schedule.departureStation.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {schedule.departureStation.city}, {schedule.departureStation.state}
+                </p>
               </div>
-            ))}
+            </div>
+
+            {/* Duration */}
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <div className="flex items-center gap-2 text-gray-500">
+                <Clock className="hidden sm:block" />
+                <span className="text-xs sm:text-sm">{schedule.duration}</span>
+              </div>
+              <div className="w-full h-0.5 bg-gray-200 relative">
+                <div className="absolute w-2 h-2 bg-gray-400 rounded-full -top-1 left-0" />
+                <div className="absolute w-2 h-2 bg-gray-400 rounded-full -top-1 right-0" />
+              </div>
+            </div>
+
+            {/* Arrival */}
+            <div className="space-y-1 text-right">
+              <p className="text-lg sm:text-xl font-bold">{schedule.arrivalTime}</p>
+              <div>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {schedule.arrivalStation.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {schedule.arrivalStation.city}, {schedule.arrivalStation.state}
+                </p>
+              </div>
+            </div>
           </div>
-          {status === 'SCHEDULED' && (
-            <Link 
-              href={`/trains/review-booking?scheduleId=${schedule._id}&trainId=${train._id}&class=${selectedClass}&date=${date}`}
-              className="mt-4 w-full block"
-            >
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                Book Now
-              </Button>
-            </Link>
-          )}
+        </div>
+
+        {/* Classes and Booking */}
+        <div className="md:w-1/3 lg:w-1/4">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-2">
+              {schedule.availableClasses.map((cls: TrainClass) => (
+                <div 
+                  key={cls.code}
+                  className="flex justify-between items-center text-sm sm:text-base"
+                >
+                  <span className="font-medium">{cls.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">₦{cls.baseFare}</span>
+                    <span className="text-xs sm:text-sm text-gray-500">
+                      ({cls.availableSeats})
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {schedule.status === 'SCHEDULED' && (
+              <Link
+                href={`/trains/review-booking?scheduleId=${schedule._id}&class=${classToUse}&date=${date}`}
+                className="block"
+              >
+                <Button className="w-full text-sm sm:text-base py-2 sm:py-3 bg-green-600 hover:bg-green-700">
+                  Book Now
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </Card>

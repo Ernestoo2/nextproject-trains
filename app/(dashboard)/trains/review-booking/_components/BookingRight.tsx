@@ -1,96 +1,109 @@
 "use client";
 
 import React, { useState } from "react";
-import { TrainDetails } from "@/app/api/types/types";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BookingDetails } from "../../payment/_types/paystack.types";
-import { searchParams } from "@/app/utils/searchParams";
 
-interface BookingRightProps {
-  schedule: {
-    _id: string;
-    train: {
-      trainNumber: string;
-      trainName: string;
-    };
-    departureTime: string;
-    arrivalTime: string;
-    route: {
-      fromStation: {
-        name: string;
-        code: string;
-      };
-      toStation: {
-        name: string;
-        code: string;
-      };
-      distance: number;
-      estimatedDuration: string;
-      baseFare: number;
-    };
-    availableSeats: Record<string, number>;
-    status: string;
-  };
-  travelers: {
-    name: string;
-    age: string;
-    gender: string;
-    nationality: string;
-    berthPreference: string;
-    phoneNumber?: string;
-    address?: string;
-  }[];
+interface Station {
+  _id: string;
+  name: string;
+  code: string;
+  city: string;
+  state: string;
 }
 
-const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
-  const { data: session } = useSession();
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedDiscount, setAppliedDiscount] = useState(0);
-  const router = useRouter();
+interface TrainClass {
+  _id: string;
+  name: string;
+  code: string;
+  baseFare: number;
+  availableSeats: number;
+}
 
-  if (!session?.user) {
+interface Train {
+  _id: string;
+  trainNumber: string;
+  trainName: string;
+}
+
+interface ScheduleDetails {
+  _id: string;
+  train: Train;
+  departureStation: Station;
+  arrivalStation: Station;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  availableClasses: TrainClass[];
+  status: string;
+  platform: string;
+  date: string;
+}
+
+interface BookingRightProps {
+  schedule: any; // We'll properly type this later
+  travelers?: any[];
+}
+
+export function BookingRight({ schedule, travelers = [] }: BookingRightProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const params = useSearchParams();
+  const selectedClass = params.get('class') || '';
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+
+  // Guard clause for missing data
+  if (!schedule || !session?.user) {
     return null;
   }
 
-  const baseFare = schedule.route.baseFare;
-  const taxAndGST = Math.round(baseFare * 0.18); // 18% tax
-  const totalPrice = baseFare + taxAndGST - appliedDiscount;
+  // Find the selected class details
+  const selectedClassDetails = schedule.availableClasses?.find(
+    (cls: any) => cls.code === selectedClass
+  );
 
-  const handleApplyCode = () => {
-    if (promoCode.toUpperCase() === "BOOKNOW") {
-      setAppliedDiscount(baseFare * 0.5); // 50% off
-    } else if (promoCode.toUpperCase() === "FIRSTTIME") {
-      setAppliedDiscount(baseFare * 0.2); // 20% off
-    } else {
-      alert("Invalid promo code");
-      setAppliedDiscount(0);
+  if (!selectedClassDetails) {
+    return <div>Invalid class selected</div>;
+  }
+
+  const baseFare = selectedClassDetails.baseFare;
+  const taxAndGST = Math.round(baseFare * 0.18);
+  const totalPrice = baseFare + taxAndGST - promoDiscount;
+
+  const handlePromoCode = () => {
+    if (promoCode === 'FIRST') {
+      setPromoDiscount(Math.round(baseFare * 0.1));
+      setPromoApplied(true);
     }
   };
 
   const handleBookNow = () => {
     const bookingDetails: BookingDetails = {
-      trainId: schedule.train._id,
-      trainNumber: schedule.train.trainNumber,
-      trainName: schedule.train.trainName,
-      class: searchParams.get("class") || "",
-      quota: "General",
-      source: schedule.route.fromStation.name,
-      destination: schedule.route.toStation.name,
+      scheduleId: schedule._id,
+      trainId: schedule._id, // Fallback to schedule ID if train ID is not available
+      trainNumber: schedule.trainNumber || 'N/A',
+      trainName: schedule.trainName || 'N/A',
+      departureStation: schedule.departureStation,
+      arrivalStation: schedule.arrivalStation,
       departureTime: schedule.departureTime,
       arrivalTime: schedule.arrivalTime,
-      baseFare: schedule.route.baseFare,
-      totalAmount: totalPrice,
-      travelers: travelers.map(traveler => ({
-        ...traveler,
-        phoneNumber: traveler.phoneNumber || "",
-        address: traveler.address || ""
-      })),
+      class: selectedClass,
+      baseFare,
+      taxAndGST,
+      promoDiscount,
+      totalPrice,
+      date: schedule.date,
     };
 
-    localStorage.setItem("bookingDetails", JSON.stringify(bookingDetails));
-    router.push("/trains/payment");
+    // Generate a random booking reference
+    const bookingRef = `TR-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+    
+    localStorage.setItem('bookingDetails', JSON.stringify(bookingDetails));
+    router.push(`/trains/payment?ref=${bookingRef}`);
   };
 
   return (
@@ -99,22 +112,28 @@ const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
       <div className="bg-[#F5F5F5] p-4 rounded-lg border-2 border-dashed border-gray-300">
         <div className="flex justify-between items-center">
           <div>
-            <p className="font-medium">{schedule.train.trainNumber} - {schedule.train.trainName}</p>
-            <p className="text-[#07561A]">Class {searchParams.get("class")} • General Quota</p>
+            <p className="font-medium">
+              {schedule.trainNumber} - {schedule.trainName}
+            </p>
+            <p className="text-[#07561A]">Class {selectedClass} • Tatkal Quota</p>
           </div>
         </div>
         <div className="flex justify-between items-center mt-2">
           <div>
             <p className="text-sm">{schedule.departureTime}</p>
-            <p className="text-sm text-gray-600">{schedule.route.fromStation.name}</p>
+            <p className="text-sm text-gray-600">
+              {schedule.departureStation?.name} ({schedule.departureStation?.code})
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-500">{schedule.route.estimatedDuration}</p>
+            <p className="text-sm text-gray-500">{schedule.duration || '8 hours'}</p>
             <div className="w-24 h-0.5 bg-gray-300 my-1"></div>
           </div>
           <div className="text-right">
             <p className="text-sm">{schedule.arrivalTime}</p>
-            <p className="text-sm text-gray-600">{schedule.route.toStation.name}</p>
+            <p className="text-sm text-gray-600">
+              {schedule.arrivalStation?.name} ({schedule.arrivalStation?.code})
+            </p>
           </div>
         </div>
       </div>
@@ -140,7 +159,7 @@ const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
             <button 
               onClick={() => {
                 setPromoCode("BOOKNOW");
-                handleApplyCode();
+                handlePromoCode();
               }}
               className="text-[#07561A] text-sm font-medium hover:text-[#064e15] px-4 py-1 border border-[#07561A] rounded-md"
             >
@@ -159,14 +178,19 @@ const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
               onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Enter Code"
               className="flex-1 px-3 py-2 border-t-0 border-b-2 border-x-0 border-gray-300 focus:outline-none focus:border-[#07561A] bg-transparent"
+              disabled={promoApplied}
             />
             <button
-              onClick={handleApplyCode}
+              onClick={handlePromoCode}
               className="bg-[#07561A] text-white px-6 py-2 rounded-md whitespace-nowrap hover:bg-[#064e15] transition-colors"
+              disabled={promoApplied}
             >
               Apply
             </button>
           </div>
+          {promoApplied && (
+            <p className="text-green-500 mt-2">Promo code applied successfully!</p>
+          )}
         </div>
       </div>
 
@@ -179,17 +203,13 @@ const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
             <span>₦{baseFare.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
-            <span>Total Travelers:</span>
-            <span>{travelers.length || 1}</span>
-          </div>
-          <div className="flex justify-between">
             <span>Taxes & GST (18%):</span>
             <span>₦{taxAndGST.toLocaleString()}</span>
           </div>
-          {appliedDiscount > 0 && (
+          {promoDiscount > 0 && (
             <div className="flex justify-between text-[#07561A]">
               <span>Discount:</span>
-              <span>-₦{appliedDiscount.toLocaleString()}</span>
+              <span>-₦{promoDiscount.toLocaleString()}</span>
             </div>
           )}
           <div className="flex justify-between font-medium pt-2 border-t">
@@ -207,7 +227,7 @@ const BookingRight: React.FC<BookingRightProps> = ({ schedule, travelers }) => {
       </button>
     </div>
   );
-};
+}
 
 export default BookingRight;
 

@@ -23,11 +23,11 @@ export function Nav1() {
         </Link>
         <Link
           className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
-            isActive("/trains/train-search")
+            isActive("/trains/daily-trains")
               ? "text-green-600"
               : "hover:text-green-600"
           }`}
-          href="/trains/train-search"
+          href="/trains/daily-trains"
         >
           Trains Schedule
         </Link>

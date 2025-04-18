@@ -6,6 +6,7 @@ import { useUser } from "@/_providers/user/UserContext";
 import Image from "next/image";
 import QRcode from "../../../../../public/Assets/QRcode.png";
 import { BookingDetails } from "../../payment/_types/paystack.types";
+import { format } from "date-fns";
 
 export default function BookingSuccess() {
   const router = useRouter();
@@ -43,6 +44,14 @@ export default function BookingSuccess() {
   const handleDownloadTicket = () => {
     // TODO: Implement ticket download functionality
     alert("Download functionality coming soon!");
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy");
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -89,7 +98,7 @@ export default function BookingSuccess() {
             <span className="text-right">
               Booking Reference:{" "}
               <span className="text-xs sm:text-sm md:text-base font-medium">
-                {bookingDetails.trainId}
+                {bookingDetails.scheduleId}
               </span>
             </span>
           </div>
@@ -105,12 +114,15 @@ export default function BookingSuccess() {
                 {bookingDetails.departureTime}
               </p>
               <p className="text-xs sm:text-sm md:text-base font-medium">
-                {bookingDetails.source}
+                {bookingDetails.departureStation.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {bookingDetails.departureStation.city}, {bookingDetails.departureStation.state}
               </p>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-xs sm:text-sm md:text-base text-[#9CA3AF]">
-                Journey
+                {formatDate(bookingDetails.date)}
               </span>
               <hr className="border-t border-[#D1D5DB] w-24 mt-2" />
             </div>
@@ -119,56 +131,37 @@ export default function BookingSuccess() {
                 {bookingDetails.arrivalTime}
               </p>
               <p className="text-xs sm:text-sm md:text-base font-medium">
-                {bookingDetails.destination}
+                {bookingDetails.arrivalStation.name}
               </p>
-            </div>
-          </div>
-
-          {/* Traveler Details */}
-          <div className="mt-6">
-            <h3 className="text-lg font-medium">Traveler Details</h3>
-            <div className="mt-4 space-y-4">
-              {bookingDetails.travelers.map((traveler, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Passenger {index + 1}</span>
-                    <span className="text-gray-600">{traveler.name}</span>
-                  </div>
-                  <div className="mt-2 text-sm text-gray-600">
-                    {traveler.age} years • {traveler.gender} • {traveler.nationality} • {traveler.berthPreference} berth
-                  </div>
-                  <div className="mt-1 text-sm text-gray-600">
-                    Phone: {traveler.phoneNumber}
-                  </div>
-                  <div className="mt-1 text-sm text-gray-600">
-                    Address: {traveler.address}
-                  </div>
-                </div>
-              ))}
+              <p className="text-xs text-gray-500">
+                {bookingDetails.arrivalStation.city}, {bookingDetails.arrivalStation.state}
+              </p>
             </div>
           </div>
 
           {/* Booking Details */}
           <div className="mt-6">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Class & Quota:</span>
-              <span>Class {bookingDetails.class} • {bookingDetails.quota} Quota</span>
+              <span className="text-gray-600">Class:</span>
+              <span>Class {bookingDetails.class}</span>
             </div>
             <div className="flex justify-between items-center mt-2">
-              <span className="text-gray-600">Base Fare (per passenger):</span>
+              <span className="text-gray-600">Base Fare:</span>
               <span>₦{bookingDetails.baseFare.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center mt-2">
-              <span className="text-gray-600">Number of Passengers:</span>
-              <span>{bookingDetails.travelers.length}</span>
+              <span className="text-gray-600">Tax & GST:</span>
+              <span>₦{bookingDetails.taxAndGST.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-gray-600">Total Base Fare:</span>
-              <span>₦{(bookingDetails.baseFare * bookingDetails.travelers.length).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center mt-2 font-bold">
+            {bookingDetails.promoDiscount > 0 && (
+              <div className="flex justify-between items-center mt-2 text-green-600">
+                <span>Discount Applied:</span>
+                <span>-₦{bookingDetails.promoDiscount.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center mt-2 pt-2 border-t font-bold">
               <span>Total Amount:</span>
-              <span className="text-[#07561A]">₦{bookingDetails.totalAmount.toLocaleString()}</span>
+              <span className="text-[#07561A]">₦{bookingDetails.totalPrice.toLocaleString()}</span>
             </div>
           </div>
         </div>

@@ -171,8 +171,8 @@ export async function seedData() {
         try {
           console.log('Creating schedules...');
           const schedules: ScheduleSeedData[] = [];
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
           console.log('Today:', today.toISOString());
 
           for (let i = 0; i < 14; i++) {
@@ -210,7 +210,7 @@ export async function seedData() {
                 const depMinute = Math.floor(Math.random() * 12) * 5; // 0, 5, 10, ..., 55
                 const departureTime = `${depHour.toString().padStart(2, '0')}:${depMinute.toString().padStart(2, '0')}`;
 
-                // Calculate arrival time based on route duration
+          // Calculate arrival time based on route duration
                 const [hours, minutes] = route.estimatedDuration.split(':').map(Number);
                 const depTime = new Date();
                 depTime.setHours(depHour, depMinute, 0, 0);
@@ -221,19 +221,19 @@ export async function seedData() {
 
                 // Create available seats for each class
                 const availableSeatsObj: Record<string, number> = {};
-                for (const classId of route.availableClasses) {
+          for (const classId of route.availableClasses) {
                   const trainClass = await TrainClass.findById(classId);
-                  if (trainClass) {
+            if (trainClass) {
                     availableSeatsObj[trainClass.code] = Math.floor(Math.random() * 50) + 50; // 50-100 seats per class
                     console.log(`Set ${availableSeatsObj[trainClass.code]} seats for class ${trainClass.code}`);
-                  }
-                }
+            }
+          }
 
-                schedules.push({
+          schedules.push({
                   train: train._id,
-                  route: route._id,
-                  departureTime,
-                  arrivalTime,
+            route: route._id,
+            departureTime,
+            arrivalTime,
                   date,
                   availableSeats: availableSeatsObj,
                   status: 'SCHEDULED',
