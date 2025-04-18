@@ -49,9 +49,9 @@ export default function DailyTrainsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 ">
       <h1 className="text-2xl font-bold mb-6">Today's Available Trains</h1>
-      <div className="space-y-4">
+      <div className="space-y-4  ">
         {trains.map((train) => (
           <Card key={train._id} className="p-4 sm:p-6 mb-4 hover:shadow-lg transition-shadow">
             <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
