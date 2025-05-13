@@ -1,64 +1,58 @@
-import { TrainDetails } from "../(dashboard)/trains/train-search/_types/train.types";
-import { ApiResponse } from "./type";
-import { initialTravelData, TravelRoute } from "./type";
+import { ApiResponse } from "@/types/shared/api";
+import { UnifiedTrainDetails as TrainDetails } from "@/types/shared/trains";
+import { TravelFormState } from '@/types/shared/booking';
 
 export let trainData: TrainDetails[] = [
   {
-    id: 1,
+    _id: '1',
     trainName: "12430 - PH ENUGU",
-    runsOn: "Everyday",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
-    duration: "8 hours",
+    trainNumber: "12430",
+    routes: [{
+      station: {
+        _id: "1",
+        name: "Port Harcourt",
+        code: "PH",
+      },
+      arrivalTime: "07:25",
+      departureTime: "11:25",
+      day: 1
+    }],
+    classes: [{
+      _id: "1",
+      name: "First Class",
+      code: "FC",
+    }],
+    isActive: true,
   },
   {
-    id: 2,
+    _id: '2',
     trainName: "12320 - EBLE",
-    runsOn: "Everyday",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
-    duration: "8 hours 50 minutes",
-  },
-  {
-    id: 3,
-    trainName: "12320 - EBLE",
-    runsOn: "Everyday",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
-    duration: "8 hours 30 minutes",
-  },
-  {
-    id: 4,
-    trainName: "12320 - EBLE",
-    runsOn: "Everyday",
-    startDate: "Nov 16",
-    endDate: "Nov 17",
-    departureTime: "11:25 pm",
-    arrivalTime: "7:25 am",
-    departureStation: "Port Harcourt, Rivers",
-    arrivalStation: "Enugu, Enugu",
-    duration: "8 hours 20 minutes",
+    trainNumber: "12320",
+    routes: [{
+      station: {
+        _id: "2",
+        name: "Enugu",
+        code: "ENU",
+      },
+      arrivalTime: "07:25",
+      departureTime: "11:25",
+      day: 1
+    }],
+    classes: [{
+      _id: "2",
+      name: "Business",
+      code: "BC",
+    }],
+    isActive: true,
   },
 ];
-let travelData: TravelRoute[] = initialTravelData;
-export const getTravelRoutes = (): Promise<ApiResponse<TravelRoute[]>> => {
+
+export const getTravelRoutes = (): Promise<ApiResponse<TravelFormState[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         success: true,
-        data: travelData,
+        data: [],
         message: "Travel routes fetched successfully",
       });
     }, 5000);
@@ -66,14 +60,14 @@ export const getTravelRoutes = (): Promise<ApiResponse<TravelRoute[]>> => {
 };
 
 export const fetchTravelRoutes = async (): Promise<
-  ApiResponse<TravelRoute[]>
+  ApiResponse<TravelFormState[]>
 > => {
   // Simulating an API request with a delay
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         success: true,
-        data: initialTravelData,
+        data: [],
         message: "Travel routes fetched successfully",
       });
     }, 1000); // 1 second delay to simulate API response time
@@ -82,16 +76,13 @@ export const fetchTravelRoutes = async (): Promise<
 
 export const updateTravleRoute = (
   id: number,
-  updatedRoute: Partial<TravelRoute>,
-): Promise<ApiResponse<TravelRoute[]>> => {
+  updatedRoute: Partial<TravelFormState>,
+): Promise<ApiResponse<TravelFormState[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      travelData = travelData.map((route) =>
-        route.id === id ? { ...route, ...updatedRoute } : route,
-      );
       resolve({
         success: true,
-        data: travelData,
+        data: [],
         message: "Travel route updated successfully",
       });
     }, 3000);
@@ -100,13 +91,12 @@ export const updateTravleRoute = (
 
 export const deleteTravelRoute = (
   id: number,
-): Promise<ApiResponse<TravelRoute[]>> => {
+): Promise<ApiResponse<TravelFormState[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      travelData = travelData.filter((route) => route.id !== id);
       resolve({
         success: true,
-        data: travelData,
+        data: [],
         message: "Travel route deleted successfully",
       });
     }, 2000);
@@ -145,7 +135,7 @@ export const deleteTrainDetails = (
 ): Promise<ApiResponse<TrainDetails[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      trainData = trainData.filter((train) => train.id !== id);
+      trainData = trainData.filter((train) => train._id !== id.toString());
       resolve({
         success: true,
         data: trainData,

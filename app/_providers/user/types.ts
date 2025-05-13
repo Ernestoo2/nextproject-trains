@@ -13,4 +13,4 @@ export interface UserContextType {
   userProfile: UserProfile | null;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   generateNaijaRailsId: () => string;
-} 
+}

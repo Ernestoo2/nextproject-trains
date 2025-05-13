@@ -1,13 +1,5 @@
-export interface Station {
-  name: string;
-  code: string;
-}
+ 
 
-export interface Route {
-  station: Station;
-  arrivalTime: string;
-  departureTime: string;
-}
 
 export interface TrainDetails {
   _id?: string;
@@ -46,36 +38,8 @@ export const initialTravelData: TravelRoute[] = [
   },
 ];
 
-
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
-}
-
-export interface ITrainRoute {
-  station: {
-    _id: string;
-    name: string;
-    code: string;
-  };
-  arrivalTime: string;
-  departureTime: string;
-  day: number;
-}
-
-export interface ITrainClass {
-  _id: string;
-  name: string;
-  code: string;
-  baseFare: string;
-}
-
-export interface ITrain {
-  _id: string;
-  trainName: string;
-  trainNumber: string;
-  routes: ITrainRoute[];
-  classes: ITrainClass[];
-  isActive: boolean;
 }

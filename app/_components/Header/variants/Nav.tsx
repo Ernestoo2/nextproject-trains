@@ -17,7 +17,7 @@ export default function Nav() {
   console.log("Session data:", {
     session,
     userId,
-    pathname
+    pathname,
   });
 
   return (
@@ -36,7 +36,7 @@ export default function Nav() {
         {session?.user ? (
           <Link
             className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
-             isActive(`/user/${userId}`)
+              isActive(`/user/${userId}`)
                 ? "text-green-600"
                 : "hover:text-green-600"
             }`}

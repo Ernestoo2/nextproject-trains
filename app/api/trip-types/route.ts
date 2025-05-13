@@ -11,7 +11,7 @@ export async function GET(_request: Request) {
     console.error("Error fetching trip types:", error);
     return NextResponse.json(
       { error: "Failed to fetch trip types" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

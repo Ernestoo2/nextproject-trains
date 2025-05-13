@@ -2,7 +2,7 @@ import {
   ApiResponse,
   TrainClass,
   TripType,
-  Station, 
+  Station,
 } from "../_types/api.types";
 
 const API_BASE_URL =

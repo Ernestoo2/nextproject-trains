@@ -1,0 +1,61 @@
+import type { TrainClass } from "@/types/shared/trains";
+import { Types } from "mongoose";
+
+export const trainClassesData: TrainClass[] = [
+  {
+    _id: new Types.ObjectId().toString(),
+    className: "First Class",
+    classCode: "FC1001",
+    classType: "FIRST_CLASS",
+    basePrice: 5000,
+    capacity: 60,
+    amenities: ["Reclining seats", "Meal service", "WiFi"],
+    description: "Premium seating with extra comfort and complimentary meals.",
+    isActive: true,
+  },
+  {
+    _id: new Types.ObjectId().toString(),
+    className: "Business Class",
+    classCode: "BC1001",
+    classType: "BUSINESS",
+    basePrice: 3500,
+    capacity: 80,
+    amenities: ["Spacious seats", "WiFi"],
+    description: "Business class with spacious seating and complimentary WiFi.",
+    isActive: true,
+  },
+  {
+    _id: new Types.ObjectId().toString(),
+    className: "Economy Class",
+    classCode: "EC1001",
+    classType: "ECONOMY",
+    basePrice: 2000,
+    capacity: 120,
+    amenities: ["Standard seats"],
+    description: "Affordable economy class with standard seating.",
+    isActive: true,
+  },
+  {
+    _id: new Types.ObjectId().toString(),
+    className: "Sleeper Class",
+    classCode: "SL1001",
+    classType: "SLEEPER",
+    basePrice: 1500,
+    capacity: 100,
+    amenities: ["Sleeping berths", "Reading lights"],
+    description:
+      "Sleeper class with comfortable berths for overnight journeys.",
+    isActive: true,
+  },
+  {
+    _id: new Types.ObjectId().toString(),
+    className: "Standard Class",
+    classCode: "SC1001",
+    classType: "STANDARD",
+    basePrice: 1000,
+    capacity: 90,
+    amenities: ["Basic seating"],
+    description: "Standard class with basic seating and minimal amenities.",
+    isActive: true,
+  },
+];

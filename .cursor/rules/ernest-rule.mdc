@@ -1,0 +1,103 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# ernest-rule
+
+## Component Management Rules
+
+### 🚫 NO-TOUCH ZONES
+1. Core Working Components:
+   - @app/(dashboar/page-route/_components/FromToSelector.tsx
+   - @app/(dashboard)/_components/page-route/_components/rout-selectors/DateSelector.tsx
+   - @app/(dashboard)/_components/page-route/_components/PassengerClassSelector.tsx
+   - @app/(dashboard)/_components/page-route/_components/rout-selectors/TripSelector.tsx
+
+2. Core API Routes:
+   - @app/api/train-classes/**
+   - @app/api/stations/**
+   - @app/api/routes/search/**
+   - @app/api/trains/daily/**
+
+### ✅ Type Organization
+1. Main Type Locations:
+   - @app/types/shared/* (shared interfaces and types)
+   - @app/types/schedule/* (schedule-specific types)
+   - Component-specific types should be in [ComponentName].types.ts in the same folder
+
+2. Type Hierarchy:
+   ```typescript
+   // Example structure
+   @app/types/
+   ├── shared/
+   │   ├── trains.ts (base train types)
+   │   └── api.types.ts (API response types)
+   ├── schedule/
+   │   └── scheduleBase.types.ts
+   └── [feature].types.ts
+   ```
+
+### 🔄 Import Alias Rules
+1. Always use path aliases from tsconfig.json:
+   ```typescript
+   // ✅ CORRECT
+   import { type } from "@/types/shared/trains"
+   import { component } from "@/components/ui"
+
+   // ❌ WRONG
+   import { type } from "../../types/shared/trains"
+   ```
+
+2. Type imports should use:
+   ```typescript
+   import type { TypeName } from "@/types/..."
+   ```
+
+### 📝 Component Creation Guidelines
+1. Before creating new components:
+   - Check existing components in @app/(dashboard)/_components
+   - Verify no similar functionality exists
+   - Document why new component is needed
+
+2. Component Location Rules:
+   - Shared components → @app/_components
+   - Feature-specific → @app/(feature)/_components
+   - Page-specific → @app/(feature)/[page]/_components
+
+### 🧹 Code Cleanup Requirements
+1. Remove unused imports
+2. Delete redundant type definitions
+3. Consolidate overlapping components
+4. Keep component responsibilities single-focused
+
+### ✅ Review Checklist
+Before submitting changes:
+1. Verify imports use aliases
+2. Check for type file organization
+3. Confirm no duplicate components
+4. Validate API integration
+5. Test existing functionality
+
+### 📚 Type Management
+1. Shared Types Location:
+   ```typescript
+   @app/types/shared/
+   ├── trains.ts       // Train-related types
+   ├── booking.ts      // Booking-related types
+   ├── schedule.ts     // Schedule-related types
+   └── api.types.ts    // API-related types
+   ```
+
+2. Feature-Specific Types:
+   ```typescript
+   @app/types/
+   ├── booking.types.ts
+   ├── payment.types.ts
+   └── profile.types.ts
+   ```
+
+### 🚨 Warning
+- DO NOT create new components that duplicate existing functionality
+- DO NOT modify working core components
+- DO NOT create new type definitions for existing types

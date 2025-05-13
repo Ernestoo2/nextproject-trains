@@ -1,13 +1,14 @@
 "use client";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import train from "../../../../public/Assets/Train1.png";
-import { Station } from "./_types/station.types";
-import { STATIONS } from "./_constants/stations";
 import StationCombobox from "./_components/StationCombobox";
+import train from "../../../../public/Assets/Train1.png";
+import { useRouter, useSearchParams } from "next/navigation";
+import { STATIONS } from "./_constants/stations";
 import { BookingFormState, SearchParams } from "./_types/booking.types";
+import { Station } from "./_types/station.types";
 import { TRIP_TYPES } from "@/(dashboard)/trains/train-search/_constants/train.constants";
+import { TripType } from "@/types/shared";
 
 // React.FC<BookingInterfacesProps>
 export default function BookingPage() {
@@ -18,12 +19,12 @@ export default function BookingPage() {
     departureStation: null,
     arrivalStation: null,
     date: new Date().toISOString().split("T")[0],
-    tripType: "ONE_WAY"
+    tripType: "ONE-WAY",
   });
 
   // Load initial state from URL parameters
   useEffect(() => {
-    const fromStationId = searchParams?.get("fromStationId");
+    const fromStationId = searchParams?.get("fromStationId")
     const toStationId = searchParams?.get("toStationId");
     const date = searchParams?.get("date");
     const classType = searchParams?.get("classType");
@@ -32,21 +33,20 @@ export default function BookingPage() {
     const infantCount = searchParams?.get("infantCount");
 
     if (fromStationId) {
-      const station = STATIONS.find(s => s.id === fromStationId);
+      const station = STATIONS.find((s) => s.id === fromStationId);
       if (station) {
-        setFormState(prev => ({ ...prev, departureStation: station }));
+        setFormState((prev: BookingFormState) => ({ ...prev, departureStation: station.id }));
       }
     }
 
     if (toStationId) {
-      const station = STATIONS.find(s => s.id === toStationId);
+      const station = STATIONS.find((s) => s.id === toStationId);
       if (station) {
-        setFormState(prev => ({ ...prev, arrivalStation: station }));
+        setFormState((prev: BookingFormState) => ({ ...prev, arrivalStation: station.id }));
       }
     }
-
     if (date) {
-      setFormState(prev => ({ ...prev, date }));
+      setFormState((prev) => ({ ...prev, date }));
     }
   }, [searchParams]);
 
@@ -62,10 +62,10 @@ export default function BookingPage() {
       fromStationId: departureStation.id,
       toStationId: arrivalStation.id,
       date,
-      classType: 'SC', // Default class type
-      adultCount: '1', // Default adult count
-      childCount: '0', // Default child count
-      infantCount: '0' // Default infant count
+      classType: "SC", // Default class type
+      adultCount: "1", // Default adult count
+      childCount: "0", // Default child count
+      infantCount: "0", // Default infant count
     }).toString();
 
     router.push(`/trains/train-search?${queryString}`);
@@ -94,15 +94,22 @@ export default function BookingPage() {
         <div className="grid items-center justify-center grid-cols-1 gap-5">
           <StationCombobox
             stations={STATIONS}
-            selected={formState.departureStation}
-            onChange={(station) => setFormState(prev => ({ ...prev, departureStation: station }))}
+            selected={formState.departureStation }
+
+            onChange={(station) =>
+              setFormState((prev) => ({ ...prev, departureStation: station }))
+            }
             label="Departure"
             placeholder="Select departure station"
           />
           <StationCombobox
-            stations={STATIONS.filter(station => station.id !== formState.departureStation?.id)}
+            stations={STATIONS.filter(
+              (station) => station.id !== formState.departureStation?.id,
+            )}
             selected={formState.arrivalStation}
-            onChange={(station) => setFormState(prev => ({ ...prev, arrivalStation: station }))}
+            onChange={(station) =>
+              setFormState((prev) => ({ ...prev, arrivalStation: station }))
+            }
             label="Arrival"
             placeholder="Select arrival station"
           />
@@ -114,19 +121,29 @@ export default function BookingPage() {
               type="date"
               id="date"
               value={formState.date}
-              onChange={(e) => setFormState(prev => ({ ...prev, date: e.target.value }))}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, date: e.target.value }))
+              }
               min={new Date().toISOString().split("T")[0]}
               className="w-full text-gray-500 border-t-0 border-b-2 border-x-0 focus:outline-none focus:border-green-600"
             />
           </div>
           <div>
-            <label htmlFor="tripType" className="block text-[#4A5568] font-medium">
+            <label
+              htmlFor="tripType"
+              className="block text-[#4A5568] font-medium"
+            >
               Trip Type
             </label>
             <select
               id="tripType"
               value={formState.tripType}
-              onChange={(e) => setFormState(prev => ({ ...prev, tripType: e.target.value as keyof typeof TRIP_TYPES }))}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  tripType: e.target.value as TripType,
+                }))
+              }
               className="w-full text-gray-500 border-t-0 border-b-2 border-x-0 focus:outline-none focus:border-green-600"
             >
               {Object.entries(TRIP_TYPES).map(([key, value]) => (

@@ -1,4 +1,4 @@
-import { TicketDetails } from "../types/booking.types";
+import { TicketDetails } from "@/types/shared/tickets";
 
 export const DEFAULT_TICKET_DETAILS: TicketDetails = {
   pnr: "1234567890",
@@ -35,7 +35,6 @@ export const BUTTON_LABELS = {
 
 export const SUCCESS_MESSAGES = {
   TITLE: "Congratulations! You have successfully booked tickets",
-  SUBTITLE:
-    "Please carry SMS / Email sent to your contact details, along with a relevant ID proof while travelling",
+  SUBTITLE: "Please carry SMS / Email sent to your contact details, along with a relevant ID proof while travelling",
   QR_CODE_INFO: "Scan the code to view in any device",
 };

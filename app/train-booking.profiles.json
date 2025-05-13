@@ -1,0 +1,108 @@
+[{
+  "_id": {
+    "$oid": "68032f26e85e993b70e08564"
+  },
+  "email": "john.doe@example.com",
+  "fullName": "John Doe",
+  "phoneNumber": "+2348012345678",
+  "defaultNationality": "Nigerian",
+  "preferredBerth": "lower",
+  "naijaRailsId": "NR-142300-9957",
+  "createdAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68032f26e85e993b70e08565"
+  },
+  "email": "mary.smith@example.com",
+  "fullName": "Mary Smith",
+  "phoneNumber": "+2348098765432",
+  "defaultNationality": "Nigerian",
+  "preferredBerth": "upper",
+  "naijaRailsId": "NR-142300-1403",
+  "createdAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68032f26e85e993b70e08566"
+  },
+  "email": "chinedu.okonkwo@example.com",
+  "fullName": "Chinedu Okonkwo",
+  "phoneNumber": "+2348076543210",
+  "defaultNationality": "Nigerian",
+  "preferredBerth": "middle",
+  "naijaRailsId": "NR-142300-5395",
+  "createdAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68032f26e85e993b70e08567"
+  },
+  "email": "folake.adeleke@example.com",
+  "fullName": "Folake Adeleke",
+  "phoneNumber": "+2348054321098",
+  "defaultNationality": "Nigerian",
+  "preferredBerth": "lower",
+  "naijaRailsId": "NR-142300-2504",
+  "createdAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68032f26e85e993b70e08568"
+  },
+  "email": "musa.ahmed@example.com",
+  "fullName": "Musa Ahmed",
+  "phoneNumber": "+2348032109876",
+  "defaultNationality": "Nigerian",
+  "preferredBerth": "upper",
+  "naijaRailsId": "NR-142300-8978",
+  "createdAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-19T05:05:42.300Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68033035df49d54f9bf369d9"
+  },
+  "email": "kaluwilson@gmail.com",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-04-19T05:10:13.224Z"
+  },
+  "defaultNationality": "Nigerian",
+  "fullName": "ernest",
+  "naijaRailsId": "NR200666",
+  "phoneNumber": "+2347046647941",
+  "preferredBerth": "lower",
+  "updatedAt": {
+    "$date": "2025-04-19T05:10:13.211Z"
+  }
+}]

@@ -1,21 +1,23 @@
-import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { connectDB } from '@/utils/mongodb/connect';
-import { User } from '@/utils/mongodb/models/User';
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { connectDB } from "@/utils/mongodb/connect";
+import { User } from "@/utils/mongodb/models/User";
 
 // Generate a unique Naija Rails ID
 async function generateUniqueNaijaRailsId() {
   const timestamp = Date.now().toString().slice(-6);
-  const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  const random = Math.floor(Math.random() * 1000000)
+    .toString()
+    .padStart(6, "0");
   const naijaRailsId = `NR${timestamp}${random}`;
-  
+
   // Check if ID already exists
   const existingUser = await User.findOne({ naijaRailsId });
   if (existingUser) {
     // If exists, try again recursively
     return generateUniqueNaijaRailsId();
   }
-  
+
   return naijaRailsId;
 }
 
@@ -26,8 +28,8 @@ export async function POST(req: Request) {
     // Validate input
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Name, email and password are required' },
-        { status: 400 }
+        { error: "Name, email and password are required" },
+        { status: 400 },
       );
     }
 
@@ -35,8 +37,8 @@ export async function POST(req: Request) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
+        { error: "Invalid email format" },
+        { status: 400 },
       );
     }
 
@@ -47,8 +49,8 @@ export async function POST(req: Request) {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Email already registered' },
-        { status: 400 }
+        { error: "Email already registered" },
+        { status: 400 },
       );
     }
 
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
       address: "",
       dob: "",
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
 
     // Remove password from response
@@ -81,19 +83,18 @@ export async function POST(req: Request) {
       address: user.address,
       dob: user.dob,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
     };
 
     return NextResponse.json({
-      message: 'Registration successful! You can now log in.',
-      user: userResponse
+      message: "Registration successful! You can now log in.",
+      user: userResponse,
     });
-
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     return NextResponse.json(
-      { error: 'Registration failed. Please try again.' },
-      { status: 500 }
+      { error: "Registration failed. Please try again." },
+      { status: 500 },
     );
   }
-} 
+}

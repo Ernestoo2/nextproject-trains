@@ -1,11 +1,12 @@
 "use client";
-import React, { useState, useEffect  } from "react"; 
-import Image from "next/image"; 
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import search from "../../../../../public/Assets/Searchpic.png";
 import search1 from "../../../../../public/Assets/Searchpic2.png";
 import DateSlider from "./DateSlider";
 import StationRouteCard from "./StationRouteCard";
-import { ScheduleWithDetails } from "../_types/train.types";
+import { ScheduleWithDetails, Station } from "@/types/shared/trains";
+
 type Breakpoint = "mobile" | "tablet" | "desktop";
 
 const useBreakpoint = (): Breakpoint => {
@@ -50,14 +51,13 @@ const useDebounce = (value: any, delay: number) => {
 interface TrainSearchResultsProps {
   initialLoading?: boolean;
 }
- 
 
 const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
   initialLoading = false,
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>("Wed 16");
-  const [fromStation, setFromStation] = useState<string>("Port Harcourt");
-  const [toStation, setToStation] = useState<string>("Enugu");
+  const [fromStation, setFromStation] = useState<Station | null>(null);
+  const [toStation, setToStation] = useState<Station | null>(null);
   const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);
   const [loading, setLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
@@ -66,25 +66,39 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch(
-        `/api/schedules/search?from=${encodeURIComponent(fromStation)}&to=${encodeURIComponent(toStation)}&date=${encodeURIComponent(selectedDate)}`
-      );
-      
+
+      if (!fromStation?._id || !toStation?._id) {
+        throw new Error("Please select both departure and arrival stations");
+      }
+
+      const searchDate = new Date(selectedDate);
+      if (isNaN(searchDate.getTime())) {
+        throw new Error("Invalid date selected");
+      }
+
+      const params = new URLSearchParams({
+        fromStationId: fromStation._id,
+        toStationId: toStation._id,
+        date: searchDate.toISOString().split('T')[0],
+      });
+
+      console.log("Fetching schedules with params:", Object.fromEntries(params));
+
+      const response = await fetch(`/api/schedules/search?${params}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       if (!data.success) {
-        throw new Error(data.message || 'Failed to fetch schedules');
+        throw new Error(data.message || "Failed to fetch schedules");
       }
 
       setSchedules(data.data);
     } catch (error) {
-      console.error('Error fetching schedules:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch schedules');
+      console.error("Error fetching schedules:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch schedules");
       setSchedules([]);
     } finally {
       setLoading(false);
@@ -92,38 +106,38 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
   };
 
   const calculateDuration = (departure: string, arrival: string) => {
-    const [depHours, depMinutes] = departure.split(':').map(Number);
-    const [arrHours, arrMinutes] = arrival.split(':').map(Number);
-    
+    const [depHours, depMinutes] = departure.split(":").map(Number);
+    const [arrHours, arrMinutes] = arrival.split(":").map(Number);
+
     let hourDiff = arrHours - depHours;
     let minuteDiff = arrMinutes - depMinutes;
-    
+
     if (minuteDiff < 0) {
       hourDiff--;
       minuteDiff += 60;
     }
-    
+
     if (hourDiff < 0) {
       hourDiff += 24;
     }
-    
-    return minuteDiff > 0 ? `${hourDiff} hours ${minuteDiff} minutes` : `${hourDiff} hours`;
+
+    return minuteDiff > 0
+      ? `${hourDiff} hours ${minuteDiff} minutes`
+      : `${hourDiff} hours`;
   };
 
   useEffect(() => {
-    fetchSchedules();
-  }, [selectedDate]);
+    if (fromStation && toStation && selectedDate) {
+      fetchSchedules();
+    }
+  }, [selectedDate, fromStation, toStation]);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
   };
 
   if (error) {
-    return (
-      <div className="p-4 text-red-500 bg-red-50 rounded-md">
-        {error}
-      </div>
-    );
+    return <div className="p-4 text-red-500 bg-red-50 rounded-md">{error}</div>;
   }
 
   return (
@@ -137,17 +151,18 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
         <div className="flex flex-col mb-6">
           <div className="flex items-center gap-6">
             <div className="border-t-0 border-x-0 border-b-2 border-[#D1D5DB] p-4">
-              <p className="text-sm text-[#6B7280]">{fromStation}</p>
+              <p className="text-sm text-[#6B7280]">{fromStation?.name || "Select station"}</p>
             </div>
 
             <div className="border-t-0 w-1/2 border-x-0 border-b-2 border-[#D1D5DB] p-4">
-              <p className="text-sm text-[#6B7280]">{toStation}</p>
+              <p className="text-sm text-[#6B7280]">{toStation?.name || "Select station"}</p>
             </div>
           </div>
           <div className="flex items-center w-full h-auto mx-auto mt-4 text-center">
             <button
               onClick={fetchSchedules}
               className="w-full py-2 px-4 bg-[#16A34A] text-white rounded-md text-sm font-medium"
+              disabled={!fromStation || !toStation}
             >
               Search for trains
             </button>
@@ -155,7 +170,7 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
         </div>
 
         <DateSlider onDateChange={handleDateChange} />
-        
+
         <div className="mb-6">
           <Image
             src={search}
@@ -167,7 +182,6 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
             alt="Train Planning"
             className="w-full h-auto mb-4 rounded-md"
           />
-          
         </div>
       </div>
 
@@ -184,9 +198,7 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#16A34A]"></div>
             </div>
           ) : error ? (
-            <div className="p-4 text-red-500 bg-red-50 rounded-md">
-              {error}
-            </div>
+            <div className="p-4 text-red-500 bg-red-50 rounded-md">{error}</div>
           ) : schedules.length === 0 ? (
             <div className="p-4 text-gray-500 text-center">
               No trains found for this route and date.
@@ -194,10 +206,7 @@ const TrainSearchResults: React.FC<TrainSearchResultsProps> = ({
           ) : (
             <div className="space-y-4">
               {schedules.map((schedule) => (
-                <StationRouteCard
-                  key={schedule._id} 
-                  schedule={schedule }
-                />
+                <StationRouteCard key={schedule._id} schedule={schedule} />
               ))}
             </div>
           )}

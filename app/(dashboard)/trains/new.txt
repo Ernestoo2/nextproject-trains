@@ -1,2 +1,66 @@
-please also fix the 
-http://localhost:3000/trains/review-booking?trainId=67ff09ea28f342b590ac35b5
+ PUT /api/booking 200 in 8041ms
+ PUT /api/booking 200 in 9329ms
+ PUT /api/booking 200 in 9381ms
+ POST /api/travelers 200 in 8697ms
+ PUT /api/booking 200 in 10161ms
+ POST /api/travelers 200 in 9989ms
+ POST /api/travelers 200 in 8269ms
+ PUT /api/booking 200 in 7349ms
+ POST /api/travelers 200 in 8680ms
+ PUT /api/booking 200 in 7508ms
+ PUT /api/booking 200 in 8282ms
+ POST /api/travelers 200 in 10300ms
+ PUT /api/booking 200 in 10087ms
+ POST /api/travelers 200 in 7872ms
+ POST /api/travelers 200 in 10475ms
+ PUT /api/booking 200 in 9812ms
+ POST /api/travelers 200 in 13766ms
+ PUT /api/booking 200 in 13723ms
+ PUT /api/booking 200 in 15893ms
+ POST /api/travelers 200 in 12691ms
+ PUT /api/booking 200 in 12884ms
+ POST /api/travelers 200 in 10783ms
+ POST /api/travelers 200 in 11628ms
+ PUT /api/booking 200 in 14992ms
+ POST /api/travelers 200 in 12865ms
+
+
+
+ POST /api/travelers 200 in 9265ms
+ PUT /api/booking 200 in 7140ms
+ POST /api/travelers 200 in 6622ms
+ PUT /api/booking 200 in 9404ms
+ PUT /api/booking 200 in 10224ms
+ POST /api/travelers 200 in 8817ms
+ PUT /api/booking 200 in 10033ms
+ POST /api/travelers 200 in 12030ms
+ POST /api/travelers 200 in 12048ms
+ PUT /api/booking 200 in 11555ms
+ POST /api/travelers 200 in 12394ms
+ PUT /api/booking 200 in 11649ms
+ PUT /api/booking 200 in 13483ms
+ POST /api/travelers 200 in 13921ms
+ PUT /api/booking 200 in 14919ms
+ POST /api/travelers 200 in 11109ms
+ POST /api/travelers 200 in 11541ms
+ PUT /api/booking 200 in 10345ms
+ POST /api/travelers 200 in 9164ms
+ PUT /api/booking 200 in 12172ms
+
+ POST /api/travelers 200 in 12394ms
+ PUT /api/booking 200 in 11649ms
+ PUT /api/booking 200 in 13483ms
+ POST /api/travelers 200 in 13921ms
+ PUT /api/booking 200 in 14919ms
+ POST /api/travelers 200 in 11109ms
+ POST /api/travelers 200 in 11541ms
+ PUT /api/booking 200 in 10345ms
+ POST /api/travelers 200 in 9164ms
+ PUT /api/booking 200 in 12172ms
+ PUT /api/booking 200 in 16427ms
+ POST /api/travelers 200 in 18875ms
+ PUT /api/booking 200 in 18775ms
+ POST /api/travelers 200 in 18012ms
+ ✓ Compiled in 20.5s
+ POST /api/travelers 200 in 15062ms
+ PUT /api/booking 200 in 18711ms

@@ -1,4 +1,4 @@
-import Link from "next/link"; 
+import Link from "next/link";
 
 interface TrainCardProps {
   train: {
@@ -20,7 +20,9 @@ export default function TrainCard({ train }: TrainCardProps) {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{train.trainName}</h3>
-          <p className="text-sm text-[#6B7280]">Train No: {train.trainNumber}</p>
+          <p className="text-sm text-[#6B7280]">
+            Train No: {train.trainNumber}
+          </p>
         </div>
         <Link
           href={`/trains/train-timetable?trainId=${train._id}`}
@@ -43,16 +45,22 @@ export default function TrainCard({ train }: TrainCardProps) {
               </span>
             ))
           ) : (
-            <span className="text-xs text-gray-500">No class information available</span>
+            <span className="text-xs text-gray-500">
+              No class information available
+            </span>
           )}
         </div>
       </div>
 
       <div className="mt-4 text-sm">
-        <span className={`px-2 py-1 rounded ${
-          train.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {train.isActive ? 'Active' : 'Inactive'}
+        <span
+          className={`px-2 py-1 rounded ${
+            train.isActive
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {train.isActive ? "Active" : "Inactive"}
         </span>
       </div>
     </div>

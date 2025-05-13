@@ -11,7 +11,7 @@ declare module "next-auth" {
   }
 
   interface Session {
-    user: User 
+    user: User;
   }
 }
 
@@ -19,7 +19,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
-    naijaRailsId: string ;
-
+    naijaRailsId: string;
   }
 }

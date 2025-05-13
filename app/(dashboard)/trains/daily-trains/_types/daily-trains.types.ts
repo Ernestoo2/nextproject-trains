@@ -14,7 +14,7 @@ export interface DailyTrain {
     name: string;
     code: string;
   };
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
   availableClasses: {
     code: string;
     name: string;
@@ -27,4 +27,4 @@ export interface DailyTrainsResponse {
   success: boolean;
   data: DailyTrain[];
   message?: string;
-} 
+}

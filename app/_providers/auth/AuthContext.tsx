@@ -1,13 +1,13 @@
 "use client";
 import React, { createContext, useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { signIn, signOut } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import type { AuthContextType, User } from "./types";
 
 const defaultContext: AuthContextType = {
   isAuthenticated: false,
   user: null,
-  loading: false,
+  loading: true,
   error: null,
   login: async () => {},
   register: async () => {},
@@ -21,16 +21,18 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" && session?.user) {
       setIsAuthenticated(true);
       setUser(session.user as User);
-    } else {
+      setError(null);
+    } else if (status === "unauthenticated") {
       setIsAuthenticated(false);
       setUser(null);
     }
@@ -41,21 +43,24 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setLoading(true);
       setError(null);
+
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-        callbackUrl: "/dashboard",
       });
+
       if (result?.error) {
-        setError(result.error);
+        throw new Error(result.error);
+      }
+
+      if (result?.ok) {
+        router.push("/dashboard");
       }
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "An error occurred during login",
-      );
+      const errorMessage = error instanceof Error ? error.message : "Login failed";
+      setError(errorMessage);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -63,15 +68,18 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
+      setLoading(true);
       setError(null);
       await signOut({ redirect: false });
       setUser(null);
+      setIsAuthenticated(false);
+      router.push("/auth/login");
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "An error occurred during logout",
-      );
+      const errorMessage = error instanceof Error ? error.message : "Logout failed";
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,13 +102,12 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error(data.error || "Registration failed");
       }
 
+      // Auto login after successful registration
       await login(email, password);
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "An error occurred during registration",
-      );
+      const errorMessage = error instanceof Error ? error.message : "Registration failed";
+      setError(errorMessage);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -109,26 +116,30 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateProfile = async (data: Partial<User>) => {
     try {
       setLoading(true);
+      setError(null);
+
       if (!user) {
         throw new Error("No user logged in");
       }
 
-      // Update user data in your backend/database
-      const updatedUser: User = {
-        ...user,
-        ...data,
-        id: user.id, // Ensure id is always present
-        name: user.name, // Ensure name is always present
-        email: user.email, // Ensure email is always present
-        role: user.role, // Ensure role is always present
-      };
+      const response = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update profile");
+      }
+
+      const updatedUser = await response.json();
       setUser(updatedUser);
-
-      // Store updated user data in localStorage
-      localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (error) {
-      console.error("Error updating profile:", error);
+      const errorMessage = error instanceof Error ? error.message : "Profile update failed";
+      setError(errorMessage);
       throw error;
     } finally {
       setLoading(false);

@@ -5,8 +5,7 @@ import {
   initialTravelData,
 } from "./types/types";
 
- 
-let travelData: TravelRoute[] = initialTravelData;
+const travelData = initialTravelData;
 export const getTravelRoutes = (): Promise<ApiResponse<TravelRoute[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -33,10 +32,6 @@ export const fetchTravelRoutes = async (): Promise<
     }, 1000); // 1 second delay to simulate API response time
   });
 };
-
- 
-
- 
 
 export const getTrainDetails = async (
   trainId?: string,

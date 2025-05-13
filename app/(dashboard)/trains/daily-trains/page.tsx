@@ -1,159 +1,284 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { DailyTrain } from './_types/daily-trains.types';
-import { getDailyTrains } from './_services/daily-trains.service';
+import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Clock, Train } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { format } from "date-fns";
+import { ScheduleWithDetails } from "@/types/shared/schedule.types";
+import type { ScheduleStatus } from "@/types/shared/trains";
+
+
 
 export default function DailyTrainsPage() {
-  const [trains, setTrains] = useState<DailyTrain[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  
+  // Get current date in Nigerian time
+  const getNigerianDate = () => {
+    const date = new Date();
+    return date.toLocaleString('en-NG', { 
+      timeZone: 'Africa/Lagos',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).split(',')[0].split('/').reverse().join('-');
+  };
+
+  const date = searchParams.get("date") || getNigerianDate();
+
+  // Format time to 12-hour format with AM/PM
+  const formatTime = (time: string) => {
+    if (!time || !time.includes(':')) return 'Invalid Time';
+    const [hours, minutes] = time.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return 'Invalid Time';
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Group trains by status for better organization
+  const groupedSchedules = React.useMemo(() => {
+    const groups: Record<ScheduleStatus, ScheduleWithDetails[]> = {
+      SCHEDULED: [],
+      IN_PROGRESS: [],
+      DELAYED: [],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+
+    schedules.forEach((schedule) => {
+      const status = schedule.status;
+      if (groups[status]) {
+        groups[status].push(schedule);
+      } else {
+        console.warn(`Unknown schedule status encountered: ${status}`);
+      }
+    });
+
+    return groups;
+  }, [schedules]);
+
+  // Get status badge color
+  const getStatusColor = (status: ScheduleStatus) => {
+    switch (status) {
+      case "SCHEDULED":
+        return "text-green-600";
+      case "IN_PROGRESS":
+        return "text-blue-600";
+      case "DELAYED":
+        return "text-yellow-600";
+      case "COMPLETED":
+        return "text-gray-600";
+      case "CANCELLED":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
+    }
+  };
 
   useEffect(() => {
-    const fetchTrains = async () => {
+    const fetchSchedules = async () => {
       try {
-        const response = await getDailyTrains();
-        if (response.success) {
-          setTrains(response.data);
-        } else {
-          setError(response.message || 'Failed to fetch trains');
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/schedules/daily?date=${date}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch schedules");
         }
-      } catch (err) {
-        setError('An error occurred while fetching trains');
+
+        if (data.success && Array.isArray(data.data)) {
+          setSchedules(data.data);
+        } else if (data.success) {
+            setSchedules([]);
+            setError("Received invalid data format from server.");
+        } else {
+          throw new Error(data.message || "Failed to fetch schedules");
+        }
+      } catch (error) {
+        console.error("Error fetching schedules:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch schedules");
+        setSchedules([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTrains();
-  }, []);
+    fetchSchedules();
+  }, [date]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-red-600">{error}</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="p-4 bg-red-100 text-red-700 border border-red-300 rounded">
+          <p className="font-bold">Error:</p>
+          <p>{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 ">
-      <h1 className="text-2xl font-bold mb-6">Today's Available Trains</h1>
-      <div className="space-y-4  ">
-        {trains.map((train) => (
-          <Card key={train._id} className="p-4 sm:p-6 mb-4 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
-              {/* Train Header Section */}
-              <div className="md:w-1/3 space-y-2">
-                <div className="flex items-center gap-3">
-                  <Train className="text-xl sm:text-2xl text-green-600" />
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-2">Daily Schedules</h1>
+        <p className="text-gray-600">
+          Showing schedules for: {format(new Date(`${date}T00:00:00`), "EEEE, MMMM d, yyyy")}
+        </p>
+        <p className="text-sm text-gray-500">All times are in Nigerian Time (WAT)</p>
+      </div>
+
+      {Object.entries(groupedSchedules).map(([status, statusSchedules]) => 
+        statusSchedules.length > 0 && (
+          <div key={status} className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 capitalize">
+              {status.toLowerCase().replace("_", " ")} Schedules ({statusSchedules.length})
+            </h2>
+      <div className="space-y-4">
+              {statusSchedules.map((schedule) => (
+                <Card key={schedule._id} className="p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="flex flex-col md:flex-row justify-between gap-6">
+                    {/* Schedule Details */}
+              <div className="md:w-2/3">
+                <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-base sm:text-lg font-semibold">
-                      {train.trainNumber} - {train.trainName}
-                    </h3>
-                    <p className={`text-xs sm:text-sm ${
-                      train.status === 'SCHEDULED' ? 'text-green-600' :
-                      train.status === 'IN_PROGRESS' ? 'text-blue-600' :
-                      train.status === 'COMPLETED' ? 'text-gray-600' :
-                      'text-red-600'
-                    }`}>
-                      {train.status}
+                    <h2 className="text-xl font-semibold">
+                            {schedule.trainNumber} - {schedule.trainName}
+                    </h2>
+                    <p className="text-gray-600">
+                            {schedule.departureStation.stationName} ({schedule.departureStation.stationCode}) → {" "}
+                            {schedule.arrivalStation.stationName} ({schedule.arrivalStation.stationCode})
                     </p>
+                          {schedule.platform && <p className="text-sm text-gray-500 mt-1">Platform {schedule.platform}</p>}
+                  </div>
+                        <div className="text-right flex-shrink-0">
+                    <p className="text-sm text-gray-500">Status</p>
+                          <p className={`font-medium ${getStatusColor(schedule.status)}`}>
+                            {schedule.status.replace("_", " ")}
+                          </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Journey Details */}
-              <div className="flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                  {/* Departure */}
-                  <div className="space-y-1">
-                    <p className="text-lg sm:text-xl font-bold">{train.departureTime}</p>
-                    <div>
-                      <p className="text-sm sm:text-base text-gray-600">
-                        {train.departureStation.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {train.departureStation.code}
-                      </p>
-                    </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
+                        <div className="text-center">
+                          <p className="text-lg font-semibold">{formatTime(schedule.departureTime)}</p>
+                    <p className="text-sm text-gray-600">
+                            {schedule.departureStation.stationName} ({schedule.departureStation.stationCode})
+                    </p>
+                          <p className="text-xs text-gray-500">{schedule.departureStation.city}, {schedule.departureStation.state}</p>
                   </div>
-
-                  {/* Duration */}
-                  <div className="flex flex-col items-center justify-center space-y-2">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Clock className="hidden sm:block" />
-                      <span className="text-xs sm:text-sm">Duration</span>
-                    </div>
-                    <div className="w-full h-0.5 bg-gray-200 relative">
-                      <div className="absolute w-2 h-2 bg-gray-400 rounded-full -top-1 left-0" />
-                      <div className="absolute w-2 h-2 bg-gray-400 rounded-full -top-1 right-0" />
-                    </div>
+                        <div className="text-center px-4">
+                    <p className="text-sm text-gray-500">
+                            {schedule.duration || calculateDuration(schedule.departureTime, schedule.arrivalTime)}
+                    </p>
+                          <div className="relative w-full h-1 bg-gray-200 my-1 rounded-full">
+                            <div className="absolute left-0 top-0 h-1 w-full bg-green-500 rounded-full animate-pulse"></div>
+                          </div>
+                          <p className="text-xs text-gray-500">{schedule.route?.distance ?? 'N/A'} km</p>
                   </div>
-
-                  {/* Arrival */}
-                  <div className="space-y-1 text-right">
-                    <p className="text-lg sm:text-xl font-bold">{train.arrivalTime}</p>
-                    <div>
-                      <p className="text-sm sm:text-base text-gray-600">
-                        {train.arrivalStation.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {train.arrivalStation.code}
-                      </p>
-                    </div>
+                        <div className="text-center">
+                          <p className="text-lg font-semibold">{formatTime(schedule.arrivalTime)}</p>
+                    <p className="text-sm text-gray-600">
+                            {schedule.arrivalStation.stationName} ({schedule.arrivalStation.stationCode})
+                    </p>
+                           <p className="text-xs text-gray-500">{schedule.arrivalStation.city}, {schedule.arrivalStation.state}</p>
                   </div>
                 </div>
               </div>
 
               {/* Classes and Booking */}
-              <div className="md:w-1/3 lg:w-1/4">
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="space-y-2">
-                    {train.availableClasses.map((cls) => (
-                      <div 
-                        key={cls.code}
-                        className="flex justify-between items-center text-sm sm:text-base"
+                    <div className="md:w-1/3 lg:w-1/4 border-l md:pl-6 md:border-l-gray-200">
+                       <h3 className="text-md font-semibold mb-3 text-gray-700">Available Classes</h3>
+                      <div className="space-y-3">
+                        {schedule.availableClasses.length > 0 ? (
+                          schedule.availableClasses.map((cls) => (
+                      <div
+                              key={cls.classCode}
+                              className="flex justify-between items-center text-sm p-2 rounded bg-white border border-gray-100"
                       >
-                        <span className="font-medium">{cls.name}</span>
+                              <span className="font-medium text-gray-800">{cls.className}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-green-600">₦{cls.baseFare}</span>
-                          <span className="text-xs sm:text-sm text-gray-500">
-                            ({cls.availableSeats})
+                                <span className="font-semibold text-green-700">
+                                  ₦{(cls.fare ?? cls.baseFare ?? 0).toLocaleString()}
+                          </span>
+                                <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                  {cls.capacity} seats
                           </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                          ))
+                        ) : (
+                            <p className="text-sm text-gray-500">No classes available.</p>
+                        )}
 
-                  {train.status === 'SCHEDULED' && (
+                        {schedule.status === "SCHEDULED" && schedule.availableClasses.length > 0 && (
                     <Link
-                      href={`/trains/review-booking?scheduleId=${train._id}&class=${train.availableClasses[0]?.code}&date=${new Date().toISOString().split('T')[0]}`}
-                      className="block"
+                            href={`/trains/review-booking?scheduleId=${schedule._id}&class=${schedule.availableClasses[0]?.classCode}&date=${date}`}
+                            className="block mt-4"
                     >
-                      <Button className="w-full text-sm sm:text-base py-2 sm:py-3 bg-green-600 hover:bg-green-700">
+                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
                         Book Now
                       </Button>
                     </Link>
                   )}
+                        {(schedule.status !== "SCHEDULED" || schedule.availableClasses.length === 0) && (
+                           <Button disabled className="w-full mt-4">
+                              Booking Unavailable
+                            </Button>
+                        )}
                 </div>
               </div>
             </div>
           </Card>
         ))}
       </div>
+          </div>
+        )
+      )}
+
+      {schedules.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-lg text-gray-500">No train schedules found for this date.</p>
+        </div>
+      )}
     </div>
   );
-} 
+}
+
+function calculateDuration(departure: string, arrival: string): string {
+  if (!departure || !arrival || !departure.includes(':') || !arrival.includes(':')) return "N/A";
+  
+  const [depHours, depMinutes] = departure.split(":").map(Number);
+  const [arrHours, arrMinutes] = arrival.split(":").map(Number);
+
+  if (isNaN(depHours) || isNaN(depMinutes) || isNaN(arrHours) || isNaN(arrMinutes)) return "N/A";
+
+  const totalDepMinutes = depHours * 60 + depMinutes;
+  let totalArrMinutes = arrHours * 60 + arrMinutes;
+
+  if (totalArrMinutes < totalDepMinutes) {
+    totalArrMinutes += 24 * 60;
+  }
+
+  const minuteDiff = totalArrMinutes - totalDepMinutes;
+  const hourDiff = Math.floor(minuteDiff / 60);
+  const remMinutes = minuteDiff % 60;
+
+  return remMinutes > 0
+    ? `${hourDiff}h ${remMinutes}m`
+    : `${hourDiff}h`;
+}

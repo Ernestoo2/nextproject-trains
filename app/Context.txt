@@ -1,0 +1,512 @@
+// app/Context.txt
+
+CURRENT UNDERSTANDING:
+
+1. Strict Typing System Rules:
+   - NO usage of 'any' type anywhere in the codebase
+   - Use inferred types based on usage where possible
+   - All function parameters must have explicit type annotations
+   - All component props must have explicit interfaces/types
+   - Use type assertions only after validation
+   - Enforce strict null checks
+   - Use discriminated unions for state management
+
+2. File Naming System:
+   - Components: PascalCase.tsx (e.g., TripSelector.tsx)
+   - Types: PascalCase.types.ts (e.g., TripSelector.types.ts)
+   - Contexts: PascalCase.context.tsx (e.g., TrainSearch.context.tsx)
+   - Hooks: usePascalCase.ts (e.g., useTrainSearch.ts)
+   - Utils: camelCase.utils.ts (e.g., dateFormat.utils.ts)
+   - Constants: SCREAMING_SNAKE_CASE.constants.ts
+   - API routes: kebab-case.ts (e.g., train-search.ts)
+
+3. Original Working Components:
+   - FromToSelector.tsx (Main station selector with API integration)
+   - DateSelector.tsx (Schedule display for 3 weeks)
+   - PassengerClassSelector.tsx (For review booking passenger updates)
+   - TripSelector.tsx (Search parameter component)
+
+2. API Flow:
+   Working API Calls:
+   - GET /api/train-classes
+   - GET /api/stations
+   - GET /api/profile
+   - GET /api/routes/search with station IDs
+   - GET /api/trains/daily
+
+3. Problematic Redundant Components to Remove:
+   - StationSelector.tsx (redundant with FromToSelector)
+   - StationSelect.tsx (redundant with FromToSelector)
+   - UnifiedSearchForm.tsx (unnecessary wrapper)
+   - TrainSearchTimetable.tsx (overlapping functionality)
+   - ClassSelector.tsx (redundant with PassengerClassSelector)
+   - StationRouteCard.tsx (can be merged with TrainScheduleCard)
+   - DashboardTimetable.tsx (redundant timetable)
+
+EXECUTION PLAN:
+
+1. Phase 1: Component Cleanup
+   - Keep ONLY the original working components
+   - Remove all redundant components
+   - Ensure FromToSelector.tsx remains the single source for station selection
+
+2. Phase 2: Search Parameter Flow
+   - Maintain original search parameter structure:
+     fromStationId, toStationId, date, classType, passenger counts
+
+3. Phase 3: Type System Cleanup
+   - Focus on main types in @types and @schedule @shared
+   - Remove any duplicate type definitions
+   - Ensure proper typing for MongoDB schemas
+
+NO-TOUCH ZONES:
+1. Original Working Components:
+   - FromToSelector.tsx
+   - DateSelector.tsx
+   - PassengerClassSelector.tsx
+   - TripSelector.tsx
+
+2. Existing API Routes:
+   - /api/train-classes
+   - /api/stations
+   - /api/routes/search
+   - /api/trains/daily
+
+3. Database Schemas:
+   - Train schedules (3 weeks)
+   - Routes
+   - Stations
+   - NaijaRails profile
+   - Users
+
+// === Seed Data & Type Unification Context ===
+
+# Seed Data, API, and Type Unification (2024-)
+
+## Structure
+- All seed data lives in: @app/utils/mongodb/seed/data/
+  - stations.data.ts
+  - routes.data.ts
+  - trainClasses.data.ts
+  - schedules.data.ts
+- All seed data must use types from:
+  - @app/types/shared/*
+  - @app/types/schedule/*
+- No local type/interface declarations in seed logic (e.g., seed.ts) that duplicate shared types.
+- All API endpoints for seeding and data management:
+  - @app/api/stations/route.ts
+  - @app/api/trip-types/route.ts
+  - @app/api/schedules/route.ts
+  - @app/api/train-classes/route.ts
+  - @app/api/seed/route.ts (main orchestrator)
+- MongoDB models and seed logic must use only shared types.
+
+## Unification Plan
+1. Audit all type/interface usage in seed.ts, data/, and shared types.
+2. Remove any local type/interface declarations in seed.ts that duplicate shared types.
+3. Ensure all seed data and logic use only shared types.
+4. Align the structure of seed data in data/ with what the API and MongoDB models expect.
+5. Ensure the seeding orchestrator (seed.ts or api/seed/route.ts) uses only the unified types and data.
+
+// === Seed Data & Route/Schedule Generation Context (2024-06) ===
+
+# Route Generation
+- Routes are now generated using the full station data from stations.data.ts.
+- routeCode and routeName use city, state, region, and address for clarity and uniqueness.
+- Two sets of routes are generated:
+  1. By region (routes only between stations in different regions)
+  2. By state (routes only between stations in different states)
+- Fallbacks are in place for missing city/state/region data.
+
+# Schedule Generation
+- Schedules are generated for every route, for every day in a 21-day window.
+- Each schedule references the correct train, route, departureStation, and arrivalStation.
+- Status is randomly assigned from all possible values (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, DELAYED).
+- Delay reason and actual times are set only when appropriate (for DELAYED, IN_PROGRESS, COMPLETED).
+- This ensures the seed data supports realistic search and booking flows.
+
+# Usage
+- Use the improved route and schedule generation logic in the seed orchestrator.
+- This context ensures future changes maintain the correct workflow and data relationships.
+Document the unified structure and update the progress file.
+
+// === API Endpoint Audit Results (2024-) ===
+
+## Schedules
+- /api/schedules/[scheduleId]/route.ts: Uses shared types, transforms for frontend. **Conforms.**
+- /api/schedules/route.ts: Uses shared types, but has a local ScheduleResponseData interface. **Should remove local type and use only shared types.**
+
+## Routes
+- /api/routes/route.ts: Uses shared types, Zod validation. **Conforms.**
+
+## Stations
+- /api/stations/route.ts: Uses shared types, Zod validation. **Conforms.**
+
+## Train Classes
+- /api/train-classes/route.ts: Uses shared types, Zod validation. **Conforms.**
+
+## Trains
+- /api/trains/route.ts: Uses local TrainDocument type, should use ITrain from shared types. **Needs update.**
+
+## Trip Types
+- /api/trip-types/route.ts: No type usage for response, should use shared type for trip types. **Needs update.**
+
+# ernest-rule
+
+## Component Management Rules
+
+### 🚫 NO-TOUCH ZONES
+1. Core Working Components:
+   - @app/(dashboar/page-route/_components/FromToSelector.tsx
+   - @app/(dashboard)/_components/page-route/_components/rout-selectors/DateSelector.tsx
+   - @app/(dashboard)/_components/page-route/_components/PassengerClassSelector.tsx
+   - @app/(dashboard)/_components/page-route/_components/rout-selectors/TripSelector.tsx
+
+2. Core API Routes:
+   - @app/api/train-classes/**
+   - @app/api/stations/**
+   - @app/api/routes/search/**
+   - @app/api/trains/daily/**
+
+3. Seed Data and Models:
+   - @app/utils/mongodb/seed/** (Seed data and orchestrator)
+   - @app/utils/mongodb/seed/data/** (Seed data files)
+   - @app/utils/mongodb/models/** (MongoDB models)
+   - @app/types/shared/** (Shared type definitions)
+
+### ✅ Type Organization
+1. Main Type Locations:
+   - @app/types/shared/* (shared interfaces and types)
+   - @app/types/schedule/* (schedule-specific types)
+   - Component-specific types should be in [ComponentName].types.ts in the same folder
+
+2. Type Hierarchy:
+   ```typescript
+   // Example structure
+   @app/types/
+   ├── shared/
+   │   ├── trains.ts (base train types)
+   │   └── api.types.ts (API response types)
+   ├── schedule/
+   │   └── scheduleBase.types.ts
+   └── [feature].types.ts
+   ```
+
+### 🔄 Import Alias Rules
+1. Always use path aliases from tsconfig.json:
+   ```typescript
+   // ✅ CORRECT
+   import { type } from "@/types/shared/trains"
+   import { component } from "@/components/ui"
+
+   // ❌ WRONG
+   import { type } from "../../types/shared/trains"
+   ```
+
+2. Type imports should use:
+   ```typescript
+   import type { TypeName } from "@/types/..."
+   ```
+
+### 📝 Component Creation Guidelines
+1. Before creating new components:
+   - Check existing components in @app/(dashboard)/_components
+   - Verify no similar functionality exists
+   - Document why new component is needed
+
+2. Component Location Rules:
+   - Shared components → @app/_components
+   - Feature-specific → @app/(feature)/_components
+   - Page-specific → @app/(feature)/[page]/_components
+
+### 🧹 Code Cleanup Requirements
+1. Remove unused imports
+2. Delete redundant type definitions
+3. Consolidate overlapping components
+4. Keep component responsibilities single-focused
+
+### ✅ Review Checklist
+Before submitting changes:
+1. Verify imports use aliases
+2. Check for type file organization
+3. Confirm no duplicate components
+4. Validate API integration
+5. Test existing functionality
+
+### 📚 Type Management
+1. Shared Types Location:
+   ```typescript
+   @app/types/shared/
+   ├── trains.ts       // Train-related types
+   ├── booking.ts      // Booking-related types
+   ├── schedule.ts     // Schedule-related types
+   └── api.types.ts    // API-related types
+   ```
+
+2. Feature-Specific Types:
+   ```typescript
+   @app/types/
+   ├── booking.types.ts
+   ├── payment.types.ts
+   └── profile.types.ts
+   ```
+
+### 🚨 Warning
+- DO NOT create new components that duplicate existing functionality
+- DO NOT modify working core components
+- DO NOT create new type definitions for existing types
+
+### 🔒 Data Integrity Protection
+1. Seed Data Rules:
+   - DO NOT modify seed data files directly
+   - All seed data must use shared types
+   - Maintain data relationships in seed orchestrator
+   - Follow proper seeding order:
+     1. Stations
+     2. Train Classes
+     3. Routes
+     4. Trains
+     5. Schedules
+
+2. Model Rules:
+   - DO NOT modify model schemas without migration plan
+   - All models must use shared types
+   - Maintain validation rules
+   - Keep indexes and virtuals
+
+3. Required Procedures for Changes:
+   - Full database migration plan
+   - API versioning strategy
+   - Data migration scripts
+   - Comprehensive testing
+   - Rollback procedures
+
+4. Data Consistency:
+   - Ensure ObjectId relationships
+   - Validate data integrity
+   - Maintain API compatibility
+   - Document all changes
+
+### 📋 Seed Data Structure
+```typescript
+@app/utils/mongodb/seed/
+├── data/
+│   ├── stations.data.ts
+│   ├── routes.data.ts
+│   ├── trainClasses.data.ts
+│   └── schedules.data.ts
+├── types/
+│   └── seed.types.ts
+└── seedOrchestrator.ts
+```
+
+### 🔄 Model Structure
+```typescript
+@app/utils/mongodb/models/
+├── Station.ts
+├── Route.ts
+├── TrainClass.ts
+├── Train.ts
+├── Schedule.ts
+├── Booking.ts
+├── Payment.ts
+└── User.ts
+```
+
+# Zustand Store Implementation Plan
+
+## 1. Store Structure
+
+### A. Train Search Store (`app/store/trainSearchStore.ts`)
+```typescript
+type TrainSearchState = {
+  // Data
+  stations: Station[];
+  trainClasses: TrainClass[];
+  searchResults: Route[];
+  
+  // Filters
+  filters: {
+    fromStation: string;
+    toStation: string;
+    date: string;
+    classType: string;
+    tripType: TripType;
+    adultCount: number;
+    childCount: number;
+    infantCount: number;
+  };
+  
+  // Actions
+  setStations: (stations: Station[]) => void;
+  setTrainClasses: (classes: TrainClass[]) => void;
+  setSearchResults: (results: Route[]) => void;
+  updateFilters: (filters: Partial<TrainSearchState['filters']>) => void;
+  resetFilters: () => void;
+};
+```
+
+### B. Booking Store (`app/store/bookingStore.ts`)
+```typescript
+type BookingState = {
+  // Data
+  selectedRoute: Route | null;
+  selectedSchedule: Schedule | null;
+  passengers: PassengerDetails[];
+  
+  // Status
+  status: 'idle' | 'loading' | 'success' | 'error';
+  error: string | null;
+  
+  // Actions
+  setSelectedRoute: (route: Route | null) => void;
+  setSelectedSchedule: (schedule: Schedule | null) => void;
+  updatePassengers: (passengers: PassengerDetails[]) => void;
+  resetBooking: () => void;
+};
+```
+
+### C. User Store (`app/store/userStore.ts`)
+```typescript
+type UserState = {
+  // Data
+  preferences: {
+    defaultClass: string;
+    savedStations: string[];
+  };
+  
+  // Actions
+  updatePreferences: (prefs: Partial<UserState['preferences']>) => void;
+  resetPreferences: () => void;
+};
+```
+
+## 2. Implementation Phases
+
+### Phase 1: Train Search Store
+1. Create store structure
+2. Implement URL sync
+3. Add data fetching
+4. Update components to use store
+
+### Phase 2: Booking Store
+1. Create store structure
+2. Implement booking flow
+3. Add validation
+4. Update booking components
+
+### Phase 3: User Store
+1. Create store structure
+2. Add preference management
+3. Implement persistence
+4. Update profile components
+
+## 3. Component Integration
+
+### A. Train Search Components
+- FromToSelector
+- DateSelector
+- PassengerClassSelector
+- TripSelector
+
+### B. Booking Components
+- ScheduleSelector
+- PassengerForm
+- PaymentForm
+
+### C. Profile Components
+- PreferencesForm
+- SavedStations
+
+## 4. Data Fetching Strategy
+
+### A. Initial Load
+1. Fetch stations and train classes once
+2. Store in Zustand
+3. Share across components
+
+### B. Search Flow
+1. Update filters in store
+2. Sync with URL
+3. Trigger search
+4. Store results
+
+### C. Booking Flow
+1. Select route/schedule
+2. Update passenger details
+3. Process payment
+4. Confirm booking
+
+## 5. URL Sync Strategy
+
+### A. Search Params
+- from
+- to
+- date
+- class
+- tripType
+- adults
+- children
+- infants
+
+### B. Booking Params
+- routeId
+- scheduleId
+- passengers
+
+## 6. Performance Considerations
+
+### A. Selectors
+- Use specific selectors
+- Avoid unnecessary re-renders
+- Memoize complex computations
+
+### B. Data Caching
+- Cache API responses
+- Implement stale-while-revalidate
+- Handle offline scenarios
+
+## 7. Testing Strategy
+
+### A. Store Tests
+- State updates
+- Actions
+- Selectors
+- URL sync
+
+### B. Integration Tests
+- Component integration
+- API integration
+- URL sync
+- Error handling
+
+## 8. Migration Plan
+
+### A. Phase 1
+1. Create stores
+2. Add basic functionality
+3. Test core features
+
+### B. Phase 2
+1. Migrate components
+2. Add URL sync
+3. Implement data fetching
+
+### C. Phase 3
+1. Add advanced features
+2. Implement persistence
+3. Add error handling
+
+## 9. Documentation
+
+### A. Store Documentation
+- State structure
+- Actions
+- Selectors
+- Usage examples
+
+### B. Component Documentation
+- Integration guide
+- Props
+- Examples
+- Best practices

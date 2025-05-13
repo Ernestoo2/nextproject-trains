@@ -1,0 +1,1230 @@
+[{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3282"
+  },
+  "routeName": "Route from Abuja, Federal Capital Territory to Kano, Kano",
+  "routeCode": "RT-ABUJA-KANO-FEDERAL_CAPITAL_TERRITORY-KANO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "distance": 1204,
+  "baseFare": 2408,
+  "estimatedDuration": "12h 2m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.894Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.894Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3283"
+  },
+  "routeName": "Route from Abuja, Federal Capital Territory to Port Harcourt, Rivers",
+  "routeCode": "RT-ABUJA-PORT_HARCOURT-FEDERAL_CAPITAL_TERRITORY-RIVERS",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "distance": 926,
+  "baseFare": 1852,
+  "estimatedDuration": "9h 15m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.895Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.895Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3284"
+  },
+  "routeName": "Route from Abuja, Federal Capital Territory to Ibadan, Oyo",
+  "routeCode": "RT-ABUJA-IBADAN-FEDERAL_CAPITAL_TERRITORY-OYO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "distance": 829,
+  "baseFare": 1658,
+  "estimatedDuration": "8h 17m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.895Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.895Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3285"
+  },
+  "routeName": "Route from Abuja, Federal Capital Territory to Kaduna, Kaduna",
+  "routeCode": "RT-ABUJA-KADUNA-FEDERAL_CAPITAL_TERRITORY-KADUNA",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "distance": 778,
+  "baseFare": 1556,
+  "estimatedDuration": "7h 46m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3286"
+  },
+  "routeName": "Route from Abuja, Federal Capital Territory to Enugu, Enugu",
+  "routeCode": "RT-ABUJA-ENUGU-FEDERAL_CAPITAL_TERRITORY-ENUGU",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "distance": 677,
+  "baseFare": 1354,
+  "estimatedDuration": "6h 46m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3287"
+  },
+  "routeName": "Route from Kano, Kano to Abuja, Federal Capital Territory",
+  "routeCode": "RT-KANO-ABUJA-KANO-FEDERAL_CAPITAL_TERRITORY",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "distance": 1114,
+  "baseFare": 2228,
+  "estimatedDuration": "11h 8m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3288"
+  },
+  "routeName": "Route from Kano, Kano to Port Harcourt, Rivers",
+  "routeCode": "RT-KANO-PORT_HARCOURT-KANO-RIVERS",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "distance": 994,
+  "baseFare": 1988,
+  "estimatedDuration": "9h 56m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3289"
+  },
+  "routeName": "Route from Kano, Kano to Ibadan, Oyo",
+  "routeCode": "RT-KANO-IBADAN-KANO-OYO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "distance": 520,
+  "baseFare": 1040,
+  "estimatedDuration": "5h 12m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d328a"
+  },
+  "routeName": "Route from Kano, Kano to Enugu, Enugu",
+  "routeCode": "RT-KANO-ENUGU-KANO-ENUGU",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "distance": 1280,
+  "baseFare": 2560,
+  "estimatedDuration": "12h 48m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d328b"
+  },
+  "routeName": "Route from Port Harcourt, Rivers to Abuja, Federal Capital Territory",
+  "routeCode": "RT-PORT_HARCOURT-ABUJA-RIVERS-FEDERAL_CAPITAL_TERRITORY",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "distance": 1255,
+  "baseFare": 2510,
+  "estimatedDuration": "12h 33m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d328c"
+  },
+  "routeName": "Route from Port Harcourt, Rivers to Kano, Kano",
+  "routeCode": "RT-PORT_HARCOURT-KANO-RIVERS-KANO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "distance": 810,
+  "baseFare": 1620,
+  "estimatedDuration": "8h 6m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d328d"
+  },
+  "routeName": "Route from Port Harcourt, Rivers to Ibadan, Oyo",
+  "routeCode": "RT-PORT_HARCOURT-IBADAN-RIVERS-OYO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "distance": 1167,
+  "baseFare": 2334,
+  "estimatedDuration": "11h 40m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d328e"
+  },
+  "routeName": "Route from Port Harcourt, Rivers to Kaduna, Kaduna",
+  "routeCode": "RT-PORT_HARCOURT-KADUNA-RIVERS-KADUNA",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "distance": 1351,
+  "baseFare": 2702,
+  "estimatedDuration": "13h 30m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d328f"
+  },
+  "routeName": "Route from Port Harcourt, Rivers to Enugu, Enugu",
+  "routeCode": "RT-PORT_HARCOURT-ENUGU-RIVERS-ENUGU",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "distance": 1401,
+  "baseFare": 2802,
+  "estimatedDuration": "14h 0m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3290"
+  },
+  "routeName": "Route from Ibadan, Oyo to Abuja, Federal Capital Territory",
+  "routeCode": "RT-IBADAN-ABUJA-OYO-FEDERAL_CAPITAL_TERRITORY",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "distance": 1169,
+  "baseFare": 2338,
+  "estimatedDuration": "11h 41m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3291"
+  },
+  "routeName": "Route from Ibadan, Oyo to Kano, Kano",
+  "routeCode": "RT-IBADAN-KANO-OYO-KANO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "distance": 924,
+  "baseFare": 1848,
+  "estimatedDuration": "9h 14m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3292"
+  },
+  "routeName": "Route from Ibadan, Oyo to Port Harcourt, Rivers",
+  "routeCode": "RT-IBADAN-PORT_HARCOURT-OYO-RIVERS",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "distance": 536,
+  "baseFare": 1072,
+  "estimatedDuration": "5h 21m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3293"
+  },
+  "routeName": "Route from Ibadan, Oyo to Kaduna, Kaduna",
+  "routeCode": "RT-IBADAN-KADUNA-OYO-KADUNA",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "distance": 1037,
+  "baseFare": 2074,
+  "estimatedDuration": "10h 22m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3294"
+  },
+  "routeName": "Route from Ibadan, Oyo to Enugu, Enugu",
+  "routeCode": "RT-IBADAN-ENUGU-OYO-ENUGU",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "distance": 983,
+  "baseFare": 1966,
+  "estimatedDuration": "9h 49m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3295"
+  },
+  "routeName": "Route from Kaduna, Kaduna to Abuja, Federal Capital Territory",
+  "routeCode": "RT-KADUNA-ABUJA-KADUNA-FEDERAL_CAPITAL_TERRITORY",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "distance": 1201,
+  "baseFare": 2402,
+  "estimatedDuration": "12h 0m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3296"
+  },
+  "routeName": "Route from Kaduna, Kaduna to Port Harcourt, Rivers",
+  "routeCode": "RT-KADUNA-PORT_HARCOURT-KADUNA-RIVERS",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "distance": 1325,
+  "baseFare": 2650,
+  "estimatedDuration": "13h 15m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3297"
+  },
+  "routeName": "Route from Kaduna, Kaduna to Ibadan, Oyo",
+  "routeCode": "RT-KADUNA-IBADAN-KADUNA-OYO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "distance": 815,
+  "baseFare": 1630,
+  "estimatedDuration": "8h 9m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3298"
+  },
+  "routeName": "Route from Kaduna, Kaduna to Enugu, Enugu",
+  "routeCode": "RT-KADUNA-ENUGU-KADUNA-ENUGU",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "distance": 1416,
+  "baseFare": 2832,
+  "estimatedDuration": "14h 9m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d3299"
+  },
+  "routeName": "Route from Enugu, Enugu to Abuja, Federal Capital Territory",
+  "routeCode": "RT-ENUGU-ABUJA-ENUGU-FEDERAL_CAPITAL_TERRITORY",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3265"
+  },
+  "distance": 596,
+  "baseFare": 1192,
+  "estimatedDuration": "5h 57m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d329a"
+  },
+  "routeName": "Route from Enugu, Enugu to Kano, Kano",
+  "routeCode": "RT-ENUGU-KANO-ENUGU-KANO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "distance": 1064,
+  "baseFare": 2128,
+  "estimatedDuration": "10h 38m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d329b"
+  },
+  "routeName": "Route from Enugu, Enugu to Port Harcourt, Rivers",
+  "routeCode": "RT-ENUGU-PORT_HARCOURT-ENUGU-RIVERS",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3267"
+  },
+  "distance": 1037,
+  "baseFare": 2074,
+  "estimatedDuration": "10h 22m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d329c"
+  },
+  "routeName": "Route from Enugu, Enugu to Ibadan, Oyo",
+  "routeCode": "RT-ENUGU-IBADAN-ENUGU-OYO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3268"
+  },
+  "distance": 640,
+  "baseFare": 1280,
+  "estimatedDuration": "6h 24m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.899Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.899Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d329d"
+  },
+  "routeName": "Route from Enugu, Enugu to Kaduna, Kaduna",
+  "routeCode": "RT-ENUGU-KADUNA-ENUGU-KADUNA",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d326a"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "distance": 1474,
+  "baseFare": 2948,
+  "estimatedDuration": "14h 44m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.899Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.899Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d329e"
+  },
+  "routeName": "Route from Kano, Kano to Kaduna, Kaduna",
+  "routeCode": "RT-KANO-KADUNA-KANO-KADUNA",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "distance": 1339,
+  "baseFare": 2678,
+  "estimatedDuration": "13h 23m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.900Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.900Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681ae4464cee15449f2d329f"
+  },
+  "routeName": "Route from Kaduna, Kaduna to Kano, Kano",
+  "routeCode": "RT-KADUNA-KANO-KADUNA-KANO",
+  "fromStation": {
+    "$oid": "681ae4454cee15449f2d3269"
+  },
+  "toStation": {
+    "$oid": "681ae4454cee15449f2d3266"
+  },
+  "distance": 1264,
+  "baseFare": 2528,
+  "estimatedDuration": "12h 38m",
+  "availableClasses": [
+    {
+      "$oid": "681ae4454cee15449f2d326b"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326c"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326d"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326e"
+    },
+    {
+      "$oid": "681ae4454cee15449f2d326f"
+    }
+  ],
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-07T04:40:38.901Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T04:40:38.901Z"
+  },
+  "__v": 0
+}]

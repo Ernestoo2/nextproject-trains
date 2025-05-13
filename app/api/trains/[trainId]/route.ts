@@ -1,35 +1,75 @@
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getTrainDetails } from "@/api/api";
-import { ApiResponse, TrainDetails } from "@/api/types/types";
-import { getServerSession } from "next-auth";
+import {
+  ApiErrorResponse,
+  ApiSuccessResponse,
+} from "@/types/shared/api";
+import { TrainDetails } from "@/types/shared/trains";
 import { authOptions } from "@/utils/auth/next-auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: { trainId: string } },
+  { params }: { params: { trainId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      const response: ApiErrorResponse = {
+        success: false,
+        error: "Unauthorized",
+        status: 401,
+        message: "You must be logged in to access this resource",
+      };
+      return NextResponse.json(response, { status: 401 });
     }
 
-    const response: ApiResponse<TrainDetails[]> = await getTrainDetails();
+    const response = await getTrainDetails();
 
-    if (!response.success) {
-      return new NextResponse(response.message, { status: 400 });
+    if (!response.success || !response.data) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to fetch train details",
+          status: 400,
+          message: response.message || "Unknown error occurred",
+        },
+        { status: 400 }
+      );
     }
 
-    const train = response.data.find((t) => t.id === parseInt(params.trainId));
+    const train = response.data.find((t) => t._id === params.trainId);
 
     if (!train) {
-      return new NextResponse("Train not found", { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Train not found",
+          status: 404,
+          message: `No train found with ID ${params.trainId}`,
+        },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json(train);
+    const successResponse: ApiSuccessResponse<TrainDetails> = {
+      success: true,
+      data: train as unknown as TrainDetails,
+      message: "Train details fetched successfully",
+    };
+
+    return NextResponse.json(successResponse);
   } catch (error) {
     console.error("Error fetching train details:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal Server Error",
+        status: 500,
+        message: "An unexpected error occurred while fetching train details",
+      },
+      { status: 500 }
+    );
   }
 }

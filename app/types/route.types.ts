@@ -1,131 +1,72 @@
-import { Document } from 'mongoose';
+import { Document, Types } from "mongoose";
+import { BaseApiResponse, PaginatedApiResponse } from "./shared/api";
 
-export interface StationType extends Document {
-  _id: string;
+// MongoDB document types (extending shared types with Document)
+export interface StationDocument extends Document {
   name: string;
   code: string;
   city: string;
   state: string;
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface TrainClass extends Document {
-  _id: string;
+export interface TrainClassDocument extends Document {
   name: string;
   code: string;
   baseFare: number;
+  capacity?: number;
   description?: string;
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Route extends Document {
-  _id: string;
-  fromStation: StationType;
-  toStation: StationType;
+export interface RouteDocument extends Document {
+  fromStation: Types.ObjectId;
+  toStation: Types.ObjectId;
   distance: number;
   baseFare: number;
   estimatedDuration: string;
-  availableClasses: TrainClass[];
+  availableClasses: Types.ObjectId[];
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Train extends Document {
-  _id: string;
+export interface TrainDocument extends Document {
   trainName: string;
   trainNumber: string;
+  classes: Types.ObjectId[];
   routes: Array<{
-    route: Route;
+    route: Types.ObjectId;
     arrivalTime: string;
     departureTime: string;
+    day: number;
   }>;
-  classes: TrainClass[];
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Schedule extends Document {
-  _id: string;
-  train: Train;
-  route: Route;
+export interface ScheduleDocument extends Document {
+  train: Types.ObjectId;
+  route: Types.ObjectId;
   departureTime: string;
   arrivalTime: string;
   date: Date;
-  availableSeats: Record<string, number>;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  availableSeats: Map<string, number>;
+  status: string;
   platform?: string;
+  fare: Map<string, number>;
   isActive: boolean;
-  fare?: Record<string, number>;
+  createdAt: Date;
+  updatedAt: Date;
+  duration: string; // Virtual
 }
 
-export interface TrainScheduleCardProps {
-  schedule: {
-    _id: string;
-    train: {
-      trainNumber: string;
-      trainName: string;
-    };
-    departureTime: string;
-    arrivalTime: string;
-    route: {
-      fromStation: {
-        name: string;
-        code: string;
-      };
-      toStation: {
-        name: string;
-        code: string;
-      };
-    };
-    duration: string;
-    availableClasses: Array<{
-      _id: string;
-      name: string;
-      code: string;
-      baseFare: number;
-      availableSeats: number;
-    }>;
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  };
-  selectedClass: string;
-  date: string;
-}
-
-export interface SearchParams {
-  fromStationId?: string;
-  toStationId?: string;
-  date?: string;
-  classType?: string;
-  adultCount?: number;
-  childCount?: number;
-  infantCount?: number;
-}
-
-export interface Trip {
-  id: string;
-  routeId: string;
-  trainId: string;
-  departureTime: string;
-  date: string;
-  arrivalTime: string;
-  availableSeats: {
-    [className: string]: number;
-  };
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  route: {
-    id: string;
-    fromStation: string;
-    toStation: string;
-    distance: number;
-    baseFare: number;
-    estimatedDuration: string;
-    availableClasses: string;
-  } | undefined;
-  train: {
-    id: string;
-    trainName: string;
-    trainNumber: string;
-} | undefined
-}
-
+// Passenger related types
 export interface PassengerDetails {
   classType: string;
   adultCount: number;
@@ -133,33 +74,59 @@ export interface PassengerDetails {
   infantCount: number;
 }
 
-export interface RouteSearchParams {
-  fromStationId: string;
-  toStationId: string;
+// Component props that need Document types
+export interface TrainScheduleCardProps {
+  schedule: ScheduleDocument & {
+    duration: string;
+    availableClasses: Array<
+      TrainClassDocument & {
+      availableSeats: number;
+      }
+    >;
+  };
+  selectedClass: string;
   date: string;
-  passengers: number;
-  classType?: string;
 }
 
-export interface PricingDetails {
+// Route related types
+export interface RouteCreateRequest {
+  fromStationId: Types.ObjectId;
+  toStationId: Types.ObjectId;
+  distance: number;
   baseFare: number;
-  tax: number;
-  total: number;
+  estimatedDuration: string;
+  availableClassIds: Types.ObjectId[];
 }
 
-export interface RouteSearchResponse {
-  availableRoutes: Route[];
-  pricing: {
-    routeId: string;
-    classPricing: {
-      [className: string]: PricingDetails;
-    };
-  }[];
+export interface RouteUpdateRequest {
+  distance?: number;
+  baseFare?: number;
+  estimatedDuration?: string;
+  availableClassIds?: Types.ObjectId[];
+  isActive?: boolean;
 }
 
-export interface RouteState {
-  selectedRoute: Route | null;
-  selectedTrip: Trip | null;
-  passengerDetails: PassengerDetails;
-  bookingStage: 'ROUTE_SELECTION' | 'PASSENGER_DETAILS' | 'SEAT_SELECTION' | 'PAYMENT';
-} 
+export interface RouteWithDetails {
+  _id: Types.ObjectId;
+  fromStation: StationDocument;
+  toStation: StationDocument;
+  distance: number;
+  baseFare: number;
+  estimatedDuration: string;
+  availableClasses: TrainClassDocument[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RouteSearchParams {
+  fromStationId?: Types.ObjectId;
+  toStationId?: Types.ObjectId;
+  availableClassId?: Types.ObjectId;
+  maxDistance?: number;
+  maxFare?: number;
+  page?: number;
+  limit?: number;
+}
+
+export type RouteListResponse = PaginatedApiResponse<RouteWithDetails[]>;

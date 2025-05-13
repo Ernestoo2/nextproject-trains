@@ -9,32 +9,54 @@ import { LoginFormProps } from "./_types/login_type";
 import { useContext } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/_providers/auth/AuthContext";
+import { toast } from "sonner";
 
 export default function Login({ onSuccess, onError }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const auth = useContext(AuthContext);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       if (!auth) {
         throw new Error("Authentication context not available");
       }
 
-      await auth.login(email, password);
-      if (onSuccess) onSuccess();
+      if (!email || !password) {
+        throw new Error("Please enter both email and password");
+      }
 
+      await auth.login(email, password);
+      toast.success("Login successful!");
+      if (onSuccess) onSuccess();
       router.push("/dashboard");
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred during login";
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during login";
       setError(errorMessage);
+      toast.error(errorMessage);
       if (onError) onError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    try {
+      setIsLoading(true);
+      // Implement social login logic here
+      toast.info(`${provider} login coming soon!`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Social login failed";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,6 +88,7 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
               className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-600"
               placeholder={LOGIN_CONSTANTS.EMAIL_PLACEHOLDER}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -85,6 +108,7 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
               className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-600"
               placeholder={LOGIN_CONSTANTS.PASSWORD_PLACEHOLDER}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -94,6 +118,7 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
               <input
                 type="checkbox"
                 className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                disabled={isLoading}
               />
               <span className="text-sm text-[#4A5568]">
                 {LOGIN_CONSTANTS.REMEMBER_ME}
@@ -110,10 +135,10 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-[#8DD3BB] text-white py-3 px-6 rounded-md hover:bg-red-700 transition"
-            disabled={auth?.loading}
+            className="w-full bg-[#8DD3BB] text-white py-3 px-6 rounded-md hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            {auth?.loading ? "Logging in..." : LOGIN_CONSTANTS.LOGIN_BUTTON}
+            {isLoading ? "Logging in..." : LOGIN_CONSTANTS.LOGIN_BUTTON}
           </button>
         </form>
 
@@ -135,26 +160,29 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
           </div>
           <div className="flex items-center justify-center space-x-4 mt-4">
             {/* Facebook */}
-            <Link
-              href={"https://www.facebook.com"}
-              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100"
+            <button
+              onClick={() => handleSocialLogin("Facebook")}
+              disabled={isLoading}
+              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaFacebookF className="text-blue-600 w-5 h-5" />
-            </Link>
+            </button>
             {/* Google */}
-            <Link
-              href={"/verify-email"}
-              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100"
+            <button
+              onClick={() => handleSocialLogin("Google")}
+              disabled={isLoading}
+              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaGoogle className="text-red-600 w-5 h-5" />
-            </Link>
+            </button>
             {/* Apple */}
-            <Link
-              href={"/verify-email"}
-              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100"
+            <button
+              onClick={() => handleSocialLogin("Apple")}
+              disabled={isLoading}
+              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaApple className="text-black w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>

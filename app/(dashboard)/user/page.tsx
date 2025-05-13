@@ -18,16 +18,16 @@ export default function UserPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!session?.user?.email) return;
-      
+
       try {
-        const response = await fetch('/api/user/profile');
+        const response = await fetch("/api/user/profile");
         if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+          throw new Error("Failed to fetch user data");
         }
         const data = await response.json();
         setUserData(data.user);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
       } finally {
         setLoading(false);
       }
@@ -45,7 +45,7 @@ export default function UserPage() {
   }
 
   if (!session?.user) {
-    router.push('/auth/signin');
+    router.push("/auth/signin");
     return null;
   }
 

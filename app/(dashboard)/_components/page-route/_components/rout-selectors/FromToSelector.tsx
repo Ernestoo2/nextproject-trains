@@ -1,16 +1,21 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { FaRoute } from "react-icons/fa";
-import { useRouter } from "next/navigation";
-import { StationType } from "@/types/route.types";
+import { useRouter } from "next/navigation"; 
+import { Station } from '@/types/shared/trains';
+import { useTrainSearchStore } from '@/store/trainSearchStore';
 
 interface FromToSelectorProps {
-  stations: StationType[];
+  stations: Station[];
   selectedFrom: string;
   selectedTo: string;
   onFromChange: (stationId: string) => void;
   onToChange: (stationId: string) => void;
   date: string;
   classType: string;
+  tripType?: string;
+  adultCount?: number;
+  childCount?: number;
+  infantCount?: number;
 }
 
 export default function FromToSelector({
@@ -21,32 +26,80 @@ export default function FromToSelector({
   onToChange,
   date,
   classType,
+  tripType = "ONE_WAY",
+  adultCount = 1,
+  childCount = 0,
+  infantCount = 0
 }: FromToSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const { 
+    filters, 
+    updateFilters, 
+    setLoading, 
+    setError,
+    isLoading,
+    error 
+  } = useTrainSearchStore();
+
+  // Sync with store on mount and when props change
+  useEffect(() => {
+    if (selectedFrom !== filters.fromStation) {
+      updateFilters({ fromStation: selectedFrom });
+    }
+    if (selectedTo !== filters.toStation) {
+      updateFilters({ toStation: selectedTo });
+    }
+  }, [selectedFrom, selectedTo, filters, updateFilters]);
 
   const selectedFromStation = stations.find(s => s._id === selectedFrom);
   const selectedToStation = stations.find(s => s._id === selectedTo);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback(async () => {
     if (!selectedFrom || !selectedTo || !date) {
+      setError('Please select both departure and arrival stations');
       return;
     }
 
-    const searchParams = new URLSearchParams({
-      fromStationId: selectedFrom,
-      toStationId: selectedTo,
-      date,
-      classType,
-    });
+    try {
+      setLoading(true);
+      setError(null);
 
-    router.push(`/trains/train-search?${searchParams.toString()}`);
-  }, [selectedFrom, selectedTo, date, classType, router]);
+      const searchParams = new URLSearchParams({
+        fromStationId: selectedFrom,
+        toStationId: selectedTo,
+        date,
+        classType,
+        tripType,
+        adultCount: adultCount.toString(),
+        childCount: childCount.toString(),
+        infantCount: infantCount.toString()
+      });
+
+      // Navigate to train timetable with all parameters
+      router.push(`/trains/train-timetable?${searchParams.toString()}`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to search trains');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedFrom, selectedTo, date, classType, tripType, adultCount, childCount, infantCount, router, setLoading, setError]);
+
+  const handleStationChange = useCallback((stationId: string, type: 'from' | 'to') => {
+    if (type === 'from') {
+      onFromChange(stationId);
+      updateFilters({ fromStation: stationId });
+    } else {
+      onToChange(stationId);
+      updateFilters({ toStation: stationId });
+    }
+    setIsOpen(false);
+  }, [onFromChange, onToChange, updateFilters]);
 
   return (
     <div className="relative w-full md:col-span-2">
-      <div className="border border-[#79747E] p-3 rounded-md flex items-center gap-3 text-sm">
-        <span className="absolute -top-2 left-3 bg-white px-1 text-xs text-[#79747E]">
+      <div className={`border ${error ? 'border-red-500' : 'border-[#79747E]'} p-3 rounded-md flex items-center gap-3 text-sm`}>
+        <span className={`absolute -top-2 left-3 bg-white px-1 text-xs ${error ? 'text-red-500' : 'text-[#79747E]'}`}>
           From - To
         </span>
         <button
@@ -54,11 +107,12 @@ export default function FromToSelector({
           className="w-full relative rounded-md flex items-center gap-3 text-sm cursor-pointer"
           aria-expanded={isOpen}
           aria-label="Select route"
+          disabled={isLoading}
         >
           <span className="font-medium truncate">
-            {selectedFromStation?.name || "Select"} - {selectedToStation?.name || "Select"}
+            {selectedFromStation?.stationName || "Select"} - {selectedToStation?.stationName || "Select"}
           </span>
-          <FaRoute className="text-[#79747E] ml-auto flex-shrink-0" />
+          <FaRoute className={`${error ? 'text-red-500' : 'text-[#79747E]'} ml-auto flex-shrink-0`} />
         </button>
 
         {isOpen && (
@@ -70,10 +124,7 @@ export default function FromToSelector({
                   {stations.map((station) => (
                     <button
                       key={station._id}
-                      onClick={() => {
-                        onFromChange(station._id);
-                        setIsOpen(false);
-                      }}
+                      onClick={() => handleStationChange(station._id, 'from')}
                       className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors
                         ${selectedFrom === station._id 
                           ? "bg-[#07561A] text-white" 
@@ -81,12 +132,12 @@ export default function FromToSelector({
                         ${selectedTo === station._id 
                           ? "opacity-50 cursor-not-allowed" 
                           : "cursor-pointer"}`}
-                      disabled={station._id === selectedTo}
+                      disabled={station._id === selectedTo || isLoading}
                     >
                       <div className="flex flex-col">
-                        <span className="font-medium">{station.name}</span>
+                        <span className="font-medium">{station.stationName}</span>
                         <span className="text-xs text-gray-500">
-                          {station.code} • {station.city}, {station.state}
+                          {station.stationCode} • {station.city}, {station.state}
                         </span>
                       </div>
                     </button>
@@ -100,10 +151,7 @@ export default function FromToSelector({
                   {stations.map((station) => (
                     <button
                       key={station._id}
-                      onClick={() => {
-                        onToChange(station._id);
-                        setIsOpen(false);
-                      }}
+                      onClick={() => handleStationChange(station._id, 'to')}
                       className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors
                         ${selectedTo === station._id 
                           ? "bg-[#07561A] text-white" 
@@ -111,12 +159,12 @@ export default function FromToSelector({
                         ${selectedFrom === station._id 
                           ? "opacity-50 cursor-not-allowed" 
                           : "cursor-pointer"}`}
-                      disabled={station._id === selectedFrom}
+                      disabled={station._id === selectedFrom || isLoading}
                     >
                       <div className="flex flex-col">
-                        <span className="font-medium">{station.name}</span>
+                        <span className="font-medium">{station.stationName}</span>
                         <span className="text-xs text-gray-500">
-                          {station.code} • {station.city}, {station.state}
+                          {station.stationCode} • {station.city}, {station.state}
                         </span>
                       </div>
                     </button>
@@ -128,12 +176,20 @@ export default function FromToSelector({
         )}
       </div>
 
+      {error && (
+        <p className="text-red-500 text-xs mt-1" role="alert">
+          {error}
+        </p>
+      )}
+
       {selectedFrom && selectedTo && (
         <button
           onClick={handleSearch}
-          className="mt-4 w-full bg-[#07561A] text-white py-2 px-4 rounded-md hover:bg-[#064a15] transition-colors"
+          disabled={isLoading}
+          className={`mt-4 w-full bg-[#07561A] text-white py-2 px-4 rounded-md transition-colors
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#064a15]'}`}
         >
-          Search Trains
+          {isLoading ? 'Searching...' : 'Search Trains'}
         </button>
       )}
     </div>

@@ -5,8 +5,10 @@ import { UserProfile } from "@/utils/type";
 
 // Generate a random 12-digit ID
 const generateNaijaRailsId = () => {
-  const prefix = 'NR';
-  const randomNum = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0');
+  const prefix = "NR";
+  const randomNum = Math.floor(Math.random() * 10000000000)
+    .toString()
+    .padStart(10, "0");
   return `${prefix}${randomNum}`;
 };
 
@@ -36,7 +38,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
     try {
       const response = await fetch(`/api/user/${user.id}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+        throw new Error("Failed to fetch user data");
       }
       const freshData = await response.json();
       const updatedUserProfile: UserProfile = {
@@ -47,12 +49,12 @@ const Account: React.FC<AccountProps> = ({ user }) => {
         address: freshData.address,
         dob: freshData.dob,
         image: freshData.image,
-        role: freshData.role || 'user'
+        role: freshData.role || "user",
       };
       setUserData(updatedUserProfile);
       updateUserProfile(updatedUserProfile);
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error("Error fetching user data:", error);
     }
   };
 
@@ -73,16 +75,16 @@ const Account: React.FC<AccountProps> = ({ user }) => {
       };
 
       const response = await fetch(`/api/user/${user.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(updatedProfile),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update profile');
+        throw new Error(error.error || "Failed to update profile");
       }
 
       await refreshUserData();
@@ -100,12 +102,12 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   const formatDate = (dateString: string) => {
     if (!dateString) return "Not set";
     try {
-      return new Date(dateString).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      return new Date(dateString).toLocaleString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch (error) {
       return "Invalid Date";
@@ -137,7 +139,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
           <div>
             <p className="font-semibold text-gray-600">Role</p>
             <p className="text-base break-all">
-            {(userData.role ?? '').toUpperCase()}
+              {(userData.role ?? "").toUpperCase()}
             </p>
           </div>
         </div>
@@ -201,7 +203,9 @@ const Account: React.FC<AccountProps> = ({ user }) => {
               />
             ) : (
               <p className="text-base">
-                {userData.dob ? new Date(userData.dob).toLocaleDateString() : "Not set"}
+                {userData.dob
+                  ? new Date(userData.dob).toLocaleDateString()
+                  : "Not set"}
               </p>
             )}
           </div>

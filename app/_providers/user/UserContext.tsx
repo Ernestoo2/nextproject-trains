@@ -10,20 +10,26 @@ const UserContext = createContext<UserContextType>({
   generateNaijaRailsId: () => "",
 });
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { data: session } = useSession();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const generateNaijaRailsId = () => {
     const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    const random = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, "0");
     return `NR${timestamp}${random}`;
   };
 
   useEffect(() => {
     // Load user profile from localStorage when session changes
     if (session?.user?.email) {
-      const storedProfile = localStorage.getItem(`userProfile_${session.user.email}`);
+      const storedProfile = localStorage.getItem(
+        `userProfile_${session.user.email}`,
+      );
       if (storedProfile) {
         setUserProfile(JSON.parse(storedProfile));
       } else {
@@ -39,7 +45,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastUpdated: new Date(),
         };
         setUserProfile(newProfile);
-        localStorage.setItem(`userProfile_${session.user.email}`, JSON.stringify(newProfile));
+        localStorage.setItem(
+          `userProfile_${session.user.email}`,
+          JSON.stringify(newProfile),
+        );
       }
     }
   }, [session]);
@@ -54,7 +63,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setUserProfile(updatedProfile);
-    localStorage.setItem(`userProfile_${session.user.email}`, JSON.stringify(updatedProfile));
+    localStorage.setItem(
+      `userProfile_${session.user.email}`,
+      JSON.stringify(updatedProfile),
+    );
   };
 
   const value = {
@@ -63,11 +75,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     generateNaijaRailsId,
   };
 
-  return (
-    <UserContext.Provider value={value}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
 export function useUser(): UserContextType {
@@ -76,4 +84,4 @@ export function useUser(): UserContextType {
     throw new Error("useUser must be used within a UserProvider");
   }
   return context;
-} 
+}

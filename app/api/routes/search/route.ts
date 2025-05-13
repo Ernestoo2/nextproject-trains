@@ -12,9 +12,9 @@ interface StationType extends Document {
 
 interface TrainClassType extends Document {
   _id: string;
-  name: string;
-  code: string;
-  baseFare: number;
+  className: string;
+  classCode: string;
+  basePrice: number;
 }
 
 interface RouteType extends Document {
@@ -34,10 +34,13 @@ export async function GET(request: NextRequest) {
     const toStationId = searchParams.get("toStationId");
 
     if (!fromStationId || !toStationId) {
-      return NextResponse.json({
-        success: false,
-        message: "Missing required parameters",
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Missing required parameters",
+        },
+        { status: 400 },
+      );
     }
 
     await connectDB();
@@ -45,24 +48,29 @@ export async function GET(request: NextRequest) {
     const routes = await Route.find({
       fromStation: fromStationId,
       toStation: toStationId,
-      isActive: true
+      isActive: true,
     })
-    .populate('fromStation', 'name code city state')
-    .populate('toStation', 'name code city state')
-    .populate('availableClasses', 'name code baseFare');
+      .populate("fromStation", "stationName stationCode city state")
+      .populate("toStation", "stationName stationCode city state")
+      .populate("availableClasses", "className classCode basePrice");
 
     return NextResponse.json({
       success: true,
       data: routes,
-      message: "Routes retrieved successfully"
+      message: "Routes retrieved successfully",
     });
-
   } catch (error) {
     console.error("Error in route search:", error);
-    return NextResponse.json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred while searching for routes"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "An error occurred while searching for routes",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -75,7 +83,7 @@ export async function POST(request: Request) {
     if (!fromStation || !toStation || !date) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -97,21 +105,21 @@ export async function POST(request: Request) {
       // Check if stations exist
       const fromStationExists = await Station.findById(fromStation);
       const toStationExists = await Station.findById(toStation);
-      
+
       console.log("Station check:", {
         fromStationExists: !!fromStationExists,
-        toStationExists: !!toStationExists
+        toStationExists: !!toStationExists,
       });
 
       return NextResponse.json(
-        { 
+        {
           error: "No routes found between the specified stations",
           details: {
             fromStationExists: !!fromStationExists,
-            toStationExists: !!toStationExists
-          }
+            toStationExists: !!toStationExists,
+          },
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -133,9 +141,9 @@ export async function POST(request: Request) {
       estimatedDuration: route.estimatedDuration,
       availableClasses: route.availableClasses.map((cls: TrainClassType) => ({
         id: cls._id,
-        name: cls.name,
-        code: cls.code,
-        baseFare: cls.baseFare,
+        name: cls.className,
+        code: cls.classCode,
+        baseFare: cls.basePrice,
       })),
     }));
 
@@ -144,7 +152,7 @@ export async function POST(request: Request) {
     console.error("Error searching routes:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
-} 
+}

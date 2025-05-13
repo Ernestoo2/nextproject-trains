@@ -14,50 +14,89 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("Please enter your email and password");
         }
 
-        await connectDB();
+        try {
+          await connectDB();
 
-        const user = await User.findOne({ email: credentials.email });
-        if (!user) {
-          throw new Error("User not found");
+          const user = await User.findOne({ email: credentials.email.toLowerCase() });
+          if (!user) {
+            throw new Error("No user found with this email");
+          }
+
+          if (!user.isActive) {
+            throw new Error("Your account has been deactivated");
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isPasswordValid) {
+            throw new Error("Invalid password");
+          }
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            naijaRailsId: user.naijaRailsId,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          throw error;
         }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-        if (!isPasswordValid) {
-          throw new Error("Invalid password");
-        }
-
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-        };
       },
     }),
   ],
   pages: {
     signIn: "/auth/login",
+    error: "/auth/error",
+    signOut: "/auth/logout",
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role || "";
+        token.naijaRailsId = user.naijaRailsId;
+        token.email = user.email;
+        token.name = user.name;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.naijaRailsId = token.naijaRailsId as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
       }
       return session;
     },
   },
+  events: {
+    async signIn({ user }) {
+      try {
+        await connectDB();
+        await User.findByIdAndUpdate(user.id, {
+          lastLogin: new Date(),
+          $inc: { loginCount: 1 },
+        });
+      } catch (error) {
+        console.error("Error updating user login info:", error);
+      }
+    },
+  },
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
 };

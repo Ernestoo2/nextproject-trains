@@ -1,0 +1,40 @@
+page for searching that has the basic search paramenters
+it consisted of
+1.  @FromToSelector.tsx  that places api calls to get stations and map it  to display in the ui so it has an api route and a frontend that is calling it
+eg
+GET /api/train-classes 200 in 27899ms
+GET /api/stations 200 in 28059ms
+GET /api/train-classes 200 in 14809ms
+GET /api/profile?email=kaluwilson@gmail.com
+
+GET /api/routes/search?fromStationId=6809eec9c995541761db80af&toStationId=680a9542d2c9ae3ec8f76375 200 in 38544ms
+GET /api/routes/search?fromStationId=6809eec9c995541761db80af&toStationId=6809eec9c995541761db80b1 200 in 543ms
+
+2.  @DateSelector.tsx that is suppose to get schedules and from tere show active schedules
+Note: currently we where able to draft out a a 3 weeks schedule  for trains, routes, stations which i seeded into my mongodb database the schema is in my api endpoints
+i also have schemas for my naija rails profile and users
+
+3  @PassengerClassSelector.tsx  this is supposed to list a travel class to select how many passengers that will be booked for the ride
+This particular class selection is supposed to be used for review booing page in @BookingRight.tsx  to update the passenger
+
+4 @Tripselector.tsx  this is part of the search parameters that takes us to train search
+
+this process trigger a search for available routes which from there we will use and view train schedule
+
+the trainsearch parameter handles search using different routes
+using
+
+http://localhost:3000/trains/train-search?fromStationId=6809eec9c995541761db80af&toStationId=6809eec9c995541761db80b1&date=2025-04-25&classType=SC&adultCount=3&childCount=2&infantCount=1&returnDate=2025-05-02
+and as you see this passengers are are updataed in the train search
+backend
+GET /trains/train-search?fromStationId=6809eec9c995541761db80af&toStationId=6809eec9c995541761db80b1&date=2025-04-25&classType=SC&adultCount=3&childCount=2&infantCount=1&returnDate=2025-05-02 200 in 1096ms
+
+GET /trains/train-search?fromStationId=68018aa0b1f5d38b16ce0c76&toStationId=68018aa0b1f5d38b16ce0c74&date=2025-04-25&classType=SC&adultCount=1&childCount=0&infantCount=0 200 in 21916ms
+
+Compiled /trains/daily-trains in 13s
+http://localhost:3000/trains/daily-trains
+GET /api/trains/daily?date=2025-04-25 200 in 41051ms
+GET /api/trains/daily?date=2025-04-25 200 in 42747ms
+
+what i understand is i have this products
+@timetable

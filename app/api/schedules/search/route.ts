@@ -1,196 +1,203 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { connectDB } from "@/utils/mongodb/connect";
 import { Route } from "@/utils/mongodb/models/Route";
 import { Schedule } from "@/utils/mongodb/models/Schedule";
-import { Station, Train, TrainClass } from "@/utils/mongodb/models";
-import { cls } from "./type";
-
-type ApiResponse<T> = {
-  success: boolean;
-  data: T | null;
-  message: string;
-};
+import type { ScheduleSearchResponse } from "@/types/schedule.types";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Starting schedule search...");
     const { searchParams } = new URL(request.url);
     const fromStationId = searchParams.get("fromStationId");
     const toStationId = searchParams.get("toStationId");
     const date = searchParams.get("date");
-    const classType = searchParams.get("classType");
 
-    console.log("Search parameters:", {
-      fromStationId,
-      toStationId,
-      date,
-      classType,
-    });
-
-    // Validate required parameters
     if (!fromStationId || !toStationId || !date) {
-      console.log("Missing required parameters");
-      return NextResponse.json<ApiResponse<null>>({
+      return NextResponse.json<ScheduleSearchResponse>({
         success: false,
-        data: null,
         message: "Missing required parameters",
       });
     }
 
-    // Validate station IDs
-    if (!mongoose.Types.ObjectId.isValid(fromStationId) || !mongoose.Types.ObjectId.isValid(toStationId)) {
-      console.log("Invalid station IDs");
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        data: null,
-        message: "Invalid station IDs",
-      });
-    }
-
     await connectDB();
-    console.log("Connected to database");
 
-    // First, find the route between these stations
+    // Debug: Check if route exists
     const route = await Route.findOne({
       fromStation: new mongoose.Types.ObjectId(fromStationId),
       toStation: new mongoose.Types.ObjectId(toStationId),
-      isActive: true,
-    }).populate(['fromStation', 'toStation', 'availableClasses']);
-
-    console.log("Found route:", route ? route._id : 'No route found');
+    });
 
     if (!route) {
-      return NextResponse.json<ApiResponse<null>>({
+      return NextResponse.json<ScheduleSearchResponse>({
         success: false,
-        data: null,
-        message: "No route found between the specified stations",
+        message: "No route found between stations",
       });
     }
 
-    // Parse and validate the date
+    // Debug: Check schedules for this route
+    const allRouteSchedules = await Schedule.find({ route: route._id });
+    if (allRouteSchedules.length > 0) {
+      // Schedules exist for this route, continue with search
+    }
+
+    // Parse the input date and create start/end range for the full day
     const searchDate = new Date(date);
-    searchDate.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-    if (isNaN(searchDate.getTime())) {
-      console.log("Invalid date format");
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        data: null,
-        message: "Invalid date format",
-      });
-    }
-
-    // Ensure Train model is registered before querying
-    if (!mongoose.models.Train) {
-      console.log("Registering Train model...");
-      // The model will be registered when imported from @/utils/mongodb/models
-    }
-
-    // Construct query
-    const query: any = {
-      route: route._id,
-      date: searchDate,
+    const query = {
+      route: new mongoose.Types.ObjectId(route._id),
+      $or: [
+        {
+          // Search by ISODate
+          date: {
+            $gte: startOfDay,
+            $lte: endOfDay
+          }
+        },
+        {
+          // Also search by date string format
+          date: date
+        }
+      ],
       isActive: true,
-      status: "SCHEDULED",
+      status: { $in: ["SCHEDULED", "DELAYED"] }
     };
 
-    // Add class filter if specified
-    if (classType) {
-      query[`availableSeats.${classType}`] = { $gt: 0 };
-    }
-
-    console.log("MongoDB query:", JSON.stringify(query, null, 2));
-
-    // Count total schedules in DB for debugging
-    const totalSchedules = await Schedule.countDocuments({});
-    console.log("Total schedules in DB:", totalSchedules);
-
-    // Count schedules for this specific route
-    const routeSchedules = await Schedule.countDocuments({ route: route._id });
-    console.log("Schedules for this route:", routeSchedules);
-
-    // Find schedules with populated data
     const schedules = await Schedule.find(query)
       .populate({
-        path: "train",
-        select: "trainName trainNumber",
-        model: Train
-      })
-      .populate({
         path: "route",
-        select: "fromStation toStation distance baseFare estimatedDuration availableClasses",
         populate: [
-          { path: "fromStation", select: "name code city state", model: Station },
-          { path: "toStation", select: "name code city state", model: Station },
-          { path: "availableClasses", select: "name code baseFare", model: TrainClass }
+          { path: "fromStation" },
+          { path: "toStation" },
+          { path: "availableClasses" }
         ]
       })
-      .sort({ departureTime: 1 });
+      .populate("train");
 
-    console.log(`Found ${schedules.length} schedules for the route`);
+    // Transform schedules to match ScheduleWithDetails interface
+    const transformedSchedules = schedules
+      .filter(schedule => schedule.train && schedule.route)
+      .map(schedule => {
+        // Transform availableClasses based on route's availableClasses and schedule's availableSeats/fare
+        const availableClasses = schedule.route.availableClasses.map((cls: any) => ({
+          className: cls.className || cls.name,
+          classCode: cls.classCode || cls.code,
+          name: cls.className || cls.name,
+          code: cls.classCode || cls.code,
+          baseFare: cls.basePrice || cls.baseFare,
+          availableSeats: schedule.availableSeats.get(cls._id.toString()) || 0,
+          fare: schedule.fare.get(cls._id.toString()) || cls.basePrice || cls.baseFare
+        }));
 
-    if (schedules.length === 0) {
-      return NextResponse.json<ApiResponse<typeof Schedule[]>>({
-        success: true,
-        data: [],
-        message: "No schedules found for the given criteria",
+        return {
+          _id: schedule._id.toString(),
+          trainId: schedule.train._id.toString(),
+          trainNumber: schedule.train.trainNumber,
+          trainName: schedule.train.trainName,
+          train: {
+            id: schedule.train._id.toString(),
+            name: schedule.train.trainName,
+            number: schedule.train.trainNumber,
+            classes: (schedule.train.classes || []).map((cls: any) => ({
+              id: cls._id.toString(),
+              name: cls.className || cls.name,
+              code: cls.classCode || cls.code,
+              baseFare: cls.basePrice || cls.baseFare,
+              capacity: cls.capacity || 0
+            }))
+          },
+          route: {
+            id: schedule.route._id.toString(),
+            name: `${schedule.route.fromStation.stationName || schedule.route.fromStation.name} to ${schedule.route.toStation.stationName || schedule.route.toStation.name}`,
+            distance: schedule.route.distance,
+            duration: schedule.route.estimatedDuration,
+            baseFare: schedule.route.baseFare,
+            fromStation: {
+              _id: schedule.route.fromStation._id.toString(),
+              stationName: schedule.route.fromStation.stationName,
+              stationCode: schedule.route.fromStation.stationCode,
+              city: schedule.route.fromStation.city,
+              state: schedule.route.fromStation.state,
+              region: schedule.route.fromStation.region,
+              address: schedule.route.fromStation.address,
+              facilities: schedule.route.fromStation.facilities || [],
+              platforms: schedule.route.fromStation.platforms,
+              isActive: schedule.route.fromStation.isActive,
+              createdAt: schedule.route.fromStation.createdAt?.toISOString() || '',
+              updatedAt: schedule.route.fromStation.updatedAt?.toISOString() || '',
+            },
+            toStation: {
+              _id: schedule.route.toStation._id.toString(),
+              stationName: schedule.route.toStation.stationName,
+              stationCode: schedule.route.toStation.stationCode,
+              city: schedule.route.toStation.city,
+              state: schedule.route.toStation.state,
+              region: schedule.route.toStation.region,
+              address: schedule.route.toStation.address,
+              facilities: schedule.route.toStation.facilities || [],
+              platforms: schedule.route.toStation.platforms,
+              isActive: schedule.route.toStation.isActive,
+              createdAt: schedule.route.toStation.createdAt?.toISOString() || '',
+              updatedAt: schedule.route.toStation.updatedAt?.toISOString() || '',
+            }
+          },
+          availableClasses,
+          date: schedule.date instanceof Date ? schedule.date.toISOString() : schedule.date,
+          departureTime: schedule.departureTime,
+          arrivalTime: schedule.arrivalTime,
+          actualDepartureTime: schedule.actualDepartureTime,
+          actualArrivalTime: schedule.actualArrivalTime,
+          delayReason: schedule.delayReason,
+          duration: schedule.duration || "",
+          distance: schedule.route.distance,
+          platform: schedule.platform || "TBA",
+          status: schedule.status,
+          isActive: schedule.isActive ?? true,
+          departureStation: {
+            _id: schedule.route.fromStation._id.toString(),
+            stationName: schedule.route.fromStation.stationName,
+            stationCode: schedule.route.fromStation.stationCode,
+            city: schedule.route.fromStation.city,
+            state: schedule.route.fromStation.state,
+            region: schedule.route.fromStation.region,
+            address: schedule.route.fromStation.address,
+            facilities: schedule.route.fromStation.facilities || [],
+            platforms: schedule.route.fromStation.platforms,
+            isActive: schedule.route.fromStation.isActive,
+            createdAt: schedule.route.fromStation.createdAt?.toISOString() || '',
+            updatedAt: schedule.route.fromStation.updatedAt?.toISOString() || '',
+          },
+          arrivalStation: {
+            _id: schedule.route.toStation._id.toString(),
+            stationName: schedule.route.toStation.stationName,
+            stationCode: schedule.route.toStation.stationCode,
+            city: schedule.route.toStation.city,
+            state: schedule.route.toStation.state,
+            region: schedule.route.toStation.region,
+            address: schedule.route.toStation.address,
+            facilities: schedule.route.toStation.facilities || [],
+            platforms: schedule.route.toStation.platforms,
+            isActive: schedule.route.toStation.isActive,
+            createdAt: schedule.route.toStation.createdAt?.toISOString() || '',
+            updatedAt: schedule.route.toStation.updatedAt?.toISOString() || '',
+          }
+        };
       });
-    }
 
-    // Transform schedules into the required format
-    const transformedSchedules = schedules.map(schedule => {
-      console.log(`Processing schedule ${schedule._id}`);
-      const route = schedule.route;
-      if (!route) {
-        console.log(`No route found for schedule ${schedule._id}`);
-        return null;
-      }
-
-      return {
-        _id: schedule._id,
-        trainNumber: schedule.train?.trainNumber || '',
-        trainName: schedule.train?.trainName || '',
-        departureStation: {
-          name: route.fromStation.name,
-          code: route.fromStation.code,
-          city: route.fromStation.city,
-          state: route.fromStation.state,
-        },
-        arrivalStation: {
-          name: route.toStation.name,
-          code: route.toStation.code,
-          city: route.toStation.city,
-          state: route.toStation.state,
-        },
-      departureTime: schedule.departureTime,
-      arrivalTime: schedule.arrivalTime,
-        duration: schedule.duration,
-        availableClasses: route.availableClasses.map((cls: cls) => ({
-          _id: cls._id,
-          name: cls.name,
-          code: cls.code,
-          baseFare: cls.baseFare,
-          availableSeats: schedule.availableSeats[cls.code] || 0,
-        })),
-      status: schedule.status,
-        platform: schedule.platform,
-      };
-    }).filter(Boolean);
-
-    console.log(`Transformed ${transformedSchedules.length} schedules`);
-
-    return NextResponse.json<ApiResponse<any>>({
+    return NextResponse.json<ScheduleSearchResponse>({
       success: true,
       data: transformedSchedules,
-      message: "Schedules found successfully",
+      message: transformedSchedules.length ? "Schedules found successfully" : "No schedules found for the given criteria",
     });
+
   } catch (error) {
-    console.error("Error in schedule search:", error);
-    return NextResponse.json<ApiResponse<null>>({
+    return NextResponse.json<ScheduleSearchResponse>({
       success: false,
-      data: null,
       message: error instanceof Error ? error.message : "An error occurred while searching for schedules",
     });
   }
-} 
+}

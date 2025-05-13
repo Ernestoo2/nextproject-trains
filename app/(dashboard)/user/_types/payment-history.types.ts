@@ -19,4 +19,4 @@ export interface PaymentHistoryResponse {
   success: boolean;
   payments: PaymentHistory[];
   message?: string;
-} 
+}

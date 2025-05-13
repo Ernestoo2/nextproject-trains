@@ -1,0 +1,61 @@
+[{
+  "_id": {
+    "$oid": "67fdba40956628b488b88113"
+  },
+  "name": "Eze Ernest",
+  "email": "ezechibuezeernest@gmail.com",
+  "naijaRailsId": "NR9190489811",
+  "createdAt": {
+    "$date": "2025-04-15T01:45:36.593Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T01:45:36.618Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdc998c20a169db413728e"
+  },
+  "name": "Eze Ernest",
+  "email": "erneiifani@gmail.com",
+  "password": "$2b$12$AdwelVT3lNN2z89vWJcqk.AFGoOeBLJPKxUJEINaYH0ZH3bTzUeqO",
+  "naijaRailsId": "NR3500314604",
+  "phone": "07046647941",
+  "address": "umuchima, imo state",
+  "dob": "2003-08-17",
+  "createdAt": "2025-04-15T02:51:04.605Z",
+  "updatedAt": "2025-04-15T03:10:41.156Z",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ffdeca14725fc2c12f0c52"
+  },
+  "name": "Eze DANIELS",
+  "email": "rocxyspata@gmail.com",
+  "password": "$2b$12$DfTUhmlpNB/2Z91D6Kti3OWat5r9QvhyJ.DOme8Xdn/hZuN34itT.",
+  "naijaRailsId": "NR961328493407",
+  "phone": "",
+  "address": "",
+  "dob": "",
+  "createdAt": "2025-04-16T16:46:02.143Z",
+  "updatedAt": "2025-04-16T16:46:02.159Z",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6800156f2878063c50e7a823"
+  },
+  "name": "Wilson  DANIELS",
+  "email": "kaluwilson@gmail.com",
+  "password": "$2b$12$FmP.BtixKiTIA8gb1eJy9OGpxnOGCYC.XYMXswn59LiGzrTXn3YC.",
+  "naijaRailsId": "NR949651907799",
+  "phone": "07046647941",
+  "role": "user",
+  "address": "umuchima, imo state, nigeria",
+  "dob": "2025-04-17",
+  "createdAt": "2025-04-16T20:39:11.668Z",
+  "updatedAt": "2025-04-19T12:46:55.246Z",
+  "__v": 0
+}]

@@ -1,4 +1,4 @@
-import { DashboardTimetable } from './_components/DashboardTimetable';
+import { DashboardTimetable } from "./_components/DashboardTimetable";
 
 export default function TimetablePage() {
   return (
@@ -7,4 +7,4 @@ export default function TimetablePage() {
       <DashboardTimetable />
     </div>
   );
-} 
+}

@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     domains: ["your-production-image-domain.com"],
   },
+
   async headers() {
     return [
       {

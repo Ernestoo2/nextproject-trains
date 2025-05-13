@@ -1,57 +1,56 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
+import {
+  AuthUser,
+  UserRole,
+  USER_ROLES,
+  UserDocument,
+} from "@/types/shared/users";
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      select: false,
+    },
+    naijaRailsId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    phone: {
+      type: String,
+      default: "",
+    },
+    role: {
+      type: String,
+      enum: USER_ROLES,
+      default: "user",
+    },
+    address: {
+      type: String,
+      default: "",
+    },
+    dob: {
+      type: String,
+      default: "",
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  naijaRailsId: {
-    type: String,
-    unique: true,
-    required: true,
-  },
-  phone: {
-    type: String,
-    default: "",
-  },
-  role: {
-    type: String,
-    default: "user" ,
-  },
-  address: {
-    type: String,
-    default: "",
-  },
-  dob: {
-    type: String,
-    default: "",
-  },
-  createdAt: {
-    type: String,
-    required: true,
-  },
-  updatedAt: {
-    type: String,
-    required: true,
-  },
-});
+  { timestamps: true }
+);
 
-// Update the timestamps before saving
-userSchema.pre("save", function (next) {
-  if (!this.createdAt) {
-    this.createdAt = new Date().toISOString();
-  }
-  this.updatedAt = new Date().toISOString();
-  next();
-});
+// Only create index for role since email and naijaRailsId already have unique constraints
+userSchema.index({ role: 1 });
 
-export const User = mongoose.models.User || mongoose.model("User", userSchema);
+// Export the model
+export const User =
+  mongoose.models.User ||
+  mongoose.model<UserDocument & Document>("User", userSchema);

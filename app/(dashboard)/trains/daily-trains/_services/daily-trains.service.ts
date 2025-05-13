@@ -1,27 +1,39 @@
-import { DailyTrainsResponse } from '../_types/daily-trains.types';
+import { DailyTrainsResponse } from "../_types/daily-trains.types";
 
-export async function getDailyTrains(): Promise<DailyTrainsResponse> {
+export async function getDailyTrains(
+  date?: string
+): Promise<DailyTrainsResponse> {
   try {
-    const response = await fetch('/api/trains/daily', {
-      method: 'GET',
+    const url = new URL("/api/trains/daily", window.location.origin);
+    if (date) {
+      url.searchParams.append("date", date);
+    }
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      cache: 'no-store' // Ensure we get fresh data each time
+      cache: "no-store",
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch daily trains');
+      throw new Error(`Failed to fetch daily trains: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return data;
+
+    return {
+      success: true,
+      data: Array.isArray(data.data) ? data.data : [],
+      message: data.message || "Successfully fetched daily trains",
+    };
   } catch (error) {
-    console.error('Error fetching daily trains:', error);
     return {
       success: false,
       data: [],
-      message: 'Failed to fetch daily trains'
+      message:
+        error instanceof Error ? error.message : "Failed to fetch daily trains",
     };
   }
-} 
+}

@@ -11,7 +11,9 @@ import { format } from "date-fns";
 export default function BookingSuccess() {
   const router = useRouter();
   const { userProfile } = useUser();
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(
+    null,
+  );
 
   useEffect(() => {
     // Try to get booking details from localStorage
@@ -25,7 +27,9 @@ export default function BookingSuccess() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">No Booking Details Found</h1>
+          <h1 className="text-2xl font-semibold mb-4">
+            No Booking Details Found
+          </h1>
           <button
             onClick={() => router.push("/trains/train-search")}
             className="bg-[#07561A] text-white px-6 py-2 rounded-md"
@@ -117,7 +121,8 @@ export default function BookingSuccess() {
                 {bookingDetails.departureStation.name}
               </p>
               <p className="text-xs text-gray-500">
-                {bookingDetails.departureStation.city}, {bookingDetails.departureStation.state}
+                {bookingDetails.departureStation.city},{" "}
+                {bookingDetails.departureStation.state}
               </p>
             </div>
             <div className="flex flex-col items-center">
@@ -134,7 +139,8 @@ export default function BookingSuccess() {
                 {bookingDetails.arrivalStation.name}
               </p>
               <p className="text-xs text-gray-500">
-                {bookingDetails.arrivalStation.city}, {bookingDetails.arrivalStation.state}
+                {bookingDetails.arrivalStation.city},{" "}
+                {bookingDetails.arrivalStation.state}
               </p>
             </div>
           </div>
@@ -161,7 +167,9 @@ export default function BookingSuccess() {
             )}
             <div className="flex justify-between items-center mt-2 pt-2 border-t font-bold">
               <span>Total Amount:</span>
-              <span className="text-[#07561A]">₦{bookingDetails.totalPrice.toLocaleString()}</span>
+              <span className="text-[#07561A]">
+                ₦{bookingDetails.totalPrice.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>

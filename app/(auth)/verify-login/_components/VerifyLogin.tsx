@@ -38,7 +38,7 @@ export default function VerifyLogin() {
           Verify Your Login
         </h2>
         <p className="text-gray-600 mb-6">
-          We've sent a verification code to your email. Enter the code below to
+          We&apos;ve sent a verification code to your email. Enter the code below to
           verify and reset your password.
         </p>
 
@@ -58,7 +58,7 @@ export default function VerifyLogin() {
 
         {/* Resend Code */}
         <p className="text-sm text-gray-600 mb-4">
-          Didn't receive a code?{" "}
+          Didn&apos;t receive a code?{" "}
           <button
             onClick={handleResend}
             className="text-red-600 hover:underline"

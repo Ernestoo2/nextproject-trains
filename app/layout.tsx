@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { AuthProvider } from "./_providers/auth/AuthProvider";
-
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Naija Rails",
-  description: "Book your train tickets with ease",
+  title: "Naija Rails - Book Your Train Journey",
+  description: "Book your train journey across Nigeria with ease and comfort",
 };
 
 export default function RootLayout({
@@ -20,10 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
+        <Providers>
           {children}
           <Toaster />
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

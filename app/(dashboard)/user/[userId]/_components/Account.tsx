@@ -3,15 +3,12 @@
 import React, { useState } from "react";
 import EditProfile from "./EditProfile";
 import { UserProfile } from "@/utils/type";
- 
 
- 
 interface AccountProps {
   user: UserProfile & {
     createdAt?: string;
     updatedAt?: string;
     role?: "user" | "admin";
-     
   };
 }
 
@@ -50,7 +47,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   if (isEditing) {
     return (
       <EditProfile
-        user={{...currentUser}}
+        user={{ ...currentUser }}
         onSave={handleSave}
         onCancel={handleCancel}
       />

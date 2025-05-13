@@ -1,3 +1,5 @@
+import { IBookingPaymentDetails } from "./payment.types";
+
 export interface BookingDetails {
   scheduleId: string;
   trainId: string;
@@ -25,22 +27,24 @@ export interface BookingDetails {
   date: string;
 }
 
-export interface PaystackPopupConfig {
-  key: string;
+export interface IPaystackConfig {
   email: string;
   amount: number;
-  currency?: string;
-  reference: string;
   metadata: {
-    booking_details: BookingDetails;
-    custom_fields: Array<{
-      display_name: string;
-      variable_name: string;
-      value: string;
-    }>;
+    bookingDetails: IBookingPaymentDetails;
   };
-  callback?: (response: PaystackResponse) => void;
-  onClose?: () => void;
+  publicKey: string;
+  text: string;
+  onSuccess: (reference: string) => void;
+  onClose: () => void;
+}
+
+export interface IPaystackHandler {
+  openIframe: () => void;
+}
+
+export interface IPaystackInstance {
+  setup: (config: IPaystackConfig) => IPaystackHandler;
 }
 
 export interface PaystackResponse {
@@ -55,4 +59,4 @@ export interface PaystackResponse {
 export interface PaymentContextType {
   bookingDetails: BookingDetails | null;
   setBookingDetails: (details: BookingDetails) => void;
-} 
+}

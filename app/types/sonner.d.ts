@@ -1,1 +1,1 @@
-declare module "sonner"; 
+declare module "sonner";
