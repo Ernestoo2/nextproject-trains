@@ -3,13 +3,21 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    // Add custom middleware logic here if needed
+    const token = req.nextauth.token;
+
+    // Check if accessing own profile
+    if (req.nextUrl.pathname.startsWith("/user/")) {
+      const userId = req.nextUrl.pathname.split("/")[2];
+      if (token?.id !== userId) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+    }
+
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token }) => {
-        // Allow the request if the user is authenticated
         return !!token;
       },
     },
@@ -19,7 +27,12 @@ export default withAuth(
   }
 );
 
-// Protect all routes under /dashboard and /profile
+// Protect all routes that require authentication
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*"],
-}; 
+  matcher: [
+    "/dashboard/:path*",
+    "/user/:path*",
+    "/booking/:path*",
+    "/payment/:path*",
+  ],
+};

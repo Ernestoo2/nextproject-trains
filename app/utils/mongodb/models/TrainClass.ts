@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { z } from "zod";
 import type { MongoDocument } from "@/types/shared/database";
-import { TrainClassType } from "@/types/shared/train.types";
+import { TrainClassType } from "@/types/shared/trains";
  
 export const CLASS_TYPE = {
   FIRST_CLASS: "First Class",

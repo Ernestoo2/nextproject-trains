@@ -8,7 +8,7 @@ import Account from "../_components/Account";
 import Tickets from "../_components/Tickets";
 import Payment from "../_components/Payment";
 import Image from "next/image";
-import { UserProfile } from "@/utils/type";
+import { UserProfile, UserRole } from "@/types/shared/users";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBoundary from "@/_components/ErrorBoundary";
 
@@ -107,7 +107,13 @@ export default function UserPage() {
         name: session.user.name || "",
         email: session.user.email || "",
         image: session.user.image || undefined,
-        role: "user",
+        naijaRailsId: session.user.naijaRailsId || "",
+        phone: "",
+        address: "",
+        dob: "",
+        role: "USER",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }
     : null;
 
@@ -186,7 +192,7 @@ export default function UserPage() {
 
           {/* Content Section */}
           <div className="max-w-7xl mx-auto p-6 mt-6">
-            {activeTab === "account" && <Account user={displayUser} />}
+            {activeTab === "account" && <Account user={displayUser as UserProfile} />}
             {activeTab === "tickets" && <Tickets userId={displayUser.id} />}
             {activeTab === "payment" && <Payment userId={displayUser.id} />}
           </div>

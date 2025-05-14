@@ -5,6 +5,7 @@ import { Schedule } from "../models/Schedule";
 import { Station } from "../models/Station";
 import { Train } from "../models/Train";
 import { TrainClass } from "../models/TrainClass";
+import { User } from "../models/User";
 import { generateAllRoutes } from "./data/routes.data";
 import { generateSchedulesForRoutes } from "./data/schedules.data";
 import { stationsData } from "./data/stations.data";
@@ -67,8 +68,10 @@ export async function seedDatabase() {
       Route.deleteMany({}),
       TrainClass.deleteMany({}),
       Train.deleteMany({}),
-      Schedule.deleteMany({}),
+      Schedule.deleteMany({}) 
     ]);
+
+    // Note: User seeding removed as requested
 
     // 1. Seed Stations
     const stations = await Station.insertMany(stationsData);
@@ -147,8 +150,9 @@ export async function seedDatabase() {
     }
     // --- END RESTORE --- 
 
-    // Log coverage statistics
+    // Statistics about seeded data
     const stats = {
+      // Removed users count
       stations: stations.length,
       trainClasses: trainClasses.length,
       routes: createdRoutes.length,
@@ -160,6 +164,7 @@ export async function seedDatabase() {
 
     console.log("\nSeeding Statistics:");
     console.log("------------------");
+    // Removed users count
     console.log(`Stations: ${stats.stations}`);
     console.log(`Train Classes: ${stats.trainClasses}`);
     console.log(`Routes: ${stats.routes}/${stats.expectedRoutes} (${Math.round(stats.routes/stats.expectedRoutes*100)}% coverage)`);

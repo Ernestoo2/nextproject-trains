@@ -1,8 +1,9 @@
-import { UserProfile } from "./users";
+import { Gender} from "./users";
 import { Types } from "mongoose";
 import type { MongoDocument } from "./database";
-
-//app/types/shared/trains.ts
+import { PassengerType } from "./booking";
+import { PaymentStatus } from "./paymentApi";
+import { BERTH_PREFERENCES, BerthPreference } from "../booking.types";
 
 // Base Types
 export type TripType = "ONE_WAY" | "ROUND_TRIP";
@@ -13,6 +14,7 @@ export type ScheduleStatus =
   | "CANCELLED"
   | "DELAYED";
 export type TrainClassType = "ECONOMY" | "BUSINESS" | "FIRST_CLASS" | "SLEEPER" | "STANDARD";
+export type IdentificationType = "PASSPORT" | "NATIONAL_ID" | "DRIVER_LICENSE";
 
 // Constants
 export const TRIP_TYPES = {
@@ -104,13 +106,13 @@ export interface Passenger {
   firstName: string;
   lastName: string;
   age: number;
-  type: "ADULT" | "CHILD" | "INFANT";
+  type: PassengerType;
   nationality: string;
-  gender: "MALE" | "FEMALE" | "OTHER";
-  identificationType?: "passport" | "nationalId" | "driverLicense";
+  gender: Gender;
+  identificationType?: IdentificationType;
   identificationNumber?: string;
   seatNumber?: string;
-  berthPreference?: "LOWER" | "MIDDLE" | "UPPER";
+  berthPreference?: BerthPreference;
   seat?: string;
   phone?: string;
 }
@@ -180,7 +182,7 @@ export interface Booking extends MongoDocument {
   totalFare: number;
   status: ScheduleStatus;
   pnr: string;
-  paymentStatus: "PENDING" | "COMPLETED" | "FAILED";
+  paymentStatus: PaymentStatus;
   transactionId?: string;
   promoCode?: string;
   promoDiscount?: number;
@@ -189,9 +191,8 @@ export interface Booking extends MongoDocument {
 }
 
 // Additional constants and types for bookings
-export const BERTH_PREFERENCES = ["LOWER", "UPPPER", "MIDDLE", "SIDE"] as const;
-export type BerthPreference = typeof BERTH_PREFERENCES[number];
 
+ 
 export const TAX_RATE = 0.18; // 18% tax rate
 export const PROMO_CODES = {
   WELCOME20: 0.2, // 20% discount

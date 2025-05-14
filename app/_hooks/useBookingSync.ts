@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBookingStore } from '@/store/bookingStore';
 import type { PromoCode, TrainClassType, Schedule } from '@/types/shared/trains';
-import { toast } from 'sonner';
 
 export function useBookingSync() {
   const searchParams = useSearchParams();
@@ -15,7 +14,6 @@ export function useBookingSync() {
     const scheduleId = searchParams.get('scheduleId');
     const classType = searchParams.get('classType') as TrainClassType | null;
     const promoCode = searchParams.get('promoCode') as PromoCode | null;
-    const date = searchParams.get('date');
 
     // Only update if we have valid parameters
     if (routeId || scheduleId || classType || promoCode) {
@@ -24,29 +22,16 @@ export function useBookingSync() {
         try {
           if (routeId) {
             const routeResponse = await fetch(`/api/routes/${routeId}`);
-            if (!routeResponse.ok) {
-              throw new Error(`Failed to fetch route: ${routeResponse.statusText}`);
-            }
-            const routeData = await routeResponse.json();
-            if (routeData.success) {
+            if (routeResponse.ok) {
+              const routeData = await routeResponse.json();
               actions.selectRoute(routeData.data);
             }
           }
 
           if (scheduleId) {
-            // Include necessary query parameters
-            const queryParams = new URLSearchParams({
-              ...(classType && { class: classType }),
-              ...(date && { date }),
-              populate: 'train,route,departureStation,arrivalStation'
-            });
-
-            const scheduleResponse = await fetch(`/api/schedules/${scheduleId}?${queryParams}`);
-            if (!scheduleResponse.ok) {
-              throw new Error(`Failed to fetch schedule: ${scheduleResponse.statusText}`);
-            }
-            const scheduleData = await scheduleResponse.json();
-            if (scheduleData.success) {
+            const scheduleResponse = await fetch(`/api/schedules/${scheduleId}`);
+            if (scheduleResponse.ok) {
+              const scheduleData = await scheduleResponse.json();
               actions.selectSchedule(scheduleData.data);
             }
           }
@@ -60,8 +45,6 @@ export function useBookingSync() {
           }
         } catch (error) {
           console.error('Error syncing booking data:', error);
-          // Show error toast instead of using store action
-          toast.error(error instanceof Error ? error.message : 'Failed to sync booking data');
         }
       };
 

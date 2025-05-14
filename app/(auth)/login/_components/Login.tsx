@@ -6,17 +6,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { LOGIN_CONSTANTS } from "./_constants/login_constants";
 import { LoginFormProps } from "./_types/login_type";
-import { useContext } from "react";
 import { useRouter } from "next/navigation";
-import { AuthContext } from "@/_providers/auth/AuthContext";
 import { toast } from "sonner";
+import { signIn } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 
 export default function Login({ onSuccess, onError }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useContext(AuthContext);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -25,19 +24,25 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      if (!auth) {
-        throw new Error("Authentication context not available");
-      }
-
       if (!email || !password) {
         throw new Error("Please enter both email and password");
       }
 
-      await auth.login(email, password);
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
       toast.success("Login successful!");
       if (onSuccess) onSuccess();
       router.push("/dashboard");
     } catch (err) {
+      console.error("Login error:", err);
       const errorMessage = err instanceof Error ? err.message : "An error occurred during login";
       setError(errorMessage);
       toast.error(errorMessage);
@@ -47,15 +52,16 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
     }
   };
 
-  const handleSocialLogin = async (provider: string) => {
+  const handleSocialLogin = async (provider: 'google' | 'facebook' | 'apple') => {
     try {
       setIsLoading(true);
-      // Implement social login logic here
-      toast.info(`${provider} login coming soon!`);
+      await signIn(provider, {
+        callbackUrl: '/dashboard',
+      });
+      // Note: No need to handle success case here as signIn will redirect
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Social login failed";
       toast.error(errorMessage);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -68,16 +74,14 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
         <p className="text-[#4A5568]">{LOGIN_CONSTANTS.SUBTITLE}</p>
 
         {error && (
-          <div className="text-red-600 text-sm font-medium">{error}</div>
+          <div className="bg-red-50 border border-red-300 text-red-500 px-4 py-3 rounded mb-4 text-sm">
+            {error}
+          </div>
         )}
 
-        <form onSubmit={handleLogin} className="relative space-y-6 mt-4">
-          {/* Email Input */}
-          <div className="relative">
-            <label
-              htmlFor="email"
-              className="absolute -top-2 left-3 bg-[#F4FFF8] px-1 text-sm text-[#4A5568]"
-            >
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               {LOGIN_CONSTANTS.EMAIL_LABEL}
             </label>
             <input
@@ -85,19 +89,15 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
               placeholder={LOGIN_CONSTANTS.EMAIL_PLACEHOLDER}
               required
               disabled={isLoading}
             />
           </div>
 
-          {/* Password Input */}
-          <div className="relative">
-            <label
-              htmlFor="password"
-              className="absolute -top-2 left-3 bg-[#F4FFF8] px-1 text-sm text-[#4A5568]"
-            >
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               {LOGIN_CONSTANTS.PASSWORD_LABEL}
             </label>
             <input
@@ -105,14 +105,13 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
               placeholder={LOGIN_CONSTANTS.PASSWORD_PLACEHOLDER}
               required
               disabled={isLoading}
             />
           </div>
 
-          {/* Remember Me and Forgot Password */}
           <div className="flex items-center justify-between">
             <label className="flex items-center space-x-2">
               <input
@@ -132,13 +131,18 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
             </Link>
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
             className="w-full bg-[#8DD3BB] text-white py-3 px-6 rounded-md hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : LOGIN_CONSTANTS.LOGIN_BUTTON}
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging in...
+              </span>
+            ) : (
+              LOGIN_CONSTANTS.LOGIN_BUTTON
+            )}
           </button>
         </form>
 
@@ -161,25 +165,28 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
           <div className="flex items-center justify-center space-x-4 mt-4">
             {/* Facebook */}
             <button
-              onClick={() => handleSocialLogin("Facebook")}
+              onClick={() => handleSocialLogin("facebook")}
               disabled={isLoading}
               className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Continue with Facebook"
             >
               <FaFacebookF className="text-blue-600 w-5 h-5" />
             </button>
             {/* Google */}
             <button
-              onClick={() => handleSocialLogin("Google")}
+              onClick={() => handleSocialLogin("google")}
               disabled={isLoading}
               className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Continue with Google"
             >
               <FaGoogle className="text-red-600 w-5 h-5" />
             </button>
             {/* Apple */}
             <button
-              onClick={() => handleSocialLogin("Apple")}
+              onClick={() => handleSocialLogin("apple")}
               disabled={isLoading}
               className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Continue with Apple"
             >
               <FaApple className="text-black w-5 h-5" />
             </button>

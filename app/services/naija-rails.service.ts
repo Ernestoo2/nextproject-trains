@@ -11,8 +11,14 @@ export const createProfile = async (
   >,
 ): Promise<NaijaRailsProfileResponse> => {
   try {
-    const response = await fetch("/api/profiles", {
-      method: "POST",
+    // Get the userId or naijaRailsId
+    const userId = profile.userId || profile.email; // Use email as fallback
+    if (!userId) {
+      return { success: false, error: "User identifier missing" };
+    }
+
+    const response = await fetch(`/api/user/${userId}`, {
+      method: "PUT", // Using PUT since we're updating with initial values
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profile),
     });
@@ -26,7 +32,11 @@ export const updateProfile = async (
   profile: NaijaRailsProfileUpdate & { userId: string },
 ): Promise<NaijaRailsProfileResponse> => {
   try {
-    const response = await fetch("/api/profiles", {
+    if (!profile.userId) {
+      return { success: false, error: "User identifier missing" };
+    }
+
+    const response = await fetch(`/api/user/${profile.userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profile),
@@ -41,7 +51,11 @@ export const getProfile = async (
   userId: string,
 ): Promise<NaijaRailsProfileResponse> => {
   try {
-    const response = await fetch(`/api/profiles?userId=${userId}`);
+    if (!userId) {
+      return { success: false, error: "User identifier missing" };
+    }
+
+    const response = await fetch(`/api/user/${userId}`);
     return await response.json();
   } catch (error) {
     return { success: false, error: "Failed to fetch profile" };

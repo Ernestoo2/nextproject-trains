@@ -21,41 +21,26 @@ export interface Schedule extends MongoDocument {
   availableSeats: Record<string, number>;
   status: ScheduleStatus;
   platform?: string;
-  fare: Partial<Record<"ECONOMY" | "BUSINESS" | "FIRST_CLASS", number>>;
+  fare: Record<string, number>;
   duration?: string;
 }
 
 export interface Booking extends MongoDocument {
   userId: Types.ObjectId;
+  totalPrice?: number;
   scheduleId: Types.ObjectId;
   pnr: string;
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   passengers: Array<Passenger>;
-  selectedClass: string;
-  availableSeats: Record<string, number>;
-  schedule: Schedule | null;
-  
-  // Fare related fields
-  totalPrice: number;
-  baseFare: number;
-  taxes: number;
-  promoDiscount?: number;
-  promoCode?: string;
-  
-  // Offer flags
-  has20PercentOffer: boolean;
-  has50PercentOffer: boolean;
-  
-  // Detailed fare breakdown
-  fareDetails: {
-    perPersonFare: number;
-    baseTicketFare: number;
+  fare: {
+    base: number;
     taxes: number;
-    totalFare: number;
+    total: number;
+    discount?: number;
+    promoCode?: string;
   };
-  
-  // Payment related
+  class: string;
   transactionId?: string;
 }
 

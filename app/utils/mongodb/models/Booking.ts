@@ -1,64 +1,63 @@
-import mongoose, { Schema } from "mongoose";
-import { BookingStatus } from "@/types/shared/booking";
-import { PaymentStatus } from "@/types/shared/payments";
+import mongoose from "mongoose";
+import {
+  BookingDocument,
+  BookingFare,
+  Passenger,
+  BOOKING_STATUS,
+  PAYMENT_STATUS,
+  BERTH_PREFERENCES,
+  GENDER,
+} from "@/types/booking.types";
 
-export const BERTH_PREFERENCE = {
-  LOWER: "LOWER",
-  MIDDLE: "MIDDLE",
-  UPPER: "UPPER",
-  SIDE: "SIDE",
-} as const;
+interface BookingVirtuals {
+  formattedFare: string;
+}
 
-const PassengerSchema = new Schema(
+const passengerSchema = new mongoose.Schema<Passenger>(
   {
-    firstName: {
-      type: String,
-      required: true,
-    },
-    lastName: {
-      type: String,
-      required: true,
-    },
-    age: {
-      type: Number,
-      required: true,
-    },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    age: { type: Number, required: true },
+    type: { type: String, required: true, enum: ["ADULT", "CHILD", "INFANT"] },
+    nationality: { type: String, required: true },
     gender: {
       type: String,
-      enum: ["MALE", "FEMALE", "OTHER"],
+      enum: Object.values(GENDER),
       required: true,
     },
-    nationality: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      enum: ["ADULT", "CHILD", "INFANT"],
-      required: true,
-    },
+    identificationType: String,
+    identificationNumber: String,
+    seatNumber: String,
     berthPreference: {
       type: String,
-      enum: Object.values(BERTH_PREFERENCE),
-      required: true,
+      enum: Object.values(BERTH_PREFERENCES),
     },
-    phone: {
-      type: String,
-      required: true,
-    },
+    seat: String,
+    phone: String,
   },
   { _id: false }
 );
 
-const BookingSchema = new Schema(
+const fareSchema = new mongoose.Schema<BookingFare>(
+  {
+    base: { type: Number, required: true },
+    taxes: { type: Number, required: true },
+    total: { type: Number, required: true },
+    discount: Number,
+    promoCode: String,
+  },
+  { _id: false }
+);
+
+const bookingSchema = new mongoose.Schema<BookingDocument, {}, BookingVirtuals>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     scheduleId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Schedule",
       required: true,
     },
@@ -69,80 +68,52 @@ const BookingSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["DRAFT", "INITIATED", "CONFIRMED", "CANCELLED", "COMPLETED"],
-      default: "DRAFT",
+      enum: Object.values(BOOKING_STATUS),
+      default: BOOKING_STATUS.INITIATED,
+      required: true,
     },
     paymentStatus: {
       type: String,
-      enum: ["PENDING", "COMPLETED", "FAILED"],
-      default: "PENDING",
+      enum: Object.values(PAYMENT_STATUS),
+      default: PAYMENT_STATUS.PENDING,
+      required: true,
     },
-    passengers: [PassengerSchema],
-    selectedClass: {
+    passengers: [passengerSchema],
+    fare: {
+      type: fareSchema,
+      required: true,
+    },
+    class: {
       type: String,
       required: true,
     },
-    availableSeats: {
-      type: Map,
-      of: Number,
-      default: {},
-    },
-    totalPrice: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    baseFare: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    taxes: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    promoDiscount: {
-      type: Number,
-      default: 0,
-    },
-    promoCode: String,
-    has20PercentOffer: {
-      type: Boolean,
-      default: false,
-    },
-    has50PercentOffer: {
-      type: Boolean,
-      default: false,
-    },
-    fareDetails: {
-      perPersonFare: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-      baseTicketFare: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-      taxes: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-      totalFare: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-    },
     transactionId: String,
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
-export const Booking = mongoose.models.Booking || mongoose.model("Booking", BookingSchema);
+// Create indexes for better query performance
+bookingSchema.index({ userId: 1, createdAt: -1 });
+bookingSchema.index({ scheduleId: 1, status: 1 });
+bookingSchema.index({ pnr: 1 }, { unique: true });
+bookingSchema.index({ transactionId: 1 });
 
+// Virtual for formatted fare
+bookingSchema.virtual("formattedFare").get(function (this: BookingDocument) {
+  return `₦${this.fare.total.toLocaleString()}`;
+});
+
+export const Booking =
+  mongoose.models.Booking ||
+  mongoose.model<
+    BookingDocument,
+    mongoose.Model<BookingDocument, {}, BookingVirtuals>
+  >("Booking", bookingSchema);

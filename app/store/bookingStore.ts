@@ -11,13 +11,21 @@ import type {
   PromoCode
 } from '@/types/shared/trains';
 
+interface ExtendedBookingState extends TrainBookingState {
+  baseFare: number;
+  taxes: number;
+  discount: number;
+  totalAmount: number;
+  appliedPromoCode?: string;
+}
+
 interface BookingStoreState {
   // Selected route and schedule
   selectedRoute: Route | null;
   selectedSchedule: Schedule | null;
   
   // Booking state
-  bookingState: TrainBookingState;
+  bookingState: ExtendedBookingState;
   stage: BookingStage;
   
   // Loading and error states
@@ -31,10 +39,9 @@ interface BookingStoreState {
     addPassenger: (passenger: Passenger) => void;
     removePassenger: (index: number) => void;
     updateClass: (classType: TrainClassType) => void;
-    applyPromo: (code: PromoCode) => void;
-    toggle20PercentOffer: () => void;
-    toggle50PercentOffer: () => void;
-    calculateTotal: (amount: number) => void;
+    applyPromoCode: (code: string) => Promise<void>;
+    removePromoCode: () => Promise<void>;
+    calculateFare: (baseFare: number, passengerCount: number) => void;
     setBookingDetails: (details: Partial<Booking>) => void;
     resetBooking: () => void;
   };
@@ -49,7 +56,11 @@ const initialState: Omit<BookingStoreState, 'actions'> = {
     selectedClass: 'STANDARD' as TrainClassType,
     has20PercentOffer: false,
     has50PercentOffer: false,
-    totalFare: 0
+    totalFare: 0,
+    baseFare: 0,
+    taxes: 0,
+    discount: 0,
+    totalAmount: 0
   },
   stage: 'ROUTE_SELECTION',
   isLoading: false,
@@ -97,37 +108,59 @@ export const useBookingStore = create<BookingStoreState>((set) => ({
         }
       })),
 
-    applyPromo: (code) =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          promoCode: code
-        }
-      })),
+    applyPromoCode: async (code) => {
+      try {
+        // Here you would typically validate the promo code with your backend
+        const response = await fetch('/api/promo/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
 
-    toggle20PercentOffer: () =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          has20PercentOffer: !state.bookingState.has20PercentOffer
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Invalid promo code');
         }
-      })),
 
-    toggle50PercentOffer: () =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          has50PercentOffer: !state.bookingState.has50PercentOffer
-        }
-      })),
+        set((state) => ({
+          bookingState: {
+            ...state.bookingState,
+            appliedPromoCode: code,
+            discount: data.discount || 0,
+            totalAmount: state.bookingState.totalAmount - (state.bookingState.totalAmount * (data.discount || 0))
+          }
+        }));
+      } catch (error) {
+        throw error;
+      }
+    },
 
-    calculateTotal: (amount) =>
+    removePromoCode: async () => {
       set((state) => ({
         bookingState: {
           ...state.bookingState,
-          totalFare: amount
+          appliedPromoCode: undefined,
+          discount: 0,
+          totalAmount: state.bookingState.baseFare + state.bookingState.taxes
         }
-      })),
+      }));
+    },
+
+    calculateFare: (baseFare, passengerCount) =>
+      set((state) => {
+        const totalBaseFare = baseFare * passengerCount;
+        const taxes = totalBaseFare * 0.18; // 18% tax
+        const totalAmount = totalBaseFare + taxes;
+
+        return {
+          bookingState: {
+            ...state.bookingState,
+            baseFare: totalBaseFare,
+            taxes,
+            totalAmount
+          }
+        };
+      }),
 
     setBookingDetails: (details) =>
       set((state) => ({

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { useUser } from "@/_providers/user/UserContext";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { UserProfile } from "@/utils/type";
+import { UserProfile } from "@/types/shared/users";
+import { toast } from "sonner";
+import Image from "next/image";
 
 // Generate a random 12-digit ID
 const generateNaijaRailsId = () => {
@@ -13,48 +14,62 @@ const generateNaijaRailsId = () => {
 };
 
 interface AccountProps {
-  user: UserProfile & {
-    createdAt?: string;
-    updatedAt?: string;
-  };
+  user: UserProfile;
 }
 
-const Account: React.FC<AccountProps> = ({ user }) => {
-  const { updateUserProfile } = useUser();
+const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
-  const [userData, setUserData] = useState<UserProfile>(user);
+  const [userData, setUserData] = useState<UserProfile>(initialUser);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    name: user.name || "",
-    phone: user.phone || "",
-    address: user.address || "",
-    dob: user.dob || "",
+    name: initialUser.name || "",
+    phone: initialUser.phone || "",
+    address: initialUser.address || "",
+    dob: initialUser.dob || "",
   });
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    refreshUserData();
+  }, [session]);
 
   // Fetch latest user data
   const refreshUserData = async () => {
+    if (!session?.user?.id) return;
+    
     try {
-      const response = await fetch(`/api/user/${user.id}`);
+      setIsLoading(true);
+      const response = await fetch(`/api/user/${session.user.id}`);
+      
       if (!response.ok) {
         throw new Error("Failed to fetch user data");
       }
-      const freshData = await response.json();
-      const updatedUserProfile: UserProfile = {
-        id: freshData.id || user.id,
-        name: freshData.name,
-        email: freshData.email,
-        phone: freshData.phone,
-        address: freshData.address,
-        dob: freshData.dob,
-        image: freshData.image,
-        role: freshData.role || "user",
-      };
-      setUserData(updatedUserProfile);
-      updateUserProfile(updatedUserProfile);
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        const freshData = result.data;
+        setUserData(freshData);
+        
+        // Update form data with fresh data
+        setFormData({
+          name: freshData.name || "",
+          phone: freshData.phone || "",
+          address: freshData.address || "",
+          dob: freshData.dob || "",
+        });
+      } else {
+        throw new Error(result.message || "Failed to get user data");
+      }
     } catch (error) {
       console.error("Error fetching user data:", error);
+      toast.error("Failed to load profile data");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,35 +82,98 @@ const Account: React.FC<AccountProps> = ({ user }) => {
   };
 
   const handleUpdate = async () => {
+    if (!session?.user?.id) {
+      toast.error("User ID not found");
+      return;
+    }
+    
     try {
       setIsLoading(true);
-      const updatedProfile = {
-        ...formData,
-        email: session?.user?.email || userData.email,
-      };
 
-      const response = await fetch(`/api/user/${user.id}`, {
+      const response = await fetch(`/api/user/${session.user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedProfile),
+        body: JSON.stringify(formData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update profile");
+        throw new Error(result.message || result.error || "Failed to update profile");
       }
 
-      await refreshUserData();
+      if (result.success && result.data) {
+        setUserData(result.data);
+        toast.success("Profile updated successfully!");
+      } else {
+        throw new Error("No data returned from server");
+      }
+      
       setIsEditing(false);
-      alert("Profile updated successfully!");
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Error updating profile!");
+      toast.error(error instanceof Error ? error.message : "Error updating profile!");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      
+      // Create FormData
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      // Upload image
+      const response = await fetch(`/api/user/${session?.user?.id}/upload-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Update user data with new image URL
+        setUserData(prev => ({
+          ...prev,
+          image: result.data.imageUrl
+        }));
+        toast.success('Profile image updated successfully');
+      } else {
+        throw new Error(result.message || 'Failed to update profile image');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const triggerImageUpload = () => {
+    fileInputRef.current?.click();
   };
 
   // Format date for display
@@ -129,6 +207,40 @@ const Account: React.FC<AccountProps> = ({ user }) => {
         )}
       </div>
 
+      {/* Profile Image Section */}
+      <div className="mb-6 flex flex-col items-center">
+        <div className="relative w-32 h-32 mb-4">
+          {userData.image ? (
+            <Image
+              src={userData.image}
+              alt="Profile"
+              fill
+              className="rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+              <span className="text-4xl text-gray-500">
+                {userData.name?.charAt(0).toUpperCase() || '?'}
+              </span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={triggerImageUpload}
+          disabled={isUploading}
+          className="px-4 py-2 text-sm text-white bg-[#07561A] rounded-md hover:bg-[#064e15] transition-colors"
+        >
+          {isUploading ? 'Uploading...' : 'Change Profile Picture'}
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          accept="image/*"
+          className="hidden"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Read-only fields */}
         <div className="space-y-4">
@@ -140,6 +252,12 @@ const Account: React.FC<AccountProps> = ({ user }) => {
             <p className="font-semibold text-gray-600">Role</p>
             <p className="text-base break-all">
               {(userData.role ?? "").toUpperCase()}
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-600">NaijaRails ID</p>
+            <p className="text-base break-all">
+              {userData.naijaRailsId || "Not available"}
             </p>
           </div>
         </div>
@@ -214,11 +332,11 @@ const Account: React.FC<AccountProps> = ({ user }) => {
 
       {/* Timestamps */}
       <div className="mt-6 space-y-2 text-sm text-gray-500">
-        {user.createdAt && (
-          <p>Account Created: {new Date(user.createdAt).toLocaleString()}</p>
+        {userData.createdAt && (
+          <p>Account Created: {new Date(userData.createdAt).toLocaleString()}</p>
         )}
-        {user.updatedAt && (
-          <p>Last Updated: {new Date(user.updatedAt).toLocaleString()}</p>
+        {userData.updatedAt && (
+          <p>Last Updated: {new Date(userData.updatedAt).toLocaleString()}</p>
         )}
       </div>
 

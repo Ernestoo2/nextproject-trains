@@ -1,84 +1,138 @@
-import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/utils/mongodb/connect";
 import { User } from "@/utils/mongodb/models/User";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
 
-// Define Zod schema for user profile updates
-const userProfileSchema = z.object({
-  name: z.string().min(1, "Name is required").optional(),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number").optional(),
-  address: z.string().optional(),
+// Schema for user creation
+const createUserSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+  phone: z.string().optional(),
+  role: z.enum(["USER"]).default("USER"),
 });
 
-export async function PUT(req: Request) {
+function generateNaijaRailsId() {
+  const prefix = "NR";
+  const randomNum = Math.floor(Math.random() * 10000000000)
+    .toString()
+    .padStart(10, "0");
+  return `${prefix}${randomNum}`;
+}
+
+// GET: Get all users (admin only in the future)
+export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession();
-    if (!session?.user?.email) {
+    await connectDB();
+
+    // Ensure authentication (will implement admin check in the future)
+    const session = await getServerSession(authOptions);
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Connect to database
+    // Get query parameters for pagination
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
+    // Find users with pagination
+    const users = await User.find({})
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments({});
+
+    return NextResponse.json({
+      users: users.map(user => ({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        naijaRailsId: user.naijaRailsId,
+        role: user.role,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+      })),
+      pagination: {
+        total: totalUsers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalUsers / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Create a new user
+export async function POST(request: NextRequest) {
+  try {
     await connectDB();
 
-    // Get request body
-    const updates = await req.json();
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = createUserSchema.parse(body);
 
-    // Validate request body using Zod
-    const validationResult = userProfileSchema.safeParse(updates);
-    if (!validationResult.success) {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: validatedData.email.toLowerCase() });
+    if (existingUser) {
       return NextResponse.json(
-        {
-          error: "Validation Error",
-          message: validationResult.error.errors.map((e) => e.message).join(", "),
-        },
-        { status: 400 },
+        { error: "Email already registered" },
+        { status: 400 }
       );
     }
 
-    const validatedUpdates = validationResult.data;
+    // Hash password
+    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
-    // Find and update user, create if doesn't exist
-    const updatedUser = await User.findOneAndUpdate(
-      { email: session.user.email },
-      {
-        ...validatedUpdates,
-        email: session.user.email,
-        name: validatedUpdates.name || session.user.name,
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-        setDefaultsOnInsert: true,
-      },
-    );
-
-    return NextResponse.json({
-      message: "Profile updated successfully",
-      user: updatedUser,
+    // Create user
+    const user = await User.create({
+      email: validatedData.email.toLowerCase(),
+      password: hashedPassword,
+      name: validatedData.name,
+      phone: validatedData.phone || "",
+      role: validatedData.role,
+      naijaRailsId: generateNaijaRailsId(),
+      isVerified: false,
     });
-  } catch (error) {
-    console.error("Profile update error:", error);
-    return NextResponse.json(
-      { error: "Failed to update profile" },
-      { status: 500 },
-    );
-  }
-}
 
-export async function GET(_req: Request) {
-  try {
-    await connectDB();
-    const users = await User.find().select("-password").sort({ name: 1 });
-    return NextResponse.json({ users });
+    // Return created user without password
+    const createdUser = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      naijaRailsId: user.naijaRailsId,
+      role: user.role,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+    };
+
+    return NextResponse.json(createdUser, { status: 201 });
   } catch (error) {
-    console.error("Error fetching user profiles:", error);
+    console.error("Error creating user:", error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid input", details: error.errors },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to fetch user profiles" },
-      { status: 500 },
+      { error: "Failed to create user" },
+      { status: 500 }
     );
   }
-}
+} 

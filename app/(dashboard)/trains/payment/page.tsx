@@ -4,13 +4,15 @@ import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/_providers/user/UserContext";
-import { useBooking } from "@/_providers/booking/BookingContext";
-import { IPaystackConfig, IPaystackInstance } from "./_types/paystack.types";
+import { useBookingStore } from "@/store/bookingStore";
 import {
   IBookingPaymentDetails,
   IPaymentStation,
+  IPaystackPopProps,
 } from "./_types/payment.types";
-import { IPassenger } from "../review-booking/_types/shared.types";
+import { IPaystackInstance } from "./_types/paystack.types";
+import { BERTH_PREFERENCES } from "@/types/booking.types";
+import { Passenger } from "@/types/shared/trains";
 
 // Generate Naija Rails ID
 function generateNaijaRailsId(): string {
@@ -25,7 +27,7 @@ function generateNaijaRailsId(): string {
 export default function PaymentPage() {
   const { data: session } = useSession();
   const { userProfile, updateUserProfile } = useUser();
-  const { state } = useBooking();
+  const { bookingState } = useBookingStore();
   const router = useRouter();
   const params = useSearchParams();
   const [bookingDetails, setBookingDetails] =
@@ -37,20 +39,31 @@ export default function PaymentPage() {
     const loadUserProfile = async () => {
       if (session?.user?.email) {
         try {
-          const response = await fetch(
-            `/api/profiles?userId=${session.user.email}`
-          );
+          // Use the user's ID or naijaRailsId for fetching profile
+          const userId = session.user.id || session.user.naijaRailsId;
+          if (!userId) {
+            console.error("No user ID available in session");
+            return;
+          }
+
+          const response = await fetch(`/api/user/${userId}`);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch profile: ${response.status}`);
+          }
+          
           const data = await response.json();
+          
           if (data.success && data.data) {
             // Ensure all required fields are present
             const profileData = {
               naijaRailsId: data.data.naijaRailsId || generateNaijaRailsId(),
-              fullName: data.data.fullName || session.user.name || "",
+              fullName: data.data.name || session.user.name || "",
               email: data.data.email || session.user.email,
-              phone: data.data.phoneNumber || "",
+              phone: data.data.phone || "",
               address: data.data.address || "",
               defaultNationality: data.data.defaultNationality || "Nigerian",
-              preferredBerth: data.data.preferredBerth || "lower",
+              preferredBerth: data.data.preferredBerth || BERTH_PREFERENCES.LOWER,
             };
             updateUserProfile(profileData);
           }
@@ -96,10 +109,10 @@ export default function PaymentPage() {
       code: params.get("arrivalCode") || "",
     };
 
-    const config: IPaystackConfig = {
+    const config: IPaystackPopProps = {
       email: userProfile.email,
-      amount: state.totalPrice * 100, // Convert to kobo
-        metadata: {
+      amount: bookingState.totalAmount * 100, // Convert to kobo
+      metadata: {
         bookingDetails: {
           scheduleId: params.get("scheduleId") || "",
           trainId: params.get("trainId") || "",
@@ -109,37 +122,56 @@ export default function PaymentPage() {
           arrivalStation,
           departureTime: params.get("departureTime") || "",
           arrivalTime: params.get("arrivalTime") || "",
-          class: state.selectedClass || "",
-          baseFare: state.baseFare,
-          taxes: state.taxes,
-          promoDiscount: state.promoDiscount,
-          has20PercentOffer: state.has20PercentOffer,
-          has50PercentOffer: state.has50PercentOffer,
-          totalPrice: state.totalPrice,
+          class: bookingState.selectedClass || "",
+          baseFare: bookingState.baseFare,
+          taxes: bookingState.taxes,
+          promoDiscount: bookingState.discount,
+          has20PercentOffer: bookingState.has20PercentOffer,
+          has50PercentOffer: bookingState.has50PercentOffer,
+          totalPrice: bookingState.totalAmount,
           date: params.get("date") || "",
-          passengers: state.passengers,
+          passengers: bookingState.passengers,
         },
       },
       publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
       text: "Pay Now",
       onSuccess: (reference) => {
         console.log("Payment successful", reference);
-          // Store booking details for success page
-          localStorage.setItem(
-            "lastBookingDetails",
-          JSON.stringify(bookingDetails)
-          );
-          localStorage.removeItem("bookingDetails");
-          router.push("/trains/booking-success");
-        },
-        onClose: () => {
+        // Store booking details for success page
+        const successDetails = {
+          scheduleId: params.get("scheduleId") || "",
+          trainId: params.get("trainId") || "",
+          trainNumber: params.get("trainNumber") || "",
+          trainName: params.get("trainName") || "",
+          departureStation,
+          arrivalStation,
+          departureTime: params.get("departureTime") || "",
+          arrivalTime: params.get("arrivalTime") || "",
+          class: bookingState.selectedClass || "",
+          baseFare: bookingState.baseFare,
+          taxes: bookingState.taxes,
+          promoDiscount: bookingState.discount,
+          has20PercentOffer: bookingState.has20PercentOffer,
+          has50PercentOffer: bookingState.has50PercentOffer,
+          totalPrice: bookingState.totalAmount,
+          date: params.get("date") || "",
+          passengers: bookingState.passengers,
+        };
+        localStorage.setItem(
+          "lastBookingDetails",
+          JSON.stringify(successDetails)
+        );
+        localStorage.removeItem("bookingDetails");
+        router.push("/trains/booking-success");
+      },
+      onClose: () => {
         console.log("Payment cancelled");
-        },
+      },
     };
 
     const paystack = window.PaystackPop as unknown as IPaystackInstance;
     const handler = paystack.setup(config);
-      handler.openIframe();
+    handler.openIframe();
   };
 
   if (isLoading) {
@@ -174,34 +206,34 @@ export default function PaymentPage() {
           <div className="space-y-4">
             <div className="flex justify-between">
               <span>Base Fare:</span>
-              <span>₦{state.baseFare.toLocaleString()}</span>
+              <span>₦{bookingState.baseFare.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span>Taxes:</span>
-              <span>₦{state.taxes.toLocaleString()}</span>
+              <span>₦{bookingState.taxes.toLocaleString()}</span>
             </div>
-            {state.has20PercentOffer && (
+            {bookingState.has20PercentOffer && (
               <div className="flex justify-between text-green-600">
                 <span>20% Discount:</span>
-                <span>-₦{(state.baseFare * 0.2).toLocaleString()}</span>
+                <span>-₦{(bookingState.baseFare * 0.2).toLocaleString()}</span>
               </div>
             )}
-            {state.has50PercentOffer && (
+            {bookingState.has50PercentOffer && (
               <div className="flex justify-between text-green-600">
                 <span>50% Discount:</span>
-                <span>-₦{(state.baseFare * 0.5).toLocaleString()}</span>
+                <span>-₦{(bookingState.baseFare * 0.5).toLocaleString()}</span>
               </div>
             )}
-            {state.promoDiscount > 0 && (
+            {bookingState.discount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Promo Discount:</span>
-                <span>-₦{state.promoDiscount.toLocaleString()}</span>
+                <span>-₦{bookingState.discount.toLocaleString()}</span>
               </div>
             )}
             <div className="border-t pt-4">
               <div className="flex justify-between font-semibold">
                 <span>Total:</span>
-                <span>₦{state.totalPrice.toLocaleString()}</span>
+                <span>₦{bookingState.totalAmount.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -210,7 +242,7 @@ export default function PaymentPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-2xl font-semibold mb-4">Passenger Details</h2>
           <div className="space-y-4">
-            {state.passengers.map((passenger: IPassenger, index: number) => (
+            {bookingState.passengers.map((passenger: Passenger, index: number) => (
               <div
                 key={index}
                 className="border rounded-lg p-4 flex justify-between items-center"

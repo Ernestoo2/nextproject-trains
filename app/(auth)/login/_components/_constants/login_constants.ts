@@ -69,10 +69,4 @@ export const METHODS = [
     isSelected: false,
   },
 ];
-export const USER = {
-  name: "Eze Ernest",
-  email: "ezeernest@gmail.com",
-  phone: "+234 70 466 479 41",
-  address: "Umuchima, Futo",
-  dob: "17-08-2008",
-};
+

@@ -1,6 +1,7 @@
 import { Document, Types } from "mongoose";
 import type { ScheduleStatus} from "./shared/base.types";
 import type { MongoDocument, Schedule } from "./shared/database";
+import { IdentificationType} from "./shared/trains";
 
 // Enums
 export const BOOKING_STATUS = {
@@ -19,16 +20,17 @@ export const PAYMENT_STATUS = {
 } as const;
 
 export const BERTH_PREFERENCES = {
-  LOWER: "LOWER",
-  MIDDLE: "MIDDLE",
-  UPPER: "UPPER",
-  SIDE: "SIDE",
+  LOWER: "lower",
+  MIDDLE: "middle",
+  UPPER: "upper",
+  SIDE: "side",
 } as const;
 
 export const GENDER = {
   MALE: "MALE",
   FEMALE: "FEMALE",
   OTHER: "OTHER",
+  PREFER_NOT_TO_SAY: "PREFER_NOT_TO_SAY"
 } as const;
 
 // Type definitions
@@ -44,11 +46,11 @@ export interface Passenger {
   age: number;
   type: "ADULT" | "CHILD" | "INFANT";
   nationality: string;
-  gender: "MALE" | "FEMALE" | "OTHER";
-  identificationType?: "passport" | "nationalId" | "driverLicense";
+  gender: Gender;
+  identificationType?: IdentificationType;
   identificationNumber?: string;
   seatNumber?: string;
-  berthPreference?: "LOWER" | "UPPPER" | "MIDDLE" | "SIDE";
+  berthPreference?: BerthPreference;
   seat?: string;
   phone?: string;
 }

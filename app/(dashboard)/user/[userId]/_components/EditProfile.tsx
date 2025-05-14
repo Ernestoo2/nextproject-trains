@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { UserProfile } from "@/utils/type";
+import { UserProfile } from "@/types/shared/users";
 
 interface EditProfileProps {
   user: UserProfile;
@@ -16,11 +16,12 @@ const EditProfile: React.FC<EditProfileProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: user.name || "",
-    email: user.email || "",
-    phone: "",
-    address: "",
-    dob: "",
+    phone: user.phone || "",
+    address: user.address || "",
+    dob: user.dob || "",
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,24 +33,16 @@ const EditProfile: React.FC<EditProfileProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
     try {
-      const response = await fetch(`/api/user/${user.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      const updatedUser = await response.json();
-      onSave(updatedUser);
+      // Call the parent component's onSave method
+      // which will handle the API call
+      onSave(formData);
     } catch (error) {
-      console.error("Error updating profile:", error);
-      // Handle error (show toast or error message)
+      console.error("Error in form submission:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -71,14 +64,14 @@ const EditProfile: React.FC<EditProfileProps> = ({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Email
+            Email (Cannot be changed)
           </label>
           <input
             type="email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            value={user.email}
+            disabled
+            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm"
           />
         </div>
         <div>
@@ -122,14 +115,16 @@ const EditProfile: React.FC<EditProfileProps> = ({
             type="button"
             onClick={onCancel}
             className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="px-4 py-2 text-sm text-white bg-green-600 rounded hover:bg-green-700"
+            disabled={isSubmitting}
           >
-            Save Changes
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>

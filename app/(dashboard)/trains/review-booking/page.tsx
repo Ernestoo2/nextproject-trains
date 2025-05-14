@@ -1,116 +1,83 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookingLeft } from "./_components/BookingLeft";
-import { BookingRight } from "./_components/BookingRight";
-import { BookingDetails, TrainClassType } from "@/types/shared/booking";
-import { Schedule } from "@/types/shared/database";
-import { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from "@/types/shared/api";
+import BookingLeft from "./_components/BookingLeft";
+import BookingRight from "./_components/BookingRight";
+import { useBookingStore } from "@/store/bookingStore";
+import { toast } from "sonner";
+import type { ScheduleWithDetails } from "@/types/shared/database";
+import type { TrainClass } from "@/types/shared/trains";
 
-interface ReviewBookingState {
-  schedule: Schedule | null;
-  loading: boolean;
-  error: string | null;
-  bookingId: string | null;
-}
+// Define a more specific type for items in availableClasses array
+type AvailableClassInfo = TrainClass & { availableSeats: number; fare: number };
 
 const ReviewBooking: React.FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [state, setState] = useState<ReviewBookingState>({
-    schedule: null,
-    loading: true,
-    error: null,
-    bookingId: null
-  });
-
-  // Generate booking ID only once when component mounts
-  useEffect(() => {
-    const id = searchParams.get('bookingId') || `booking-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setState(prev => ({ ...prev, bookingId: id }));
-
-    // Update URL with booking ID if not present
-    if (!searchParams.get('bookingId')) {
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.set('bookingId', id);
-      router.replace(`${window.location.pathname}?${newParams.toString()}`);
-    }
-  }, []);
+  const [schedule, setSchedule] = useState<ScheduleWithDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { bookingState, actions } = useBookingStore();
 
   useEffect(() => {
     const fetchScheduleDetails = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const scheduleId = searchParams.get("scheduleId");
-        const selectedClass = searchParams.get("class") as TrainClassType;
-        let date = searchParams.get("date");
+        const selectedClass = searchParams.get("class");
+        const date = searchParams.get("date");
 
-        if (!date) {
-          const today = new Date();
-          date = today.toISOString().split("T")[0];
-          const newParams = new URLSearchParams(searchParams.toString());
-          newParams.set('date', date);
-          router.replace(`${window.location.pathname}?${newParams.toString()}`);
+        if (!scheduleId || !selectedClass || !date) {
+          setError("Missing required parameters (scheduleId, class, or date).");
+          setLoading(false);
+          toast.error("Missing required parameters to fetch schedule.");
           return;
         }
 
-        if (!scheduleId || !selectedClass) {
-          throw new Error("Missing required parameters: scheduleId or class");
-        }
-
-        const response = await fetch(
-          `/api/schedules/${scheduleId}?class=${selectedClass}&date=${date}&populate=train,route`
-        );
-
+        const response = await fetch(`/api/schedules/${scheduleId}?class=${selectedClass}&date=${date}&populate=train,route,departureStation,arrivalStation`);
+        
         if (!response.ok) {
-          const errorData: ApiErrorResponse = await response.json();
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch schedule details");
         }
 
-        const data: ApiSuccessResponse<any> = await response.json();
+        const data = await response.json();
         if (data.success && data.data) {
-          // Transform the API response to match the Schedule type
-          const transformedSchedule: Schedule = {
-            _id: data.data._id,
-            createdAt: data.data.createdAt,
-            updatedAt: data.data.updatedAt,
-            isActive: data.data.isActive,
-            train: data.data.train._id,
-            route: data.data.route._id,
-            departureTime: data.data.departureTime,
-            arrivalTime: data.data.arrivalTime,
-            date: new Date(date),
-            availableSeats: data.data.availableSeats || {},
-            status: data.data.status,
-            platform: data.data.platform,
-            fare: data.data.fare || {},
-            duration: data.data.duration || ""
-          };
-          
-          setState(prev => ({
-            ...prev,
-            schedule: transformedSchedule,
-            loading: false
-          }));
+          setSchedule(data.data);
+          actions.selectSchedule(data.data);
+          if (data.data.availableClasses && data.data.availableClasses.length > 0) {
+            const classInfo = data.data.availableClasses.find((c: AvailableClassInfo) => c.classCode === selectedClass);
+            if (classInfo) {
+              const passengerCount = bookingState.passengers?.length || 1;
+              actions.calculateFare(classInfo.baseFare || classInfo.fare || 0, passengerCount);
+            }
+          }
         } else {
-          throw new Error(data.message || "Schedule not found");
+          setError(data.message || "Schedule not found or invalid data.");
+          toast.error(data.message || "Schedule not found.");
         }
-      } catch (error) {
-        console.error("Error fetching schedule details:", error);
-        setState(prev => ({
-          ...prev,
-          error: error instanceof Error ? error.message : "An error occurred while fetching schedule details",
-          loading: false
-        }));
+      } catch (err) {
+        console.error("Error fetching schedule details:", err);
+        const errorMessage = err instanceof Error ? err.message : "An error occurred while fetching schedule details";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchScheduleDetails();
-  }, [searchParams, router]);
+    if (session) {
+      fetchScheduleDetails();
+    } else if (session === null) {
+      router.push("/auth/signin");
+    }
+  }, [searchParams.toString(), session, router, actions, bookingState.passengers?.length]);
 
-  if (state.loading || !state.bookingId) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -118,32 +85,40 @@ const ReviewBooking: React.FC = () => {
     );
   }
 
-  if (session === null) {
-    router.push("/auth/signin");
+  if (session === null && !loading) {
     return null;
   }
-
-  if (state.error) {
+  
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">{state.error}</div>
+        <div className="text-red-500 p-4 bg-red-100 border border-red-400 rounded-md text-center">
+            <h2 className="text-lg font-semibold mb-2">Error Loading Schedule</h2>
+            <p>{error}</p>
+            <button 
+                onClick={() => router.back()}
+                className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+                Go Back
+            </button>
+        </div>
       </div>
     );
   }
 
-  if (!state.schedule) {
+  if (!schedule && !loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">No schedule details available</div>
+        <div className="text-gray-500">No schedule details available for the selected criteria.</div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <BookingLeft bookingId={state.bookingId} schedule={state.schedule} />
-        <BookingRight bookingId={state.bookingId} schedule={state.schedule} />
+      <div className="flex flex-col md:flex-row gap-8">
+        <BookingLeft />
+        {schedule && <BookingRight schedule={schedule} travelers={bookingState.passengers || []} />}
       </div>
     </div>
   );
