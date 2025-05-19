@@ -4,32 +4,36 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/_providers/user/UserContext";
 import Image from "next/image";
-import QRcode from "../../../../../public/Assets/QRcode.png";
-import { BookingDetails } from "../../payment/_types/paystack.types";
+import QRcode from "../../../../../public/Assets/QRcode.png"; 
 import { format } from "date-fns";
+import { IBookingPaymentDetails } from "../../payment/_types/payment.types";
 
 export default function BookingSuccess() {
   const router = useRouter();
   const { userProfile } = useUser();
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(
-    null,
-  );
+  const [bookingDetails, setBookingDetails] = useState<IBookingPaymentDetails | null>(null);
 
   useEffect(() => {
-    // Try to get booking details from localStorage
     const storedBookingDetails = localStorage.getItem("lastBookingDetails");
     if (storedBookingDetails) {
-      setBookingDetails(JSON.parse(storedBookingDetails));
+      try {
+        const parsedDetails = JSON.parse(storedBookingDetails);
+        if (!parsedDetails || !parsedDetails.passengers || !parsedDetails.fareDetails) {
+          throw new Error("Invalid booking details format");
+        }
+        setBookingDetails(parsedDetails);
+      } catch (error) {
+        console.error("Error parsing booking details:", error);
+        router.push("/");
+      }
     }
-  }, []);
+  }, [router]);
 
   if (!bookingDetails) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">
-            No Booking Details Found
-          </h1>
+          <h1 className="text-2xl font-semibold mb-4">No Booking Details Found</h1>
           <button
             onClick={() => router.push("/trains/train-search")}
             className="bg-[#07561A] text-white px-6 py-2 rounded-md"
@@ -108,7 +112,7 @@ export default function BookingSuccess() {
           </div>
 
           <h2 className="text-lg font-bold mt-4">
-            {bookingDetails.trainNumber} - {bookingDetails.trainName}
+            {bookingDetails.trainName}
           </h2>
 
           {/* Date and Locations */}
@@ -118,16 +122,12 @@ export default function BookingSuccess() {
                 {bookingDetails.departureTime}
               </p>
               <p className="text-xs sm:text-sm md:text-base font-medium">
-                {bookingDetails.departureStation.name}
-              </p>
-              <p className="text-xs text-gray-500">
-                {bookingDetails.departureStation.city},{" "}
-                {bookingDetails.departureStation.state}
+                {bookingDetails.departureStationName}
               </p>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-xs sm:text-sm md:text-base text-[#9CA3AF]">
-                {formatDate(bookingDetails.date)}
+                {formatDate(bookingDetails.journeyDate)}
               </span>
               <hr className="border-t border-[#D1D5DB] w-24 mt-2" />
             </div>
@@ -136,39 +136,56 @@ export default function BookingSuccess() {
                 {bookingDetails.arrivalTime}
               </p>
               <p className="text-xs sm:text-sm md:text-base font-medium">
-                {bookingDetails.arrivalStation.name}
+                {bookingDetails.arrivalStationName}
               </p>
-              <p className="text-xs text-gray-500">
-                {bookingDetails.arrivalStation.city},{" "}
-                {bookingDetails.arrivalStation.state}
-              </p>
+            </div>
+          </div>
+
+          {/* Passenger Details */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Passenger Details</h3>
+            <div className="space-y-4">
+              {bookingDetails.passengers.map((passenger, index) => (
+                <div
+                  key={index}
+                  className="border rounded-lg p-4 flex justify-between items-center"
+                >
+                  <div>
+                    <h3 className="font-medium">
+                      {passenger.firstName} {passenger.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {passenger.age} years • {passenger.type} • {passenger.berthPreference}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">Class {passenger.selectedClassId}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Booking Details */}
           <div className="mt-6">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Class:</span>
-              <span>Class {bookingDetails.class}</span>
-            </div>
-            <div className="flex justify-between items-center mt-2">
               <span className="text-gray-600">Base Fare:</span>
-              <span>₦{bookingDetails.baseFare.toLocaleString()}</span>
+              <span>₦{bookingDetails.fareDetails.baseFare.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center mt-2">
               <span className="text-gray-600">Tax & GST:</span>
-              <span>₦{bookingDetails.taxAndGST.toLocaleString()}</span>
+              <span>₦{bookingDetails.fareDetails.taxes.toLocaleString()}</span>
             </div>
-            {bookingDetails.promoDiscount > 0 && (
+            {bookingDetails.fareDetails.discount > 0 && (
               <div className="flex justify-between items-center mt-2 text-green-600">
                 <span>Discount Applied:</span>
-                <span>-₦{bookingDetails.promoDiscount.toLocaleString()}</span>
+                <span>-₦{bookingDetails.fareDetails.discount.toLocaleString()}</span>
               </div>
             )}
             <div className="flex justify-between items-center mt-2 pt-2 border-t font-bold">
               <span>Total Amount:</span>
               <span className="text-[#07561A]">
-                ₦{bookingDetails.totalPrice.toLocaleString()}
+                ₦{bookingDetails.fareDetails.totalAmount.toLocaleString()}
               </span>
             </div>
           </div>

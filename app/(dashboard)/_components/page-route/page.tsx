@@ -6,40 +6,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import TripSelector from "./_components/rout-selectors/TripSelector";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaTrain } from "react-icons/fa";
-import { TripType } from "./_type";
-import { TRIP_TYPES } from "@/(dashboard)/trains/train-search/_constants/train.constants";
-import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails } from "@/types/shared/trains";
-import { format } from 'date-fns';
+  import { TripType } from "@/types/shared/trains"; 
+import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails, TRIP_TYPES } from "@/types/shared/trains";
 import type { Route as RouteType } from "@/types/shared/trains";
-
-// Add this interface for mock schedules
-interface MockSchedule {
-  _id: string;
-  trainNumber: string;
-  trainName: string;
-  departureTime: string;
-  arrivalTime: string;
-  duration: string;
-  availableSeats: Record<string, number>;
-  fare: Record<string, number>;
-  status: "SCHEDULED" | "DELAYED" | "CANCELLED";
-}
-
-interface RouteData {
-  _id: string;
-  fromStation: Station;
-  toStation: Station;
-  distance: number;
-  baseFare: number;
-  estimatedDuration: string;
-  availableClasses: Array<{
-    _id: string;
-    className: string;
-    classCode: string;
-    basePrice: number;
-  }>;
-  isActive: boolean;
-}
 
 export default function RoutePage() {
   const router = useRouter();
@@ -230,10 +199,10 @@ export default function RoutePage() {
     }));
   };
 
-  const handleDatesChange = (departure: string, returnDate: string) => {
+  const handleDatesChange = (departureDate: string, returnD: string) => {
     setDates({
-      departure,
-      return: returnDate,
+      departure: departureDate,
+      return: selectedTripType === TRIP_TYPES.ROUND_TRIP ? returnD : departureDate,
     });
   };
 
@@ -282,8 +251,7 @@ export default function RoutePage() {
         tripType: selectedTripType
       });
 
-      console.log(`Fetching schedules for route ${route._id} with params:`, Object.fromEntries(params));
-
+   
       const response = await fetch(`/api/schedules/search?${params}`);
       const data = await response.json();
 
@@ -311,7 +279,6 @@ export default function RoutePage() {
 
     setLoadingRoutes(true);
     try {
-      console.log("Fetching routes with params:", { selectedFromStationId, selectedToStationId });
       
       const response = await fetch(
         `/api/routes/search?fromStationId=${selectedFromStationId}&toStationId=${selectedToStationId}`
@@ -322,8 +289,7 @@ export default function RoutePage() {
         throw new Error(data.message || "Failed to fetch routes");
       }
 
-      console.log("Raw route data:", data.data);
-
+    
       const transformedRoutes = data.data.map((route: any) => ({
         _id: route._id.toString(),
         fromStation: {
@@ -361,8 +327,7 @@ export default function RoutePage() {
         isActive: route.isActive
       }));
 
-      console.log("Transformed routes:", transformedRoutes);
-
+      
       setAvailableRoutes(transformedRoutes);
 
       // Fetch schedules for each route
@@ -430,8 +395,8 @@ export default function RoutePage() {
               </div>
               <div className="lg:col-span-1">
                 <DateSelector
-                  selectedDate={dates.departure}
-                  onDateChange={(date) => handleDatesChange(date, date)}
+                  initialDate={dates.departure}
+                  onDateChange={(newDepartureDate) => handleDatesChange(newDepartureDate, dates.return)}
                 />
               </div>
               <div className="lg:col-span-1">

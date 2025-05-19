@@ -3,8 +3,10 @@ import { useState, useCallback } from "react";
 import type { NaijaRailsProfile } from "../_providers/profile/ProfileContext";
 import { useBookingState } from "./useBookingState";
 import { toast } from "sonner";
-import { Passenger } from "@/types/shared/trains";
-import { BookingFormState, TripType, TrainClassType } from "@/types/shared/booking";
+import { Passenger, TripType, TrainClassType } from "@/types/shared/trains";
+import { BookingFormState } from "@/types/shared/booking";
+import { BERTH_PREFERENCES, GENDER } from "@/types/booking.types";
+import type { UserProfile } from "@/types/shared/users";
 
 interface FormState extends BookingFormState {
   isEditingProfile: boolean;
@@ -13,6 +15,7 @@ interface FormState extends BookingFormState {
   passengerToRemove: Passenger | null;
   newPassenger: Partial<Passenger>;
   isLoading: boolean;
+  promoCode: string;
 }
 
 const initialPassenger: Partial<Passenger> = {
@@ -20,29 +23,41 @@ const initialPassenger: Partial<Passenger> = {
   lastName: "",
   age: 0,
   type: "ADULT",
-  identificationType: "passport",
+  identificationType: "PASSPORT",
   seatNumber: "",
   nationality: "",
-  berthPreference: "LOWER",
-  gender: "MALE",
+  berthPreference: BERTH_PREFERENCES.LOWER,
+  gender: "OTHER",
+};
+
+const initialState: FormState = {
+  departureStation: null,
+  arrivalStation: null,
+  date: "",
+  tripType: "ONE_WAY",
+  classType: "ECONOMY",
+  passengers: [],
+  isEditingProfile: false,
+  showAddPassengerDialog: false,
+  showConfirmDialog: false,
+  passengerToRemove: null,
+  newPassenger: {
+    firstName: "",
+    lastName: "",
+    age: 0,
+    gender: "OTHER",
+    nationality: "Nigerian", 
+    berthPreference: BERTH_PREFERENCES.LOWER,
+    phone: "",
+    type: "ADULT"
+  },
+  isLoading: false,
+  promoCode: ""
 };
 
 export function useBookingForm(bookingId: string) {
   const { state, updateState } = useBookingState(bookingId);
-  const [formState, setFormState] = useState<FormState>({
-    departureStation: null,
-    arrivalStation: null,
-    date: "",
-    tripType: "ONE_WAY" as TripType,
-    classType: "ECONOMY" as TrainClassType,
-    passengers: [],
-    isEditingProfile: false,
-    showAddPassengerDialog: false,
-    showConfirmDialog: false,
-    passengerToRemove: null,
-    newPassenger: initialPassenger,
-    isLoading: false,
-  });
+  const [formState, setFormState] = useState<FormState>(initialState);
 
   const addPassenger = useCallback(
     async (passenger: Passenger): Promise<void> => {
@@ -92,10 +107,19 @@ export function useBookingForm(bookingId: string) {
   );
 
   const updateProfile = useCallback(
-    async (profile: Partial<NaijaRailsProfile>): Promise<void> => {
+    async (profile: Partial<UserProfile>): Promise<void> => {
       try {
         setFormState((prev) => ({ ...prev, isLoading: true }));
-        // API call to update profile would go here
+        const response = await fetch(`/api/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update profile');
+        }
+
         setFormState((prev) => ({
           ...prev,
           isEditingProfile: false,

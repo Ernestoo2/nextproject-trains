@@ -3,6 +3,7 @@ import mongoose, { Types } from "mongoose";
 import { connectDB } from "@/utils/mongodb/connect";
 import { Route } from "@/utils/mongodb/models/Route";
 import { Schedule } from "@/utils/mongodb/models/Schedule";
+import type { ScheduleWithDetails, ScheduleStatus } from "@/types/shared/trains";
 import type { ScheduleSearchResponse } from "@/types/schedule.types";
 
 export async function GET(request: NextRequest) {
@@ -82,17 +83,6 @@ export async function GET(request: NextRequest) {
     const transformedSchedules = schedules
       .filter(schedule => schedule.train && schedule.route)
       .map(schedule => {
-        // Transform availableClasses based on route's availableClasses and schedule's availableSeats/fare
-        const availableClasses = schedule.route.availableClasses.map((cls: any) => ({
-          className: cls.className || cls.name,
-          classCode: cls.classCode || cls.code,
-          name: cls.className || cls.name,
-          code: cls.classCode || cls.code,
-          baseFare: cls.basePrice || cls.baseFare,
-          availableSeats: schedule.availableSeats.get(cls._id.toString()) || 0,
-          fare: schedule.fare.get(cls._id.toString()) || cls.basePrice || cls.baseFare
-        }));
-
         return {
           _id: schedule._id.toString(),
           trainId: schedule.train._id.toString(),
@@ -106,85 +96,42 @@ export async function GET(request: NextRequest) {
               id: cls._id.toString(),
               name: cls.className || cls.name,
               code: cls.classCode || cls.code,
-              baseFare: cls.basePrice || cls.baseFare,
+              baseFare: cls.basePrice || cls.baseFare || 0,
               capacity: cls.capacity || 0
             }))
           },
           route: {
             id: schedule.route._id.toString(),
-            name: `${schedule.route.fromStation.stationName || schedule.route.fromStation.name} to ${schedule.route.toStation.stationName || schedule.route.toStation.name}`,
+            name: `${schedule.route.fromStation.stationName} to ${schedule.route.toStation.stationName}`,
             distance: schedule.route.distance,
             duration: schedule.route.estimatedDuration,
             baseFare: schedule.route.baseFare,
-            fromStation: {
-              _id: schedule.route.fromStation._id.toString(),
-              stationName: schedule.route.fromStation.stationName,
-              stationCode: schedule.route.fromStation.stationCode,
-              city: schedule.route.fromStation.city,
-              state: schedule.route.fromStation.state,
-              region: schedule.route.fromStation.region,
-              address: schedule.route.fromStation.address,
-              facilities: schedule.route.fromStation.facilities || [],
-              platforms: schedule.route.fromStation.platforms,
-              isActive: schedule.route.fromStation.isActive,
-              createdAt: schedule.route.fromStation.createdAt?.toISOString() || '',
-              updatedAt: schedule.route.fromStation.updatedAt?.toISOString() || '',
-            },
-            toStation: {
-              _id: schedule.route.toStation._id.toString(),
-              stationName: schedule.route.toStation.stationName,
-              stationCode: schedule.route.toStation.stationCode,
-              city: schedule.route.toStation.city,
-              state: schedule.route.toStation.state,
-              region: schedule.route.toStation.region,
-              address: schedule.route.toStation.address,
-              facilities: schedule.route.toStation.facilities || [],
-              platforms: schedule.route.toStation.platforms,
-              isActive: schedule.route.toStation.isActive,
-              createdAt: schedule.route.toStation.createdAt?.toISOString() || '',
-              updatedAt: schedule.route.toStation.updatedAt?.toISOString() || '',
-            }
+            fromStation: schedule.route.fromStation,
+            toStation: schedule.route.toStation
           },
-          availableClasses,
+          availableClasses: schedule.route.availableClasses.map((cls: any) => ({
+            className: cls.className || cls.name,
+            classCode: cls.classCode || cls.code,
+            name: cls.className || cls.name,
+            code: cls.classCode || cls.code,
+            baseFare: cls.basePrice || cls.baseFare || 0,
+            availableSeats: schedule.availableSeats.get(cls._id.toString()) || 0,
+            fare: schedule.fare.get(cls._id.toString()) || cls.basePrice || cls.baseFare || 0
+          })),
           date: schedule.date instanceof Date ? schedule.date.toISOString() : schedule.date,
           departureTime: schedule.departureTime,
           arrivalTime: schedule.arrivalTime,
           actualDepartureTime: schedule.actualDepartureTime,
           actualArrivalTime: schedule.actualArrivalTime,
           delayReason: schedule.delayReason,
-          duration: schedule.duration || "",
+          duration: schedule.duration || schedule.route.estimatedDuration || "",
           distance: schedule.route.distance,
           platform: schedule.platform || "TBA",
           status: schedule.status,
           isActive: schedule.isActive ?? true,
-          departureStation: {
-            _id: schedule.route.fromStation._id.toString(),
-            stationName: schedule.route.fromStation.stationName,
-            stationCode: schedule.route.fromStation.stationCode,
-            city: schedule.route.fromStation.city,
-            state: schedule.route.fromStation.state,
-            region: schedule.route.fromStation.region,
-            address: schedule.route.fromStation.address,
-            facilities: schedule.route.fromStation.facilities || [],
-            platforms: schedule.route.fromStation.platforms,
-            isActive: schedule.route.fromStation.isActive,
-            createdAt: schedule.route.fromStation.createdAt?.toISOString() || '',
-            updatedAt: schedule.route.fromStation.updatedAt?.toISOString() || '',
-          },
-          arrivalStation: {
-            _id: schedule.route.toStation._id.toString(),
-            stationName: schedule.route.toStation.stationName,
-            stationCode: schedule.route.toStation.stationCode,
-            city: schedule.route.toStation.city,
-            state: schedule.route.toStation.state,
-            region: schedule.route.toStation.region,
-            address: schedule.route.toStation.address,
-            facilities: schedule.route.toStation.facilities || [],
-            platforms: schedule.route.toStation.platforms,
-            isActive: schedule.route.toStation.isActive,
-            createdAt: schedule.route.toStation.createdAt?.toISOString() || '',
-            updatedAt: schedule.route.toStation.updatedAt?.toISOString() || '',
-          }
+          departureStation: schedule.route.fromStation,
+          arrivalStation: schedule.route.toStation,
+          fare: schedule.fare instanceof Map ? Object.fromEntries(schedule.fare) : schedule.fare || {}
         };
       });
 

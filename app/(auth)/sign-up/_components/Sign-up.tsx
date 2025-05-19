@@ -1,15 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import sign from "../../../../public/Assets/Signup.png";
 import { FaApple, FaFacebook, FaGoogle } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
-import { useContext } from "react";
-import { AuthContext } from "@/_providers/auth/AuthContext";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { signIn } from "next-auth/react";
 
 export default function SignUp() {
-  // State variables for form fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,67 +18,103 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isAgreed, setIsAgreed] = useState(false);
 
-  // State for handling API response
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const auth = useContext(AuthContext);
   const router = useRouter();
 
-  // Function to handle form submission
+  // Handle redirect after successful registration
+  useEffect(() => {
+    let redirectTimer: NodeJS.Timeout;
+    if (successMessage) {
+      redirectTimer = setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    }
+    return () => {
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
+  }, [successMessage, router]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
-
-    // Basic validation
-    if (!isAgreed) {
-      setErrorMessage("You must agree to the terms and privacy policy.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
-      if (!auth) {
-        throw new Error("Authentication context not available");
+      // Form validation
+      if (!isAgreed) {
+        setErrorMessage("You must agree to the terms and privacy policy.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMessage("Passwords do not match.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (password.length < 8) {
+        setErrorMessage("Password must be at least 8 characters.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!firstName.trim() || !lastName.trim()) {
+        setErrorMessage("First name and last name are required.");
+        setIsSubmitting(false);
+        return;
       }
 
-      // Generate Naija Rails ID
-      const naijaRailsId = `NR${Date.now().toString().slice(-8)}`;
+      // Construct full name
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-      // Register with additional user data
-      await auth.register(`${firstName} ${lastName}`, email, password);
+      toast.info("Creating your account...");
 
-      // Update user profile with additional data
-      await auth.updateProfile({
-        phone: phoneNumber,
-        naijaRailsId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      // Call the new direct API endpoint instead
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName,
+          email: email.toLowerCase(),
+          password,
+          phone: phoneNumber,
+        }),
       });
 
-      setSuccessMessage("Account created successfully!");
+      const data = await response.json();
 
-      // Reset form fields immediately after successful registration
+      if (!response.ok) {
+        let errorMsg = "Registration failed";
+        
+        if (data.error) {
+          errorMsg = data.error;
+        } else if (data.details && Array.isArray(data.details)) {
+          // Handle Zod validation errors
+          errorMsg = data.details.map((err: any) => `${err.path}: ${err.message}`).join(", ");
+        }
+        
+        throw new Error(errorMsg);
+      }
+
+      toast.success("Account created successfully!");
+      setSuccessMessage("Account created successfully! Redirecting to login...");
       resetFormFields();
 
-      // Show success message briefly before redirecting
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : "An error occurred during registration";
       setErrorMessage(errorMessage);
+      toast.error(errorMessage);
+      if(successMessage) setSuccessMessage(""); 
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Helper function to reset form fields
   const resetFormFields = () => {
     setFirstName("");
     setLastName("");
@@ -88,215 +124,215 @@ export default function SignUp() {
     setConfirmPassword("");
     setIsAgreed(false);
   };
+  
+  const handleSocialSignup = async (provider: 'google' | 'facebook' | 'apple') => {
+    try {
+      setIsSubmitting(true);
+      await signIn(provider, {
+        callbackUrl: '/dashboard',
+      });
+      // Note: No need to handle success case here as signIn will redirect
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Social signup failed";
+      toast.error(errorMessage);
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex w-5/6 flex-col   gap-5 mx-auto  md:flex-row items-center  justify-center min-h-screen ">
       {/* Image Section */}
-      <div className="w-3/4 sm:w-2/3 sm: h-auto  flex justify-center items-center py-8 md:py-0">
+      <div className="w-full md:w-1/2 lg:w-2/5 flex justify-center items-center py-6 md:py-0 order-2 md:order-1">
         <Image
           src={sign}
-          alt="Placeholder"
-          className="rounded-lg w-3/4 h-full object-cover shadow-md"
+          alt="Illustration of people signing up for Naija Rails service"
+          className="rounded-lg w-full max-w-md h-auto object-contain shadow-lg"
+          priority
         />
       </div>
 
       {/* Form Section */}
-      <div className="w-full md:w-1/2 p-8  shadow-md rounded-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Sign Up</h2>
-        <p className="text-gray-600 mb-6">
-          Let's get you all set up so you can access your personal account.
+      <div className="w-full md:w-1/2 lg:w-2/5 p-6 sm:p-8 bg-white shadow-xl rounded-lg order-1 md:order-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 text-center px-1">Create Your Account</h2>
+        <p className="text-gray-600 mb-6 text-sm sm:text-base text-center px-1">
+          Join Naija Rails today and unlock seamless train bookings.
         </p>
 
-        {/* Error Message */}
-        {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-
-        {/* Success Message */}
+        {errorMessage && (
+          <p className="text-red-500 mb-4 p-3 bg-red-50 border border-red-300 rounded-md text-sm">
+            {errorMessage}
+          </p>
+        )}
         {successMessage && (
-          <p className="text-green-500 mb-4">{successMessage}</p>
+          <p className="text-green-600 mb-4 p-3 bg-green-50 border border-green-300 rounded-md text-sm">
+            {successMessage}
+          </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* First Name */}
-            <div className="relative">
+        <form onSubmit={handleSubmit} className="space-y-5 px-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-0.5">
+            <div className="relative px-0.5">
+              <label htmlFor="firstName" className="sr-only">First Name</label>
               <input
                 type="text"
                 id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="peer w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="First Name"
+                className="w-full border-gray-300 rounded-md px-4 py-2.5 focus:ring-green-500 focus:border-green-500 shadow-sm" 
                 required
+                disabled={isSubmitting}
               />
-              <label
-                htmlFor="firstName"
-                className="absolute left-4 top-2 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-gray-600"
-              >
-                First Name
-              </label>
             </div>
-
-            {/* Last Name */}
-            <div className="relative">
+            <div className="relative px-0.5">
+              <label htmlFor="lastName" className="sr-only">Last Name</label>
               <input
                 type="text"
                 id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="peer w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Last Name"
+                className="w-full border-gray-300 rounded-md px-4 py-2.5 focus:ring-green-500 focus:border-green-500 shadow-sm" 
                 required
+                disabled={isSubmitting}
               />
-              <label
-                htmlFor="lastName"
-                className="absolute left-4 top-2 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-gray-600"
-              >
-                Last Name
-              </label>
+            </div>
             </div>
 
-            {/* Email */}
-            <div className="relative">
+          <div className="relative px-1">
+            <label htmlFor="email" className="sr-only">Email</label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="peer w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Email Address"
+                className="w-full border-gray-300 rounded-md px-4 py-2.5 focus:ring-green-500 focus:border-green-500 shadow-sm" 
                 required
+                disabled={isSubmitting}
               />
-              <label
-                htmlFor="email"
-                className="absolute left-4 top-2 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-gray-600"
-              >
-                Email
-              </label>
             </div>
 
-            {/* Phone Number */}
-            <div className="relative">
+          <div className="relative px-1">
+            <label htmlFor="phoneNumber" className="sr-only">Phone Number</label>
               <input
                 type="tel"
                 id="phoneNumber"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="peer w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              />
-              <label
-                htmlFor="phoneNumber"
-                className="absolute left-4 top-2 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-gray-600"
-              >
-                Phone Number
-              </label>
-            </div>
+                placeholder="Phone Number (e.g., 08012345678)" 
+                className="w-full border-gray-300 rounded-md px-4 py-2.5 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                disabled={isSubmitting}
+            />
           </div>
 
-          {/* Password */}
-          <div className="relative">
+          <div className="relative px-1">
+            <label htmlFor="password" className="sr-only">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="peer w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Password (min. 8 characters)"
+              className="w-full border-gray-300 rounded-md px-4 py-2.5 focus:ring-green-500 focus:border-green-500 shadow-sm" 
               required
+              minLength={8}
+              disabled={isSubmitting}
             />
-            <label
-              htmlFor="password"
-              className="absolute left-4 top-2 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-gray-600"
-            >
-              Password
-            </label>
           </div>
 
-          {/* Confirm Password */}
-          <div className="relative">
+          <div className="relative px-1">
+            <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="peer w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Confirm Password"
+              className="w-full border-gray-300 rounded-md px-4 py-2.5 focus:ring-green-500 focus:border-green-500 shadow-sm" 
               required
+              disabled={isSubmitting}
             />
-            <label
-              htmlFor="confirmPassword"
-              className="absolute left-4 top-2 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-gray-600"
-            >
-              Confirm Password
-            </label>
           </div>
 
-          {/* Agreement Checkbox */}
-          <div className="flex w-full items-center  ">
-            <label className="flex items-center">
+          <div className="flex items-center mt-4 px-1">
               <input
                 type="checkbox"
+                id="isAgreed"
                 checked={isAgreed}
                 onChange={(e) => setIsAgreed(e.target.checked)}
-                className="mr-2"
-              />
-              <p className="text-xs gap-3">
-                I agree to all the <span className="text-red-600"> Terms</span>{" "}
-                and <span className="text-red-600">Privacy Policies</span>
-              </p>
+                className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                disabled={isSubmitting}
+            />
+            <label htmlFor="isAgreed" className="ml-2 block text-xs sm:text-sm text-gray-700">
+              I agree to Naija Rails 
+              <Link href="/terms" className="font-medium text-green-600 hover:text-green-700"> Terms of Service</Link> and 
+              <Link href="/privacy" className="font-medium text-green-600 hover:text-green-700"> Privacy Policy</Link>.
             </label>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition"
-            disabled={auth?.loading}
+            className="w-full bg-green-600 text-white py-3 rounded-md hover:bg-green-700 transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-70"
+            disabled={isSubmitting || !isAgreed}
           >
-            {auth?.loading ? "Creating Account..." : "Create Account"}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
+              </span>
+            ) : (
+              "Create Account"
+            )}
           </button>
         </form>
 
-        {/* Social Sign-Up */}
-        {/* Sign-up and Social Login */}
-        <div className="text-center relative">
-          <p className="text-sm text-[#4A5568]">
+        <div className="mt-6 text-center px-1">
+          <p className="text-sm text-gray-600">
             Already have an account?{" "}
-            <Link href="/login" className="text-red-600 hover:underline">
-              Login
+            <Link href="/login" className="font-medium text-green-600 hover:text-green-700">
+              Log In
             </Link>
           </p>
+        </div>
 
-          {/* Divider with Text */}
-          <div className="relative w-full mt-4">
-            <div className="h-[1px] w-full bg-[#112211]" />
-            <p className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#F4FFF8] px-2 text-sm text-[#4A5568]">
-              Or login with
-            </p>
+        {/* Social Logins */}
+        <div className="mt-6 px-1">
+          <div className="relative px-1">
+            <div className="absolute inset-0 flex items-center px-1">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm px-1">
+              <span className="bg-white px-2 text-gray-500">Or sign up with</span>
+            </div>
           </div>
-          <div
-            className="flex items-center justify-center space-x-4 mt-4"
-            title="button"
-          >
+          <div className="mt-6 flex justify-center space-x-4 px-1">
             {/* Facebook */}
-            <Link
-              title="button"
-              href={"https://www.facebook.com"}
-              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100"
+            <button
+              onClick={() => handleSocialSignup("facebook")}
+              disabled={isSubmitting}
+              className="flex items-center justify-center w-12 h-12 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign up with Facebook"
             >
               <FaFacebook className="text-blue-600 w-5 h-5" />
-            </Link>
+            </button>
             {/* Google */}
-            <Link
-              title="button"
-              href={"/verify-email"}
-              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100"
+            <button
+              onClick={() => handleSocialSignup("google")}
+              disabled={isSubmitting}
+              className="flex items-center justify-center w-12 h-12 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign up with Google"
             >
               <FaGoogle className="text-red-600 w-5 h-5" />
-            </Link>
+            </button>
             {/* Apple */}
-            <Link
-              title="button"
-              href={"/verify-email"}
-              className="flex items-center justify-center w-24 h-10 border border-gray-300 rounded-md hover:bg-gray-100"
+            <button
+              onClick={() => handleSocialSignup("apple")}
+              disabled={isSubmitting}
+              className="flex items-center justify-center w-12 h-12 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign up with Apple"
             >
               <FaApple className="text-black w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { 
   Route, 
-  Schedule, 
+  Schedule as IScheduleFromTypes,
   Passenger,
   TrainClassType,
   BookingState as TrainBookingState,
@@ -10,132 +10,210 @@ import type {
   Booking,
   PromoCode
 } from '@/types/shared/trains';
+import type { ScheduleWithDetails } from '@/types/shared/database';
+
+interface ExtendedBookingState extends TrainBookingState {
+  baseFare: number;
+  taxes: number;
+  discount: number;
+  totalAmount: number;
+  appliedPromoCode?: string;
+  currentDefaultClassId: string | null;
+  scheduleDetails: ScheduleWithDetails | null;
+}
 
 interface BookingStoreState {
-  // Selected route and schedule
   selectedRoute: Route | null;
-  selectedSchedule: Schedule | null;
-  
-  // Booking state
-  bookingState: TrainBookingState;
+  bookingState: ExtendedBookingState;
   stage: BookingStage;
-  
-  // Loading and error states
   isLoading: boolean;
   error: string | null;
-  
-  // Actions
   actions: {
     selectRoute: (route: Route) => void;
-    selectSchedule: (schedule: Schedule) => void;
+    selectScheduleAndClass: (schedule: ScheduleWithDetails, defaultClassId: string) => void;
     addPassenger: (passenger: Passenger) => void;
     removePassenger: (index: number) => void;
-    updateClass: (classType: TrainClassType) => void;
-    applyPromo: (code: PromoCode) => void;
-    toggle20PercentOffer: () => void;
-    toggle50PercentOffer: () => void;
-    calculateTotal: (amount: number) => void;
+    updatePassengerClass: (passengerIndex: number, newClassId: string) => void;
+    updateCurrentDefaultClass: (classId: string) => void;
+    applyPromoCode: (code: string) => Promise<void>;
+    removePromoCode: () => Promise<void>;
+    recalculateBookingTotals: () => void;
     setBookingDetails: (details: Partial<Booking>) => void;
     resetBooking: () => void;
   };
 }
 
-// Initial state
+const TAX_RATE = 0.08;
+
 const initialState: Omit<BookingStoreState, 'actions'> = {
   selectedRoute: null,
-  selectedSchedule: null,
   bookingState: {
     passengers: [],
-    selectedClass: 'STANDARD' as TrainClassType,
+    selectedClass: 'STANDARD',
+    promoCode: undefined,
     has20PercentOffer: false,
     has50PercentOffer: false,
-    totalFare: 0
+    totalFare: 0,
+    bookingDetails: undefined,
+    currentDefaultClassId: null,
+    scheduleDetails: null,
+    baseFare: 0,
+    taxes: 0,
+    discount: 0,
+    totalAmount: 0,
+    appliedPromoCode: undefined
   },
   stage: 'ROUTE_SELECTION',
   isLoading: false,
   error: null
 };
 
-// Create the store
-export const useBookingStore = create<BookingStoreState>((set) => ({
+export const useBookingStore = create<BookingStoreState>((set, get) => ({
   ...initialState,
 
   actions: {
     selectRoute: (route) => 
-      set((state) => ({
+      set(() => ({
         selectedRoute: route,
         stage: 'PASSENGER_DETAILS'
       })),
 
-    selectSchedule: (schedule) =>
+    selectScheduleAndClass: (schedule, defaultClassId) => {
       set((state) => ({
-        selectedSchedule: schedule,
+        bookingState: {
+          ...state.bookingState,
+          scheduleDetails: schedule,
+          currentDefaultClassId: defaultClassId,
+          selectedClass: schedule.availableClasses.find(c => c.classCode === defaultClassId)?.classType as TrainClassType || state.bookingState.selectedClass,
+        },
         stage: 'SEAT_SELECTION'
-      })),
+      }));
+      get().actions.recalculateBookingTotals();
+    },
 
-    addPassenger: (passenger) =>
+    updateCurrentDefaultClass: (classId) => {
+      set(state => ({
+        bookingState: {
+          ...state.bookingState,
+          currentDefaultClassId: classId,
+          selectedClass: state.bookingState.scheduleDetails?.availableClasses.find(c => c.classCode === classId)?.classType as TrainClassType || state.bookingState.selectedClass,
+        }
+      }));
+    },
+
+    addPassenger: (passenger) => {
       set((state) => ({
         bookingState: {
           ...state.bookingState,
           passengers: [...state.bookingState.passengers, passenger]
         }
-      })),
+      }));
+      get().actions.recalculateBookingTotals();
+    },
 
-    removePassenger: (index) =>
+    removePassenger: (index) => {
       set((state) => ({
         bookingState: {
           ...state.bookingState,
           passengers: state.bookingState.passengers.filter((_, i) => i !== index)
         }
-      })),
+      }));
+      get().actions.recalculateBookingTotals();
+    },
 
-    updateClass: (classType) =>
+    updatePassengerClass: (passengerIndex, newClassId) => {
+      set(state => {
+        const updatedPassengers = state.bookingState.passengers.map((p, index) => 
+          index === passengerIndex ? { ...p, selectedClassId: newClassId } : p
+        );
+        return {
+          bookingState: {
+            ...state.bookingState,
+            passengers: updatedPassengers
+          }
+        };
+      });
+      get().actions.recalculateBookingTotals();
+    },
+
+    applyPromoCode: async (code) => {
+      const discountAmount = code === "BOOKNOW" ? 50 : code === "FIRSTTIME" ? 100 : 0;
+
+      if (discountAmount > 0) {
+        set((state) => ({
+          bookingState: {
+            ...state.bookingState,
+            appliedPromoCode: code,
+            discount: discountAmount
+          }
+        }));
+        get().actions.recalculateBookingTotals();
+      } else {
+        console.warn("Invalid promo code applied or no discount");
+      }
+    },
+
+    removePromoCode: async () => {
       set((state) => ({
         bookingState: {
           ...state.bookingState,
-          selectedClass: classType
+          appliedPromoCode: undefined,
+          discount: 0
         }
-      })),
+      }));
+      get().actions.recalculateBookingTotals();
+    },
 
-    applyPromo: (code) =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          promoCode: code
-        }
-      })),
+    recalculateBookingTotals: () =>
+      set((state) => {
+        const { scheduleDetails, passengers, discount } = state.bookingState;
 
-    toggle20PercentOffer: () =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          has20PercentOffer: !state.bookingState.has20PercentOffer
-        }
-      })),
+        let totalCalculatedBaseFare = 0;
+        let totalCalculatedTaxes = 0;
 
-    toggle50PercentOffer: () =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          has50PercentOffer: !state.bookingState.has50PercentOffer
+        if (scheduleDetails && scheduleDetails.availableClasses) {
+          passengers.forEach(passenger => {
+            const passengerClass = scheduleDetails.availableClasses.find(
+              cls => cls.classCode === passenger.selectedClassId || cls._id === passenger.selectedClassId
+            );
+            
+            if (passengerClass) {
+              totalCalculatedBaseFare += passengerClass.fare || passengerClass.baseFare || 0;
+            } else {
+              console.warn(`Class ${passenger.selectedClassId} not found in available classes. Available classes:`, 
+                scheduleDetails.availableClasses.map(c => ({ code: c.classCode, id: c._id }))
+              );
+              const defaultClass = scheduleDetails.availableClasses[0];
+              if (defaultClass) {
+                totalCalculatedBaseFare += defaultClass.fare || defaultClass.baseFare || 0;
+              }
+            }
+          });
+          
+          totalCalculatedTaxes = totalCalculatedBaseFare * TAX_RATE;
+        } else {
+          console.warn("[Store Action - recalculateBookingTotals] Cannot recalculate totals: Missing scheduleDetails or availableClasses");
         }
-      })),
+        
+        let newTotalAmount = totalCalculatedBaseFare + totalCalculatedTaxes - (discount || 0);
+        newTotalAmount = Math.max(0, newTotalAmount);
 
-    calculateTotal: (amount) =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          totalFare: amount
-        }
-      })),
+        return {
+          bookingState: {
+            ...state.bookingState,
+            baseFare: totalCalculatedBaseFare,
+            taxes: totalCalculatedTaxes,
+            totalAmount: newTotalAmount,
+            totalFare: newTotalAmount
+          }
+        };
+      }),
 
     setBookingDetails: (details) =>
-      set((state) => ({
-        bookingState: {
-          ...state.bookingState,
-          bookingDetails: details
-        }
-      })),
+      set((state) => {
+        
+        return state;
+      }),
 
     resetBooking: () => set(initialState)
   }

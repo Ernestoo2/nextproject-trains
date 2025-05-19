@@ -11,14 +11,9 @@ export default function Nav() {
   const isActive = (path: string) => pathname === path;
 
   // Get the MongoDB _id from the session
-  const userId = session?.user?.id;
+  const Id: string | undefined = session?.user?.id;
 
-  // Debug session data
-  console.log("Session data:", {
-    session,
-    userId,
-    pathname,
-  });
+  
 
   return (
     <div className="w-full py-3 mx-auto text-black">
@@ -36,11 +31,11 @@ export default function Nav() {
         {session?.user ? (
           <Link
             className={`text-center font-bold text-sm md:text-base lg:text-lg transition-colors ${
-              isActive(`/user/${userId}`)
+              isActive(`/user/${Id}`)
                 ? "text-green-600"
                 : "hover:text-green-600"
             }`}
-            href={`/user/${userId}`}
+            href={`/user/${Id}`}
           >
             My Profile
           </Link>

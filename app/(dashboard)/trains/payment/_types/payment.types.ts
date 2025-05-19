@@ -1,6 +1,4 @@
-import { IPassenger } from "../../review-booking/_types/shared.types";
-import { IStation } from "../../_types/shared.types";
-import { ISchedule } from "../../daily-trains/_types/schedule.types";
+import { Passenger } from "@/types/shared";
 
 export interface IPaystackPopProps {
   email: string;
@@ -21,22 +19,24 @@ export interface IPaymentStation {
 
 export interface IBookingPaymentDetails {
   scheduleId: string;
-  trainId: string;
-  trainNumber: string;
   trainName: string;
-  departureStation: IPaymentStation;
-  arrivalStation: IPaymentStation;
+  trainNumber: string;
+  departureStationName: string;
+  arrivalStationName: string;
   departureTime: string;
   arrivalTime: string;
-  class: string;
-  baseFare: number;
-  taxes: number;
-  promoDiscount: number;
-  has20PercentOffer: boolean;
-  has50PercentOffer: boolean;
-  totalPrice: number;
-  date: string;
-  passengers: IPassenger[];
+  journeyDate: string;
+  selectedClass: string;
+  passengers: Passenger[];
+  fareDetails: {
+    baseFare: number;
+    taxes: number;
+    discount: number;
+    totalAmount: number;
+    promoCode?: string;
+  };
+  has20PercentOffer?: boolean;
+  has50PercentOffer?: boolean;
 }
 
 export interface IPaymentResponse {

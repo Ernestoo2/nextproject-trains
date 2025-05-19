@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import type { Schedule as ISchedule } from "@/types/shared/database";
 import { z } from "zod";
+import "./Train"; // Ensures Train model is registered before Schedule
 
 const scheduleSchema = new mongoose.Schema<ISchedule>(
   {

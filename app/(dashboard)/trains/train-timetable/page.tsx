@@ -62,8 +62,7 @@ export default function TrainTimetablePage() {
           .filter((entry): entry is [string, string] => entry[1] !== null)
           .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 
-        console.log("Searching schedules with params:", params);
-
+        
         // Make the API call
         const response = await fetch(`/api/schedules/search?${new URLSearchParams(params)}`);
         const data = await response.json();
@@ -75,9 +74,7 @@ export default function TrainTimetablePage() {
         if (!data.success) {
           throw new Error(data.message || "Failed to fetch schedules");
         }
-
-        console.log(`Found ${data.data.length} schedules`);
-        setSchedules(data.data);
+         setSchedules(data.data);
       } catch (error) {
         console.error("Error fetching schedules:", error);
         setError(error instanceof Error ? error.message : "Failed to fetch schedules");

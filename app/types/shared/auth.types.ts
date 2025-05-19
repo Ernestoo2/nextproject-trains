@@ -13,7 +13,7 @@ export interface AuthUser extends BaseModel {
   lastLogin?: Date;
 }
 
-export type UserRole = 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+export type UserRole = 'USER';
 
 export interface AuthToken {
   token: string;

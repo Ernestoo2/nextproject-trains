@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useTrainSearchStore } from '@/store/trainSearchStore';
-import { toast } from 'sonner';
 
 export function useTrainSearchData() {
   const {
@@ -21,30 +20,18 @@ export function useTrainSearchData() {
 
         // Fetch stations
         const stationsResponse = await fetch('/api/stations');
-        if (!stationsResponse.ok) {
-          throw new Error(`Failed to fetch stations: ${stationsResponse.statusText}`);
-        }
+        if (!stationsResponse.ok) throw new Error('Failed to fetch stations');
         const stationsData = await stationsResponse.json();
-        if (!stationsData.success) {
-          throw new Error(stationsData.error || 'Failed to fetch stations data');
-        }
         setStations(stationsData.data.stations);
 
         // Fetch train classes
         const classesResponse = await fetch('/api/train-classes');
-        if (!classesResponse.ok) {
-          throw new Error(`Failed to fetch train classes: ${classesResponse.statusText}`);
-        }
+        if (!classesResponse.ok) throw new Error('Failed to fetch train classes');
         const classesData = await classesResponse.json();
-        if (!classesData.success) {
-          throw new Error(classesData.error || 'Failed to fetch train classes data');
-        }
-        setTrainClasses(classesData);
+        setTrainClasses(classesData.data);
 
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-        setError(errorMessage);
-        toast.error(errorMessage);
+        setError(error instanceof Error ? error.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -75,35 +62,14 @@ export function useTrainSearchData() {
           infants: filters.infantCount.toString(),
         });
 
-        const response = await fetch(`/api/routes/search?${params.toString()}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch search results: ${response.statusText}`);
-        }
+        const response = await fetch(`/api/routes/search?${params.toString()}`);
+        if (!response.ok) throw new Error('Failed to fetch search results');
         
         const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch search results data');
-        }
-
-        // Validate the response data
-        if (!Array.isArray(data.data?.routes)) {
-          throw new Error('Invalid search results format');
-        }
-
         setSearchResults(data.data.routes);
-        if (data.data.routes.length === 0) {
-          toast.info('No routes found for the selected criteria');
-        }
 
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-        setError(errorMessage);
-        toast.error(errorMessage);
+        setError(error instanceof Error ? error.message : 'An error occurred');
       } finally {
         setLoading(false);
       }

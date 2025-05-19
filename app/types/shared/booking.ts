@@ -1,6 +1,7 @@
+import { BerthPreference } from "../booking.types";
 import { PaymentStatus } from "./payments";
-import { Schedule, ScheduleStatus, TrainClass, Station } from "./trains";
-import { UserProfile } from "./users";
+import { Schedule, ScheduleStatus, TrainClass} from "./trains";
+import { Gender, IdentificationType, UserProfile } from "./users";
 
 export interface BookingFormData {
   departure: string;
@@ -116,19 +117,19 @@ export interface BookingFormState {
 export type TripType = "ONE_WAY" | "RETURN" | "MULTI_CITY" | "ROUND_TRIP";
 
 export type TrainClassType = "ECONOMY" | "BUSINESS" | "FIRST_CLASS";
- 
+export type PassengerType = "ADULT" | "CHILD" | "INFANT";
 
 export interface Passenger {
   firstName: string;
   lastName: string;
   age: number;
-  type: "ADULT" | "CHILD" | "INFANT";
+  type: PassengerType;
   nationality: string;
-  gender: "MALE" | "FEMALE" | "OTHER";
-  identificationType?: "passport" | "nationalId" | "driverLicense";
+  gender: Gender;
+  identificationType?: IdentificationType;
   identificationNumber?: string;
   seatNumber?: string;
-  berthPreference?: "LOWER" | "MIDDLE" | "UPPER";
+  berthPreference?: BerthPreference;
   seat?: string;
   phone?: string;
 }

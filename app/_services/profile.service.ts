@@ -1,129 +1,107 @@
-import {
-  NaijaRailsProfile,
-  NaijaRailsProfileUpdate,
-} from "@/types/naija-rails.types";
+import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
 
-interface ProfileResponse {
+interface ApiResponse<T> {
   success: boolean;
-  data?: NaijaRailsProfile;
-  error?: string;
+  data?: T;
+  message?: string;
   details?: Record<string, string>;
 }
 
-export async function createProfile(
-  profile: Omit<
-    NaijaRailsProfile,
-    "_id" | "naijaRailsId" | "createdAt" | "updatedAt"
-  >,
-): Promise<ProfileResponse> {
+export async function updateProfile(
+  naijaRailsId: string,
+  updates: Partial<UserProfile>,
+): Promise<ApiResponse<UserProfile>> {
   try {
-    const response = await fetch("/api/profiles", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(profile),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (data.details) {
-        Object.entries(data.details).forEach(([field, message]) => {
-          toast.error(`${field}: ${message}`);
-        });
-      }
+    if (!naijaRailsId) {
+      toast.error("User identifier (naijaRailsId) is missing for profile update.");
       return {
         success: false,
-        error: data.error || "Failed to create profile",
-        details: data.details,
+        message: "User identifier (naijaRailsId) is missing.",
       };
     }
 
-    return {
-      success: true,
-      data: data.data,
-    };
-  } catch (error) {
-    console.error("Error creating profile:", error);
-    toast.error("Failed to create profile");
-    return {
-      success: false,
-      error: "Failed to create profile",
-    };
-  }
-}
-
-export async function updateProfile(
-  profile: NaijaRailsProfileUpdate & { userId: string },
-): Promise<ProfileResponse> {
-  try {
-    const response = await fetch("/api/profiles", {
+    const response = await fetch(`/api/user/${naijaRailsId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(profile),
+      body: JSON.stringify(updates),
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || !data.success) {
+      const errorMessage = data.message || data.error || "Failed to update profile";
       if (data.details) {
         Object.entries(data.details).forEach(([field, message]) => {
           toast.error(`${field}: ${message}`);
         });
+      } else {
+        toast.error(errorMessage);
       }
       return {
         success: false,
-        error: data.error || "Failed to update profile",
+        message: errorMessage,
         details: data.details,
       };
     }
 
+    toast.success("Profile updated successfully!");
     return {
       success: true,
-      data: data.data,
+      data: data.data as UserProfile,
     };
   } catch (error) {
     console.error("Error updating profile:", error);
-    toast.error("Failed to update profile");
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during profile update.";
+    toast.error(errorMessage);
     return {
       success: false,
-      error: "Failed to update profile",
+      message: errorMessage,
     };
   }
 }
 
-export async function getProfile(userId: string): Promise<ProfileResponse> {
+export async function getProfile(naijaRailsId: string): Promise<ApiResponse<UserProfile | undefined>> {
   try {
-    const response = await fetch(`/api/profiles?userId=${encodeURIComponent(userId)}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        // Profile doesn't exist yet, return empty data
-        return {
-          success: true,
-          data: undefined
-        };
-      }
+    if (!naijaRailsId) {
+      toast.error("User identifier (naijaRailsId) is missing for fetching profile.");
       return {
         success: false,
-        error: data.error || 'Failed to fetch profile'
+        message: "User identifier (naijaRailsId) is missing.",
+      };
+    }
+    const response = await fetch(`/api/user/${naijaRailsId}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      if (response.status === 404) {
+        return {
+          success: true,
+          data: undefined,
+          message: data.message || "Profile not found",
+        };
+      }
+      const errorMessage = data.message || data.error || "Failed to fetch profile";
+      toast.error(errorMessage);
+      return {
+        success: false,
+        message: errorMessage,
       };
     }
 
     return {
       success: true,
-      data: data.data
+      data: data.data as UserProfile,
     };
   } catch (error) {
     console.error('Error fetching profile:', error);
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred while fetching profile.";
+    toast.error(errorMessage);
     return {
       success: false,
-      error: 'Failed to fetch profile'
+      message: errorMessage,
     };
   }
 }

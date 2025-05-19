@@ -1,489 +1,368 @@
 "use client";
 
-import React from "react";
-import { useUser } from "@/_providers/user/UserContext";
-import { useProfile } from "@/_providers/profile/ProfileContext";
+import React, { useState, useEffect } from "react";
+import { useBookingStore } from "@/store/bookingStore";
+import { BERTH_PREFERENCES, GENDER } from "@/types/booking.types";
+import type { Passenger, TrainClass } from "@/types/shared/trains";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Plus, Trash2, Loader2 } from "lucide-react";
-import { useBookingState } from "@/_hooks/useBookingState";
-import { useBookingForm } from "@/_hooks/useBookingForm";
-import { Schedule, Passenger } from "@/types/shared/trains";
 import { toast } from "sonner";
-import { 
-  BookingLeftProps, 
-  ExtendedBookingFormState, 
-  ProfileUpdateData, 
-  PassengerFormData 
-} from "./BookingLeft.types";
+import { Plus, Trash2, UserCircle, Mail, Phone, ChevronDown } from "lucide-react";
+import { useSession } from "next-auth/react"; 
+import { UserProfile } from "@/types/shared/users";
+const DEFAULT_NATIONALITY = "Nigerian";
 
-const defaultPassenger: PassengerFormData = {
-  firstName: "",
-  lastName: "",
-  age: 0,
-  gender: "OTHER",
-  nationality: "Nigerian",
-  berthPreference: "LOWER",
-  phone: "",
-  type: "ADULT"
+type NewTravelerFormState = {
+  firstName: string;
+  lastName: string;
+  age: string;
+  gender: typeof GENDER[keyof typeof GENDER];
+  nationality: string;
+  berthPreference: typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES];
+  selectedClassId: string;
 };
 
-export function BookingLeft({ bookingId, schedule }: BookingLeftProps) {
-  const { userProfile } = useUser();
-  const { profile, updateProfile: updateUserProfile } = useProfile();
-  const { state } = useBookingState(bookingId);
-  const {
-    formState,
-    setFormState,
-    addPassenger,
-    removePassenger,
-    updateProfile,
-    setNewPassengerField,
-  } = useBookingForm(bookingId);
+const BookingLeft: React.FC = () => {
+  const { data: session } = useSession();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const { bookingState, actions: bookingActions } = useBookingStore();
+  const [showAddPassengerDialog, setShowAddPassengerDialog] = useState(false);
+  const [isAddingTraveler, setIsAddingTraveler] = useState(false);
+ 
+  const initialNewTravelerState = (): NewTravelerFormState => ({
+    firstName: "",
+    lastName: "",
+    age: "",
+    gender: GENDER.MALE,
+    nationality: DEFAULT_NATIONALITY,
+    berthPreference: BERTH_PREFERENCES.LOWER,
+    selectedClassId: "",
+  });
 
-  const {
-    isEditingProfile,
-    showAddPassengerDialog,
-    showConfirmDialog,
-    passengerToRemove,
-    newPassenger,
-    isLoading,
-  } = formState as ExtendedBookingFormState;
+  const [newTraveler, setNewTraveler] = useState<NewTravelerFormState>(initialNewTravelerState());
 
-  if (!state || !profile) {
-    return null;
-  }
+  useEffect(() => {
+    fetchUserProfile();
+  }, [session?.user?.id]);
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const profileData: ProfileUpdateData = {
-      fullName: profile.fullName,
-      phoneNumber: profile.phoneNumber,
-      defaultNationality: profile.defaultNationality,
-      preferredBerth: profile.preferredBerth,
-    };
-    await updateProfile(profileData);
+  const fetchUserProfile = async () => {
+    if (!session?.user?.id) return;
+    setIsLoadingProfile(true);
+    try {
+      const response = await fetch(`/api/user/${session.user.id}`);
+      if (!response.ok) throw new Error('Failed to fetch profile');
+      const data = await response.json();
+      if (data.success && data.data) setUser(data.data);
+    } catch (error) {
+      toast.error('Error loading profile');
+    } finally { setIsLoadingProfile(false); }
   };
 
-  const handleAddPassenger = async () => {
-    if (!newPassenger.firstName || !newPassenger.lastName || !newPassenger.age || !newPassenger.phone) {
-      toast.error("Please fill in all required fields");
+  useEffect(() => {
+    setNewTraveler(prev => ({
+      ...prev,
+      nationality: user?.defaultNationality || DEFAULT_NATIONALITY,
+      berthPreference: (user?.preferredBerth as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES]) || BERTH_PREFERENCES.LOWER,
+      selectedClassId: bookingState.currentDefaultClassId || 
+        (bookingState.scheduleDetails?.availableClasses[0]?.classCode || 
+         bookingState.scheduleDetails?.availableClasses[0]?._id || ""),
+    }));
+  }, [user, bookingState.currentDefaultClassId, bookingState.scheduleDetails?.availableClasses]);
+
+  const handleAddTraveler = () => {
+    setIsAddingTraveler(true);
+    if (!newTraveler.firstName || !newTraveler.lastName || !newTraveler.age || !newTraveler.selectedClassId) {
+      toast.error("Please fill in all required fields, including travel class.");
+      setIsAddingTraveler(false);
       return;
     }
-    await addPassenger(newPassenger as PassengerFormData);
+
+    // Validate that the selected class exists
+    const selectedClass = bookingState.scheduleDetails?.availableClasses.find(
+      cls => cls.classCode === newTraveler.selectedClassId || cls._id === newTraveler.selectedClassId
+    );
+
+    if (!selectedClass) {
+      toast.error("Selected class is no longer available. Please choose another class.");
+      setIsAddingTraveler(false);
+      return;
+    }
+
+    const ageAsNumber = parseInt(newTraveler.age, 10);
+    if (isNaN(ageAsNumber) || ageAsNumber < 0) {
+      toast.error("Please enter a valid age.");
+      setIsAddingTraveler(false);
+      return;
+    }
+    if (bookingState.passengers.length >= 6) {
+      toast.error("You can book up to 6 travelers at once.");
+      setIsAddingTraveler(false);
+      return;
+    }
+
+    const passengerToAdd: Passenger = {
+      firstName: newTraveler.firstName,
+      lastName: newTraveler.lastName,
+      age: ageAsNumber,
+      gender: newTraveler.gender,
+      nationality: newTraveler.nationality,
+      berthPreference: newTraveler.berthPreference,
+      selectedClassId: selectedClass.classCode || selectedClass._id,
+      type: "ADULT",
+    };
+
+    bookingActions.addPassenger(passengerToAdd);
+    toast.success("Traveler added successfully!");
+    setNewTraveler(initialNewTravelerState());
+    setShowAddPassengerDialog(false);
+    setIsAddingTraveler(false);
   };
 
-  const handleNewPassengerField = (field: keyof PassengerFormData, value: any) => {
-    setNewPassengerField(field, value);
+  const handleRemoveTraveler = (index: number) => {
+    bookingActions.removePassenger(index);
+    toast.success("Traveler removed successfully!");
   };
+  
+  const availableClassesForDropdown = bookingState.scheduleDetails?.availableClasses || [];
 
   return (
-    <div className="w-full space-y-6">
-      {/* Naija Rails Profile */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Naija Rails Profile
-          </h2>
-          <Button
-            variant="outline"
-            onClick={() =>
-              setFormState((prev) => ({
-                ...prev,
-                isEditingProfile: !prev.isEditingProfile,
-              }))
-            }
-            className="text-[#07561A] hover:text-[#064516] border-[#07561A] hover:bg-[#07561A]/10"
-          >
-            {isEditingProfile ? "Cancel" : "Edit Profile"}
-          </Button>
+    <div className="w-full flex-1 space-y-6">
+      <h2 className="text-2xl font-semibold text-[#07561A]">Review your booking</h2>
+
+      {/* User Profile Section */}
+      <div className="space-y-3 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Naija Rails Profile</h3>
+          {!isLoadingProfile && user && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setNewTraveler(initialNewTravelerState());
+                setShowAddPassengerDialog(true);
+              }}
+              className="text-[#07561A] hover:text-[#064516] border-[#07561A] hover:bg-[#07561A]/10"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Traveler
+            </Button>
+          )}
         </div>
 
-        {isEditingProfile ? (
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={profile.fullName}
-                onChange={(e) =>
-                  updateUserProfile({ ...profile, fullName: e.target.value })
-                }
-                disabled={isLoading}
-                className="focus:border-[#07561A]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                value={profile.phoneNumber}
-                onChange={(e) =>
-                  updateUserProfile({ ...profile, phoneNumber: e.target.value })
-                }
-                disabled={isLoading}
-                className="focus:border-[#07561A]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="defaultNationality">Default Nationality</Label>
-              <Input
-                id="defaultNationality"
-                value={profile.defaultNationality}
-                onChange={(e) =>
-                  updateUserProfile({
-                    ...profile,
-                    defaultNationality: e.target.value,
-                  })
-                }
-                disabled={isLoading}
-                className="focus:border-[#07561A]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="preferredBerth">Preferred Berth</Label>
-              <Select
-                value={profile.preferredBerth}
-                onValueChange={(value) =>
-                  updateUserProfile({ ...profile, preferredBerth: value as any })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger className="focus:border-[#07561A]">
-                  <SelectValue placeholder="Select berth" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lower">Lower Berth</SelectItem>
-                  <SelectItem value="middle">Middle Berth</SelectItem>
-                  <SelectItem value="upper">Upper Berth</SelectItem>
-                  <SelectItem value="side">Side Berth</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-[#07561A] hover:bg-[#064516] text-white"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Profile"
-              )}
-            </Button>
-          </form>
+        {isLoadingProfile ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : !user ? (
+          <div className="text-center text-gray-500 py-4">
+            <p className="font-medium text-yellow-700">Profile Not Loaded</p>
+            <p className="text-sm text-yellow-600">Please wait while we load your profile...</p>
+          </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="font-medium">Naija Rails ID:</span>
-              <span className="text-[#07561A] font-mono">
-                {profile.naijaRailsId}
-              </span>
+            <div className="flex items-center p-2.5">
+              <UserCircle className="w-5 h-5 mr-3 text-slate-500 flex-shrink-0" />
+              <span className="font-medium text-slate-600">Naija Rails ID:</span>
+              <span className="ml-auto font-mono text-green-700 text-base">{user.naijaRailsId}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Full Name:</span>
-              <span>{profile.fullName}</span>
+            <div className="flex items-center py-2">
+              <UserCircle className="w-5 h-5 mr-3 text-slate-500 flex-shrink-0" />
+              <span className="text-slate-600">Full Name:</span>
+              <span className="ml-auto text-slate-800 font-medium">{user.name || "Not set"}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Email:</span>
-              <span>{profile.email}</span>
+            <div className="flex items-center py-2">
+              <Mail className="w-5 h-5 mr-3 text-slate-500 flex-shrink-0" />
+              <span className="text-slate-600">Email:</span>
+              <span className="ml-auto text-slate-800 font-medium">{user.email || "Not set"}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Phone:</span>
-              <span>{profile.phoneNumber || "Not set"}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Default Nationality:</span>
-              <span>{profile.defaultNationality}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Preferred Berth:</span>
-              <span>{profile.preferredBerth}</span>
+            <div className="flex items-center py-2">
+              <Phone className="w-5 h-5 mr-3 text-slate-500 flex-shrink-0" />
+              <span className="text-slate-600">Phone:</span>
+              <span className="ml-auto text-slate-800 font-medium">{user.phone || "Not set"}</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Traveler Details */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-gray-900">
-            Traveler Details
-          </h2>
+      <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-gray-800 text-md">Traveler Details</h3>
           <p className="text-sm text-gray-600">
-            As per IRCTC guidelines, you can book up to 6 travelers at once.
+            As per guidelines, you can book up to 6 travelers at once.
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() =>
-            setFormState((prev) => ({ ...prev, showAddPassengerDialog: true }))
-          }
-          disabled={!profile || isLoading}
-          className="w-full mb-4 text-[#07561A] hover:text-[#064516] border-[#07561A] hover:bg-[#07561A]/10"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Passenger
-        </Button>
-
-        {/* Existing Passengers List */}
-        {state.passengers?.map((passenger: Passenger, index: number) => (
-          <div
-            key={index}
-            className="mt-4 p-4 border-2 border-gray-100 rounded-lg"
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <span className="font-medium text-gray-900">
-                  {passenger.firstName} {passenger.lastName}
-                </span>
-                <div className="text-sm text-gray-600">
-                  <span>{passenger.age} yrs • </span>
-                  <span>{passenger.gender} • </span>
-                  <span>{passenger.nationality} • </span>
-                  <span>{passenger.berthPreference} berth</span>
-                </div>
+        <ol className="space-y-4">
+          {bookingState.passengers.map((traveler, index) => {
+            const travelerClass = availableClassesForDropdown.find(c => c.classCode === traveler.selectedClassId || c._id === traveler.selectedClassId);
+            return (
+            <li key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:shadow-sm transition-shadow">
+                <div className="flex items-center gap-3">
+                <span className="font-medium text-gray-800">{traveler.firstName} {traveler.lastName}</span>
+                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">{travelerClass?.className || traveler.selectedClassId}</span>
+                <button
+                  onClick={() => handleRemoveTraveler(index)}
+                  className="text-red-500 hover:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFormState((prev) => ({
-                    ...prev,
-                    passengerToRemove: passenger,
-                    showConfirmDialog: true,
-                  }));
-                }}
-                disabled={isLoading}
-                className="text-red-500 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>{traveler.age} yrs</span>
+                  <span>{traveler.gender}</span>
+              </div>
+            </li>
+            );
+          })}
+        </ol>
+
+        {bookingState.passengers.length === 0 && (
+          <p className="text-sm text-center text-gray-500 py-6 border border-dashed border-gray-300 rounded-md bg-gray-50">
+            No travelers added yet. Click "Add Traveler" to begin.
+          </p>
+        )}
       </div>
 
       {/* Contact Details */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">
-          Contact Details
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <Label>Email Address</Label>
-            <Input
-              type="email"
-              value={profile.email || ""}
-              disabled
-              className="bg-gray-50"
-            />
-          </div>
-          <div>
-            <Label>Phone Number</Label>
+      <div className="p-4 mb-6 rounded-lg ">
+        <div className="flex items-center justify-between w-4/5 mb-3">
+          <h3 className="text-lg font-semibold text-gray-800">Contact Details</h3>
+          <p className="text-sm">Your ticket info will be sent here</p>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Label className="text-sm text-gray-600">Mobile Number</Label>
             <Input
               type="tel"
-              value={profile.phoneNumber || ""}
-              disabled
-              className="bg-gray-50"
+              value={user?.phone || ""}
+              readOnly
+              className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-            <p className="text-sm text-gray-600 mt-1">
-              To update contact details, please edit your profile above.
-            </p>
+          </div>
+          <div className="flex-1">
+            <Label className="text-sm text-gray-600">Email ID</Label>
+            <Input
+              type="email"
+              value={user?.email || ""}
+              readOnly
+              className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
           </div>
         </div>
       </div>
 
-      {/* Add Passenger Dialog */}
-      <Dialog
-        open={showAddPassengerDialog}
-        onOpenChange={(open) =>
-          setFormState((prev) => ({
-            ...prev,
-            showAddPassengerDialog: open,
-            newPassenger: open ? prev.newPassenger : defaultPassenger,
-          }))
-        }
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Passenger</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>First Name</Label>
-              <Input
-                value={newPassenger.firstName || ""}
-                onChange={(e) => handleNewPassengerField("firstName", e.target.value)}
-                placeholder="Enter first name"
-                className="focus:border-[#07561A]"
-              />
+      {/* Add Traveler Dialog */}
+      {showAddPassengerDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Add New Traveler</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={newTraveler.firstName}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, firstName: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={newTraveler.lastName}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, lastName: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="travelClass">Travel Class</Label>
+                  <select
+                    id="travelClass"
+                    value={newTraveler.selectedClassId}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, selectedClassId: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    required
+                  >
+                    <option value="" disabled>Select a class</option>
+                    {availableClassesForDropdown.map((tc) => (
+                      <option 
+                        key={tc.classCode || tc._id} 
+                        value={tc.classCode || tc._id}
+                      >
+                        {tc.className} (₦{tc.fare?.toLocaleString() || tc.basePrice?.toLocaleString()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="age">Age</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    value={newTraveler.age}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, age: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="gender">Gender</Label>
+                  <select
+                    id="gender"
+                    value={newTraveler.gender}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, gender: e.target.value as typeof GENDER[keyof typeof GENDER] })}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  >
+                    {Object.values(GENDER).map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="nationality">Nationality</Label>
+                  <Input
+                    id="nationality"
+                    value={newTraveler.nationality}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, nationality: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="berthPreference">Berth Preference</Label>
+                  <select
+                    id="berthPreference"
+                    value={newTraveler.berthPreference}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, berthPreference: e.target.value as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES] })}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  >
+                    {Object.values(BERTH_PREFERENCES).map(bp => <option key={bp} value={bp}>{bp}</option>)}
+                  </select>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Last Name</Label>
-              <Input
-                value={newPassenger.lastName || ""}
-                onChange={(e) => handleNewPassengerField("lastName", e.target.value)}
-                placeholder="Enter last name"
-                className="focus:border-[#07561A]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Age</Label>
-              <Input
-                type="number"
-                value={newPassenger.age || ""}
-                onChange={(e) => handleNewPassengerField("age", parseInt(e.target.value) || 0)}
-                placeholder="Enter age"
-                className="focus:border-[#07561A]"
-              />
-            </div>
-            <div className="space-y-2">
-            <Label>Gender</Label>
-            <Select
-                value={newPassenger.gender || "other"}
-                onValueChange={(value) => handleNewPassengerField("gender", value)}
-              >
-                <SelectTrigger className="focus:border-[#07561A]">
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-            <div className="space-y-2">
-            <Label>Nationality</Label>
-              <Input
-                value={newPassenger.nationality || ""}
-                onChange={(e) => handleNewPassengerField("nationality", e.target.value)}
-                placeholder="Enter nationality"
-                className="focus:border-[#07561A]"
-              />
-          </div>
-            <div className="space-y-2">
-            <Label>Berth Preference</Label>
-            <Select
-                value={newPassenger.berthPreference || "lower"}
-                onValueChange={(value) => handleNewPassengerField("berthPreference", value)}
-            >
-                <SelectTrigger className="focus:border-[#07561A]">
-                <SelectValue placeholder="Select berth preference" />
-              </SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="LOWER">Lower Berth</SelectItem>
-                  <SelectItem value="MIDDLE">Middle Berth</SelectItem>
-                  <SelectItem value="UPPER">Upper Berth</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-            <div className="space-y-2">
-              <Label>Phone Number</Label>
-              <Input
-                value={newPassenger.phone || ""}
-                onChange={(e) => handleNewPassengerField("phone", e.target.value)}
-                placeholder="Enter phone number"
-                className="focus:border-[#07561A]"
-              />
+            <div className="flex justify-end gap-4 mt-6">
+              <Button variant="outline" onClick={() => setShowAddPassengerDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddTraveler} disabled={isAddingTraveler || !newTraveler.selectedClassId}>
+                {isAddingTraveler ? "Adding..." : "Add Traveler"}
+              </Button>
             </div>
           </div>
-          <div className="flex justify-end space-x-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() =>
-                setFormState((prev) => ({
-                  ...prev,
-                  showAddPassengerDialog: false,
-                  newPassenger: defaultPassenger,
-                }))
-              }
-              disabled={isLoading}
-              className="text-[#07561A] hover:text-[#064516] border-[#07561A] hover:bg-[#07561A]/10"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAddPassenger}
-              disabled={isLoading}
-              className="bg-[#07561A] hover:bg-[#064516] text-white"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                "Add Passenger"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Remove Passenger Confirmation Dialog */}
-      <Dialog
-        open={showConfirmDialog}
-        onOpenChange={(open) =>
-          setFormState((prev) => ({ ...prev, showConfirmDialog: open }))
-        }
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove Passenger</DialogTitle>
-          </DialogHeader>
-          <p>Are you sure you want to remove this passenger?</p>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() =>
-                setFormState((prev) => ({ ...prev, showConfirmDialog: false }))
-              }
-              disabled={isLoading}
-              className="text-[#07561A] hover:text-[#064516] border-[#07561A] hover:bg-[#07561A]/10"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (passengerToRemove && state.passengers) {
-                  removePassenger(state.passengers.indexOf(passengerToRemove));
-                }
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Removing...
-                </>
-              ) : (
-                "Remove"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default BookingLeft;

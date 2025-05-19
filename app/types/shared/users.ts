@@ -1,65 +1,52 @@
-export type UserRole = "user" | "admin" | "staff";
-export type Gender = "male" | "female" | "other";
-export const USER_ROLES = ["user", "admin", "staff"] as const;
+import { BerthPreference } from "../booking.types";
 
-export interface UserDocument {
-  name: string;
-  email: string;
-  password?: string;
-  naijaRailsId: string;
-  phone: string;
-  role: UserRole;
-  address: string;
-  dob: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-export interface BaseUser {
+export type UserRole = "USER";
+export type Gender = "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+export const USER_ROLES = ["USER"];
+
+// Base user fields that are always required
+interface BaseUserFields {
   id: string;
+  naijaRailsId: string;
   email: string;
   name: string;
   role: UserRole;
-  naijaRailsId?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
-export interface UserProfile extends BaseUser {
+// Optional user profile fields
+interface OptionalUserFields {
   phone?: string;
-  phoneNumber?: string; // Alternative field name used in some APIs
   address?: string;
   dob?: string;
   image?: string;
   defaultNationality?: string;
-  nationality?: string; // Alternative field name used in some APIs
-  preferredBerth?: "LOWER" | "MIDDLE" | "UPPER" | "SIDE";
-  age?: number;
+  preferredBerth?: BerthPreference;
   gender?: Gender;
-  fullName?: string; // Alternative field name used in some APIs
+  age?: number;
 }
 
-export interface AuthUser extends BaseUser {
-  password?: string; // Only used during registration/login
+// Main user profile type
+export interface UserProfile extends BaseUserFields, OptionalUserFields { }
+
+// Database specific fields
+export interface UserDocument extends Omit<UserProfile, 'id'> {
+  _id: string;
+  password: string;
+  isVerified: boolean;
+  lastLogin?: Date;
 }
 
-// Type for the session user
-export interface SessionUser extends BaseUser {
-  image?: string | null;
-}
+// Type for updating user profile - only optional fields can be updated
+export type UserProfileUpdate = Partial<OptionalUserFields>;
 
-// NaijaRails specific profile type
-export interface NaijaRailsProfile extends Omit<UserProfile, "id" | "role"> {
-  userId: string; // Reference to the base user
-  naijaRailsId: string;
-  fullName: string;
+// Next-Auth session user type
+export interface SessionUser {
+  id: string;
+  name: string;
   email: string;
-  phoneNumber: string;
-  nationality: string;
-  defaultNationality: string;
-  preferredBerth: "LOWER" | "MIDDLE" | "UPPER" | "SIDE";
-  age?: number;
-  gender?: Gender;
-  address?: string;
-  createdAt: string;
-  updatedAt: string;
+  role: UserRole;
+  naijaRailsId: string;
+  image?: string;
 }

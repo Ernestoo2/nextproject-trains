@@ -3,6 +3,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "../mongodb/connect";
 import { User } from "@/utils/mongodb/models/User";
 import bcrypt from "bcryptjs";
+import { UserRole } from "@/types/shared/users";
+
+// Validate the role or return default
+function getValidRole(role: string | undefined): UserRole {
+  return role === "USER" ? "USER" : "USER"; // Currently only supporting "USER" role
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -20,13 +26,15 @@ export const authOptions: NextAuthOptions = {
         try {
           await connectDB();
 
-          const user = await User.findOne({ email: credentials.email.toLowerCase() });
+          const user = await User.findOne({ email: credentials.email.toLowerCase() }).select('+password');
           if (!user) {
+            console.error(`Login attempt with non-existent email: ${credentials.email}`);
             throw new Error("No user found with this email");
           }
 
-          if (!user.isActive) {
-            throw new Error("Your account has been deactivated");
+          if (!user.password) {
+            console.error(`User found but password field is missing: ${credentials.email}`);
+            throw new Error("Invalid account configuration. Please contact support.");
           }
 
           const isPasswordValid = await bcrypt.compare(
@@ -35,14 +43,18 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!isPasswordValid) {
+            console.error(`Invalid password attempt for user: ${credentials.email}`);
             throw new Error("Invalid password");
           }
 
+          console.log(`Successful login for user: ${credentials.email}`);
+          
+          // Return user data for session
           return {
             id: user._id.toString(),
             email: user.email,
             name: user.name,
-            role: user.role,
+            role: getValidRole(user.role),
             naijaRailsId: user.naijaRailsId,
           };
         } catch (error) {
@@ -66,17 +78,17 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role || "";
+        token.role = getValidRole(user.role);
         token.naijaRailsId = user.naijaRailsId;
-        token.email = user.email;
-        token.name = user.name;
+        token.email = user.email || "";
+        token.name = user.name || "";
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = getValidRole(token.role as string);
         session.user.naijaRailsId = token.naijaRailsId as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
@@ -89,8 +101,7 @@ export const authOptions: NextAuthOptions = {
       try {
         await connectDB();
         await User.findByIdAndUpdate(user.id, {
-          lastLogin: new Date(),
-          $inc: { loginCount: 1 },
+          $set: { lastLogin: new Date() },
         });
       } catch (error) {
         console.error("Error updating user login info:", error);

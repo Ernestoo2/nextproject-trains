@@ -1,8 +1,6 @@
 import mongoose, { Document } from "mongoose";
 import {
-  AuthUser,
   UserRole,
-  USER_ROLES,
   UserDocument,
 } from "@/types/shared/users";
 
@@ -32,14 +30,25 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: USER_ROLES,
-      default: "user",
+      default: "USER",
     },
     address: {
       type: String,
       default: "",
     },
     dob: {
+      type: String,
+      default: "",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    image: {
       type: String,
       default: "",
     },

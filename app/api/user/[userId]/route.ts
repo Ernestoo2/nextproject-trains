@@ -1,115 +1,154 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../utils/auth/next-auth";
-import { User } from "@/utils/mongodb/models/User";
+import { authOptions } from "@/lib/auth"; 
 import { connectDB } from "@/utils/mongodb/connect";
-import { UserProfile } from "@/utils/type";
+import { User } from "@/utils/mongodb/models/User";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { userId: string } },
+  request: NextRequest,
+  { params }: { params: { userId: string } }
 ) {
   try {
+    const userId = params.userId;
+    
+    // Await the session properly to fix NextAuth headers issue
     const session = await getServerSession(authOptions);
-
+    
     if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Only allow access to your own profile
+    if (session.user.id !== userId && session.user.naijaRailsId !== userId) {
+      return NextResponse.json({ success: false, message: "You can only access your own profile" }, { status: 403 });
     }
 
     await connectDB();
 
-    // In Next.js App Router, params is a Promise that needs to be awaited
-    const { userId } = await params;
-
-    if (!userId || userId === "undefined") {
-      return new NextResponse("User ID is missing or invalid", { status: 400 });
-    }
-
-    // Try to find the user by _id
-    const user = await User.findById(userId);
+    // Try to find user by ID, naijaRailsId, or email
+    const user = await User.findOne({
+      $or: [
+        { _id: userId },
+        { naijaRailsId: userId },
+        { email: session.user.email }
+      ]
+    });
 
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "User profile not found" },
+        { status: 404 }
+      );
     }
 
-    // Transform to UserProfile type
-    const userProfile: UserProfile = {
-      id: user._id.toString(), // Convert MongoDB _id to string id
+    // Return user data from database
+    const userProfile = {
+      id: user._id.toString(),
       name: user.name,
       email: user.email,
+      role: user.role,
+      naijaRailsId: user.naijaRailsId,
       phone: user.phone || "",
       address: user.address || "",
       dob: user.dob || "",
-      role: user.role || "user",
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      image: session.user.image || undefined,
+      createdAt: user.createdAt ? user.createdAt.toISOString() : new Date().toISOString(),
+      updatedAt: user.updatedAt ? user.updatedAt.toISOString() : new Date().toISOString(),
+      defaultNationality: "Nigerian", // Default value
+      preferredBerth: "LOWER" // Default value
     };
 
-    return NextResponse.json(userProfile);
+    return NextResponse.json({ success: true, data: userProfile });
   } catch (error) {
-    console.error("Error fetching user profile:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, message: errorMessage }, { status: 500 });
   }
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { userId: string } },
+  request: NextRequest,
+  { params }: { params: { userId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const body = await request.json();
-    const { name, email, phone, address, dob } = body;
-
-    await connectDB();
-
-    // In Next.js App Router, params is a Promise that needs to be awaited
-    const { userId } = await params;
-
+    const userId = params.userId;
+    
     if (!userId || userId === "undefined") {
-      return new NextResponse("User ID is missing or invalid", { status: 400 });
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid user ID" 
+      }, { status: 400 });
+    }
+    
+    // Await the session properly to fix NextAuth headers issue
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await User.findById(userId);
-
+    // Only allow users to update their own profile
+    if (session.user.id !== userId && session.user.naijaRailsId !== userId) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "You can only update your own profile",
+        requestedId: userId,
+        sessionUserId: session.user.id
+      }, { status: 403 });
+    } 
+    
+    const updates = await request.json();
+    
+    await connectDB();
+    
+    // Find the user by ID, naijaRailsId, or email
+    const user = await User.findOne({
+      $or: [
+        { _id: userId },
+        { naijaRailsId: userId },
+        { email: session.user.email }
+      ]
+    });
+    
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "User profile not found" },
+        { status: 404 }
+      );
     }
-
-    // Update user fields
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (phone) user.phone = phone;
-    if (address) user.address = address;
-    if (dob) user.dob = dob;
-
-    // Update the updatedAt timestamp
-    user.updatedAt = new Date().toISOString();
-
+    
+    // Update allowed fields only
+    const allowedUpdates = [
+      'name', 'phone', 'address', 'dob'
+    ];
+    
+    // Apply valid updates
+    allowedUpdates.forEach(field => {
+      if (updates[field] !== undefined) {
+        user[field] = updates[field];
+      }
+    });
+    
     // Save the updated user
     await user.save();
-
-    // Transform to UserProfile type for response
-    const updatedUserProfile: UserProfile = {
-      id: user._id.toString(), // Convert MongoDB _id to string id
+    
+    // Return updated user data
+    const updatedProfile = {
+      id: user._id.toString(),
       name: user.name,
       email: user.email,
+      role: user.role,
+      naijaRailsId: user.naijaRailsId,
       phone: user.phone || "",
       address: user.address || "",
       dob: user.dob || "",
-      role: user.role || "user", // Default role if not specified
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      image: session.user.image || undefined,
+      createdAt: user.createdAt ? user.createdAt.toISOString() : new Date().toISOString(),
+      updatedAt: user.updatedAt ? user.updatedAt.toISOString() : new Date().toISOString()
     };
 
-    return NextResponse.json(updatedUserProfile);
+    return NextResponse.json({ success: true, data: updatedProfile });
   } catch (error) {
-    console.error("Error updating user profile:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, message: errorMessage }, { status: 500 });
   }
 }

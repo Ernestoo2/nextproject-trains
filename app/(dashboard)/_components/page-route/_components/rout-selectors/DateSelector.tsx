@@ -1,114 +1,118 @@
 "use client";
-import React, { useState, useCallback, useEffect } from "react";
-import { addDays, endOfDay, format, isAfter, isBefore, isValid, startOfDay, differenceInDays } from "date-fns";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { format, isAfter, isBefore, isValid, startOfDay, endOfDay, addDays } from "date-fns";
 import { FaCalendarAlt } from "react-icons/fa";
 import { useTrainSearchStore } from '@/store/trainSearchStore';
+import { useAvailableDates } from '@/_hooks/useAvailableDates';
 
 interface DateSelectorProps {
-  selectedDate: string;
+  initialDate: string; // Expected yyyy-MM-dd
   onDateChange: (date: string) => void;
 }
 
-export default function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to start of day
-  const maxDate = endOfDay(addDays(today, 21)); // 3 weeks from today
+const DEFAULT_VALIDATION = { isValid: true, error: null as string | null };
+interface ValidationState { isValid: boolean; error: string | null; }
 
+export default function DateSelector({ initialDate, onDateChange }: DateSelectorProps) {
+  const today = startOfDay(new Date());
+  const [internalSelectedDate, setInternalSelectedDate] = useState<string>(initialDate);
   const [isOpen, setIsOpen] = useState(false);
-  const [validation, setValidation] = useState({
-    isValid: true,
-    error: null as string | null,
-  });
+  const [validation, setValidation] = useState<ValidationState>(DEFAULT_VALIDATION);
+
+  const currentValidationRef = useRef(validation);
+  useEffect(() => {
+    currentValidationRef.current = validation;
+  }, [validation]);
 
   const { 
-    filters, 
-    updateFilters, 
-    setLoading, 
-    setError,
-    isLoading,
-    error 
+    isLoading: isTrainSearchLoading,
+    error: trainSearchError, // Errors from the wider search store
   } = useTrainSearchStore();
 
-  // Validate initial date on mount and sync with store
+  const {
+    availableDates,
+    isLoading: isLoadingDates,
+    error: datesError, // Errors specifically from fetching available dates
+  } = useAvailableDates();
+
   useEffect(() => {
-    if (selectedDate) {
-      validateDate(selectedDate);
-      if (selectedDate !== filters.date) {
-        updateFilters({ date: selectedDate });
-      }
+    // Only update if initialDate prop truly differs from internal state
+    if (initialDate !== internalSelectedDate) {
+        setInternalSelectedDate(initialDate);
     }
-  }, [selectedDate, filters.date, updateFilters]);
+  }, [initialDate]); // Removed internalSelectedDate from deps to avoid loop with parent potentially
 
-  const validateDate = useCallback((dateStr: string): boolean => {
-    const dateObj = new Date(dateStr);
+  // This function now returns the validation state, instead of setting it directly
+  const calculateValidationState = useCallback((dateStrToValidate: string): ValidationState => {
+    if (isLoadingDates) {
+      return { isValid: true, error: "Loading available dates..." }; // isValid: true might be debatable, but consistent with prev. error message
+    }
 
+    if (!dateStrToValidate) {
+      return { isValid: false, error: "Date cannot be empty" };
+    }
+    
+    const dateObj = new Date(dateStrToValidate + 'T00:00:00');
     if (!isValid(dateObj)) {
-      setValidation({
-        isValid: false,
-        error: "Invalid date format",
-      });
-      setError("Invalid date format");
-      return false;
+      return { isValid: false, error: "Invalid date format" };
+    }
+    if (isBefore(dateObj, today)) {
+      return { isValid: false, error: "Cannot select a past date" };
+    }
+    if (!availableDates.includes(dateStrToValidate)) {
+      return { isValid: false, error: "No schedules available for this date" };
+    }
+    return DEFAULT_VALIDATION; // If all checks pass
+  }, [today, availableDates, isLoadingDates]); // Dependencies of the validation logic
+
+  // Effect to re-validate when the selected date or data for validation changes
+  useEffect(() => {
+    let newValidationState: ValidationState;
+    if (internalSelectedDate) {
+      newValidationState = calculateValidationState(internalSelectedDate);
+    } else if (!isLoadingDates) { // If no date selected and not loading, reset
+      newValidationState = DEFAULT_VALIDATION;
+    } else {
+        // While loading and no date selected, keep current or default loading state
+        newValidationState = { isValid: true, error: "Loading available dates..." };
     }
 
-    if (isBefore(dateObj, startOfDay(today))) {
-      setValidation({
-        isValid: false,
-        error: "Cannot select a past date",
-      });
-      setError("Cannot select a past date");
-      return false;
+    if (currentValidationRef.current.isValid !== newValidationState.isValid || currentValidationRef.current.error !== newValidationState.error) {
+      setValidation(newValidationState);
     }
-
-    if (isAfter(dateObj, maxDate)) {
-      setValidation({
-        isValid: false,
-        error: "Date must be within the next 21 days",
-      });
-      setError("Date must be within the next 21 days");
-      return false;
-    }
-
-    setValidation({
-      isValid: true,
-      error: null,
-    });
-    setError(null);
-    return true;
-  }, [today, maxDate, setError]);
+  }, [internalSelectedDate, availableDates, isLoadingDates, calculateValidationState]);
 
   const formatDisplayDate = useCallback((date: string) => {
     if (!date) return "Select Date";
-    const dateObj = new Date(date);
+    const dateObj = new Date(date + 'T00:00:00');
     return isValid(dateObj) ? format(dateObj, "EEE, MMM d, yyyy") : "Select Date";
   }, []);
 
-  const handleDateChange = useCallback(async (value: string) => {
-    try {
-      setLoading(true);
-      if (validateDate(value)) {
-        onDateChange(value);
-        updateFilters({ date: value });
-        setIsOpen(false);
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to update date');
-    } finally {
-      setLoading(false);
+  const handleDateInputChange = useCallback((value: string) => {
+    setInternalSelectedDate(value);
+    const validationResult = calculateValidationState(value);
+    // Update validation state immediately based on input change
+    if (currentValidationRef.current.isValid !== validationResult.isValid || currentValidationRef.current.error !== validationResult.error) {
+        setValidation(validationResult);
     }
-  }, [validateDate, onDateChange, updateFilters, setLoading, setError]);
 
-  // Calculate days remaining in the 3-week window
-  const getDaysRemaining = useCallback((date: string) => {
-    const selectedDate = new Date(date);
-    const daysRemaining = differenceInDays(maxDate, selectedDate);
-    return daysRemaining;
-  }, [maxDate]);
+    if (validationResult.isValid) {
+      onDateChange(value);
+      setIsOpen(false);
+    }
+  }, [calculateValidationState, onDateChange]);
+
+  const minInputDate = availableDates.length > 0 && !isLoadingDates ? availableDates[0] : format(today, 'yyyy-MM-dd');
+  const maxInputDate = availableDates.length > 0 && !isLoadingDates
+    ? availableDates[availableDates.length - 1]
+    : format(endOfDay(addDays(today, 20)), 'yyyy-MM-dd');
+
+  const displayError = validation.error || datesError || trainSearchError;
 
   return (
     <div className="relative">
-      <div className={`border ${!validation.isValid || error ? 'border-red-500' : 'border-[#79747E]'} p-3 rounded-md`}>
-        <span className={`absolute -top-2 left-3 bg-white px-1 text-xs ${!validation.isValid || error ? 'text-red-500' : 'text-[#79747E]'}`}>
+      <div className={`border ${displayError ? 'border-red-500' : 'border-[#79747E]'} p-3 rounded-md`}>
+        <span className={`absolute -top-2 left-3 bg-white px-1 text-xs ${displayError ? 'text-red-500' : 'text-[#79747E]'}`}>
           Travel Date
         </span>
         <button
@@ -116,55 +120,62 @@ export default function DateSelector({ selectedDate, onDateChange }: DateSelecto
           className="w-full flex items-center gap-3 text-sm hover:border-gray-400 transition-colors"
           aria-label="Select travel date"
           aria-expanded={isOpen}
-          aria-invalid={!validation.isValid}
-          disabled={isLoading}
+          aria-invalid={!!displayError}
+          disabled={isTrainSearchLoading || isLoadingDates}
         >
           <span className="font-medium text-[13px]">
-            {formatDisplayDate(selectedDate)}
+            {formatDisplayDate(internalSelectedDate)}
           </span>
-          <FaCalendarAlt className={`${!validation.isValid || error ? 'text-red-500' : 'text-[#79747E]'} ml-auto`} />
+          <FaCalendarAlt className={`${displayError ? 'text-red-500' : 'text-[#79747E]'} ml-auto`} />
         </button>
       </div>
 
-      {(validation.error || error) && (
+      {displayError && (
         <p className="text-red-500 text-xs mt-1" role="alert">
-          {validation.error || error}
+          {displayError}
         </p>
       )}
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 w-full">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 w-full min-w-[280px]">
           <div className="p-4">
             <div>
               <label
-                htmlFor="departureDate"
+                htmlFor="departureDateInput"
                 className="text-xs text-[#79747E] mb-2 block"
               >
                 Select Date:
               </label>
               <input
-                id="departureDate"
+                id="departureDateInput"
                 type="date"
-                value={selectedDate}
-                min={today.toISOString().split("T")[0]}
-                max={maxDate.toISOString().split("T")[0]}
-                onChange={(e) => handleDateChange(e.target.value)}
+                value={internalSelectedDate}
+                min={minInputDate}
+                max={maxInputDate}
+                onChange={(e) => handleDateInputChange(e.target.value)}
                 className={`w-full p-2 border rounded ${
-                  validation.isValid
-                    ? 'focus:border-[#07561A] focus:ring-1 focus:ring-[#07561A]'
-                    : 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+                  displayError
+                    ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+                    : 'focus:border-[#07561A] focus:ring-1 focus:ring-[#07561A]'
                 } outline-none`}
-                aria-invalid={!validation.isValid}
-                aria-describedby={validation.error ? "date-error" : undefined}
-                disabled={isLoading}
+                aria-invalid={!!displayError}
+                aria-describedby={displayError ? "date-error-desc" : undefined}
+                disabled={isTrainSearchLoading || isLoadingDates}
               />
+              {displayError && <span id="date-error-desc" className="sr-only">{displayError}</span>}
               <div className="mt-2 space-y-1">
-                <p className="text-xs text-gray-500">
-                  * Schedules available for next 21 days
-                </p>
-                {selectedDate && (
-                  <p className="text-xs text-[#07561A]">
-                    {getDaysRemaining(selectedDate)} days remaining in booking window
+                {isLoadingDates && (
+                  <p className="text-xs text-blue-500">Loading available dates...</p>
+                )}
+                {!isLoadingDates && datesError && (
+                  <p className="text-xs text-red-500">Error loading dates: {datesError}</p>
+                )}
+                {!isLoadingDates && !datesError && availableDates.length === 0 && (
+                  <p className="text-xs text-red-500">No schedules available.</p>
+                )}
+                {!isLoadingDates && !datesError && availableDates.length > 0 && (
+                  <p className="text-xs text-green-600">
+                    {availableDates.length} day(s) with schedules available.
                   </p>
                 )}
               </div>

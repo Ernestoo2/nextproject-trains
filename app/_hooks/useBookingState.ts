@@ -1,101 +1,62 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import type { Booking } from "@/types/shared/database";
-import type { ApiResponse } from "@/types/shared/api";
-import { toast } from "sonner";
-import { Passenger } from "@/types/shared/trains";
-
-const DEFAULT_FARE_DETAILS = {
-  perPersonFare: 0,
-  baseTicketFare: 0,
-  taxes: 0,
-  totalFare: 0,
-};
-
-const initialState: Booking = {
-  _id: "" as any,
-  userId: "" as any,
-  scheduleId: "" as any,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  isActive: true,
-  pnr: "",
-  status: "DRAFT",
-  paymentStatus: "PENDING",
-  passengers: [],
-  selectedClass: "",
-  availableSeats: {},
-  schedule: null,
-  
-  // Fare related fields
+import { BookingState, Passenger } from "@/types/shared";
+ 
+const initialState: BookingState = {
   totalPrice: 0,
   baseFare: 0,
   taxes: 0,
-  promoDiscount: 0,
-  
-  // Offer flags
   has20PercentOffer: false,
   has50PercentOffer: false,
-  
-  // Detailed fare breakdown
-  fareDetails: DEFAULT_FARE_DETAILS,
+  promoDiscount: 0,
+  passengers: [] as Passenger[],
+  selectedClass: "ECONOMY",
+  availableSeats: {} as Record<string, number>,
+  schedule: undefined,
+  fareDetails: {
+    perPersonFare: 0,
+    baseTicketFare: 0,
+    taxes: 0,
+    totalFare: 0,
+  },
 };
 
 interface UseBookingStateReturn {
-  state: Booking;
+  state: BookingState;
   isLoading: boolean;
   error: string | null;
-  updateState: (updates: Partial<Booking>) => Promise<void>;
-  initializeState: (initialData: Partial<Booking>) => Promise<void>;
+  updateState: (updates: Partial<BookingState>) => Promise<void>;
+  initializeState: (initialData: Partial<BookingState>) => Promise<void>;
 }
 
 export function useBookingState(bookingId: string): UseBookingStateReturn {
   const { data: session } = useSession();
-  const [state, setState] = useState<Booking>(initialState);
+  const [state, setState] = useState<BookingState>({
+    ...initialState,
+    passengers: [],
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch initial state
   useEffect(() => {
-    if (!session?.user || !bookingId) {
-      setError("User session or booking ID not found");
-      setIsLoading(false);
-      return;
-    }
+    if (!session?.user || !bookingId) return;
 
     const fetchState = async (): Promise<void> => {
       try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await fetch(`/api/booking/${bookingId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch booking: ${response.statusText}`);
+        const response = await fetch(`/api/booking?bookingId=${bookingId}`);
+        const data = await response.json();
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setState({
+            ...initialState,
+            ...data.data,
+            passengers: data.data?.passengers || [],
+          });
         }
-
-        const data: ApiResponse<Booking> = await response.json();
-        if (!data.success || !data.data) {
-          throw new Error(data.error || 'Failed to fetch booking data');
-        }
-
-        // Validate and transform the data
-        const bookingData = data.data;
-        setState({
-          ...initialState,
-          ...bookingData,
-          passengers: bookingData.passengers || [],
-          schedule: bookingData.schedule || null,
-          fareDetails: bookingData.fareDetails || DEFAULT_FARE_DETAILS,
-        });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch booking state';
-        setError(errorMessage);
-        toast.error(errorMessage);
+        setError("Failed to fetch booking state");
       } finally {
         setIsLoading(false);
       }
@@ -106,116 +67,74 @@ export function useBookingState(bookingId: string): UseBookingStateReturn {
 
   // Update state
   const updateState = useCallback(
-    async (updates: Partial<Booking>): Promise<void> => {
-      if (!session?.user || !bookingId) {
-        toast.error('User session or booking ID not found');
-        return;
-      }
+    async (updates: Partial<BookingState>): Promise<void> => {
+      if (!session?.user || !bookingId) return;
 
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Validate updates before sending
-        const validatedUpdates = {
-          ...updates,
-          passengers: updates.passengers || state.passengers,
-          fareDetails: {
-            ...(state.fareDetails || DEFAULT_FARE_DETAILS),
-            ...(updates.fareDetails || {}),
-          },
-        };
-
-        const response = await fetch(`/api/booking/${bookingId}`, {
+        const response = await fetch("/api/booking", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(validatedUpdates),
+          body: JSON.stringify({
+            bookingId,
+            updates: {
+              ...updates,
+              passengers: updates.passengers || state.passengers,
+            },
+          }),
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to update booking: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setState((prevState: BookingState) => ({
+            ...prevState,
+            ...data.data,
+            passengers: data.data?.passengers || prevState.passengers,
+          }));
         }
-
-        const data: ApiResponse<Booking> = await response.json();
-        if (!data.success || !data.data) {
-          throw new Error(data.error || 'Failed to update booking data');
-        }
-
-        setState((prevState: Booking) => ({
-          ...prevState,
-          ...data.data,
-          passengers: data.data.passengers || prevState.passengers,
-          fareDetails: data.data.fareDetails || prevState.fareDetails,
-        }));
-
-        toast.success('Booking updated successfully');
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to update booking state';
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setIsLoading(false);
+        setError("Failed to update booking state");
       }
     },
-    [bookingId, session?.user, state.passengers, state.fareDetails]
+    [bookingId, session?.user, state.passengers]
   );
 
   // Initialize state
   const initializeState = useCallback(
-    async (initialData: Partial<Booking>): Promise<void> => {
-      if (!session?.user || !bookingId) {
-        toast.error('User session or booking ID not found');
-        return;
-      }
+      async (initialData: Partial<BookingState>): Promise<void> => {
+      if (!session?.user || !bookingId) return;
 
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Validate initial data
-        const validatedData = {
-          ...initialState,
-          ...initialData,
-          passengers: initialData.passengers || [],
-          fareDetails: {
-            ...DEFAULT_FARE_DETAILS,
-            ...(initialData.fareDetails || {}),
-          },
-        };
-
-        const response = await fetch(`/api/booking/${bookingId}/initialize`, {
+        const response = await fetch("/api/booking", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(validatedData),
+          body: JSON.stringify({
+            bookingId,
+            state: {
+              ...initialState,
+              ...initialData,
+              passengers: initialData.passengers || [],
+            },
+          }),
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to initialize booking: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setState({
+            ...initialState,
+            ...data.data,
+            passengers: data.data?.passengers || [],
+          });
         }
-
-        const data: ApiResponse<Booking> = await response.json();
-        if (!data.success || !data.data) {
-          throw new Error(data.error || 'Failed to initialize booking data');
-        }
-
-        setState({
-          ...initialState,
-          ...data.data,
-          passengers: data.data.passengers || [],
-          fareDetails: data.data.fareDetails || DEFAULT_FARE_DETAILS,
-        });
-
-        toast.success('Booking initialized successfully');
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to initialize booking state';
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setIsLoading(false);
+        setError("Failed to initialize booking state");
       }
     },
     [bookingId, session?.user]

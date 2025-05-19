@@ -86,9 +86,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-
-    console.log("Searching for routes with:", { fromStation, toStation });
-
+ 
     // Find routes between the specified stations
     const routes = await Route.find({
       fromStation,
@@ -99,18 +97,12 @@ export async function POST(request: Request) {
       .populate("toStation", "name code")
       .populate("availableClasses", "name code baseFare");
 
-    console.log("Found routes:", routes);
-
+    
     if (!routes.length) {
       // Check if stations exist
       const fromStationExists = await Station.findById(fromStation);
       const toStationExists = await Station.findById(toStation);
-
-      console.log("Station check:", {
-        fromStationExists: !!fromStationExists,
-        toStationExists: !!toStationExists,
-      });
-
+ 
       return NextResponse.json(
         {
           error: "No routes found between the specified stations",

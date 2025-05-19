@@ -1,4 +1,5 @@
-import { ApiResponse, AuthUser, UserRole } from "@/types/shared";
+import { ApiResponse, } from "@/types/shared";
+import { AuthUser } from "@/types/shared/auth.types";
 
 export interface LoginCredentials {
   email: string;

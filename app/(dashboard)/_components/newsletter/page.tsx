@@ -1,12 +1,17 @@
 "use client";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import mail from "../../../../public/Assets/mailbox.png";
 import { IoIosSend } from "react-icons/io";
 
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,17 +26,21 @@ export default function NewsletterPage() {
     }
   };
 
+  if (!isMounted) {
+    return null; // Return null on server-side and first render
+  }
+
   return (
-    <div className=" relative mb-[-40px]">
-      <div className=" w-5/6 flex h-auto md:w-3/5 mx-auto gap-5 bg-[#CDEAE1] items-center justify-between rounded-md p-8  lg:p-12">
+    <div className="relative mb-[-40px]">
+      <div className="w-5/6 flex h-auto md:w-3/5 mx-auto gap-5 bg-[#CDEAE1] items-center justify-between rounded-md p-8 lg:p-12">
         <div className="w-full mb-2 md:w-2/3 md:mb-0 md:pr-12">
-          <h2 className="text-xl w-full flex-wrap  md:text-2xl font-bold text-[#2D3748] mb-1">
+          <h2 className="text-xl w-full flex-wrap md:text-2xl font-bold text-[#2D3748] mb-1">
             Subscribe Newsletter
           </h2>
           <h3 className="text-lg md:text-xl font-semibold text-[#4A5568] mb-1">
             The Travel
           </h3>
-          <p className="text-xs break-normal  md:text-sm text-[#4A5568] mb-1">
+          <p className="text-xs break-normal md:text-sm text-[#4A5568] mb-1">
             Get inspired! Receive travel discounts, tips and behind the scenes
             stories.
           </p>
@@ -68,7 +77,10 @@ export default function NewsletterPage() {
           <Image
             src={mail}
             alt="Mailbox"
+            width={400}
+            height={400}
             className="object-contain w-full h-auto md:max-w-md"
+            priority
           />
         </div>
       </div>
