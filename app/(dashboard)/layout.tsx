@@ -13,17 +13,17 @@ export default async function DashboardLayout({
     const cookieStore = await cookies();
     
     // Then get session
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-    if (!session) {
-      redirect("/auth/login");
-    }
+  if (!session) {
+    redirect("/auth/login");
+  }
 
-    return (
-      <div className="min-h-screen flex flex-col">
-        <main className="flex-grow">{children}</main>
-      </div>
-    );
+  return (
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-grow">{children}</main>
+    </div>
+  );
   } catch (error) {
     console.error("Error in dashboard layout:", error);
     redirect("/auth/login");

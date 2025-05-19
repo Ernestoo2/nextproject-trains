@@ -61,14 +61,14 @@ const BookingLeft: React.FC = () => {
   };
 
   useEffect(() => {
-    setNewTraveler(prev => ({
-      ...prev,
+      setNewTraveler(prev => ({
+        ...prev,
       nationality: user?.defaultNationality || DEFAULT_NATIONALITY,
       berthPreference: (user?.preferredBerth as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES]) || BERTH_PREFERENCES.LOWER,
       selectedClassId: bookingState.currentDefaultClassId || 
         (bookingState.scheduleDetails?.availableClasses[0]?.classCode || 
          bookingState.scheduleDetails?.availableClasses[0]?._id || ""),
-    }));
+      }));
   }, [user, bookingState.currentDefaultClassId, bookingState.scheduleDetails?.availableClasses]);
 
   const handleAddTraveler = () => {

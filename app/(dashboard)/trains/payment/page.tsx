@@ -281,9 +281,9 @@ export default function PaymentPage() {
           <div className="border-b pb-4 mb-4">
             <h2 className="text-2xl font-semibold text-[#07561A]">Payment Summary</h2>
             <p className="text-sm text-gray-600">Review your booking details before payment</p>
-          </div>
+              </div>
 
-          {/* Journey Details */}
+        {/* Journey Details */}
           <div className="mb-6 p-4 bg-[#07561A1A] rounded-lg">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-semibold text-lg">{bookingDetailsForPayment?.trainName}</h3>
@@ -303,19 +303,19 @@ export default function PaymentPage() {
               <div className="text-right">
                 <p className="font-medium">{bookingDetailsForPayment?.arrivalStationName}</p>
                 <p className="text-sm text-gray-600">{bookingDetailsForPayment?.arrivalTime}</p>
-              </div>
             </div>
           </div>
+        </div>
 
-          {/* Passenger Details */}
+        {/* Passenger Details */}
           <div className="mb-6">
             <h3 className="font-semibold mb-3">Passenger Details</h3>
             <div className="space-y-3">
               {bookingDetailsForPayment?.passengers.map((passenger, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
+                <div>
                     <p className="font-medium">{passenger.firstName} {passenger.lastName}</p>
-                    <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600">
                       {passenger.age} years • {passenger.gender} • {passenger.nationality}
                     </p>
                   </div>
@@ -323,10 +323,10 @@ export default function PaymentPage() {
                     <p className="text-sm font-medium text-[#07561A]">{passenger.selectedClassId}</p>
                     <p className="text-xs text-gray-500">{passenger.berthPreference}</p>
                   </div>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
 
           {/* Fare Breakdown */}
           <div className="border-t pt-4">
@@ -335,7 +335,7 @@ export default function PaymentPage() {
               <div className="flex justify-between text-sm">
                 <span>Base Fare ({bookingDetailsForPayment?.passengers.length} passengers):</span>
                 <span>₦{bookingDetailsForPayment?.fareDetails.baseFare.toLocaleString()}</span>
-              </div>
+            </div>
               <div className="flex justify-between text-sm">
                 <span>Taxes & GST (8%):</span>
                 <span>₦{bookingDetailsForPayment?.fareDetails.taxes.toLocaleString()}</span>
@@ -344,10 +344,10 @@ export default function PaymentPage() {
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount ({bookingDetailsForPayment.fareDetails.promoCode}):</span>
                   <span>-₦{bookingDetailsForPayment.fareDetails.discount.toLocaleString()}</span>
-                </div>
-              )}
+              </div>
+            )}
               <div className="border-t pt-3 mt-3">
-                <div className="flex justify-between font-semibold">
+              <div className="flex justify-between font-semibold">
                   <span>Total Amount:</span>
                   <span className="text-[#07561A]">₦{bookingDetailsForPayment?.fareDetails.totalAmount.toLocaleString()}</span>
                 </div>

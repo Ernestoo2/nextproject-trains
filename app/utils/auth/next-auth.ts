@@ -95,6 +95,14 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // After sign in, redirect to dashboard
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/dashboard`;
+      }
+      // Default to baseUrl if url is not relative
+      return baseUrl;
+    },
   },
   events: {
     async signIn({ user }) {
