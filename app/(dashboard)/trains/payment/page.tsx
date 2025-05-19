@@ -146,40 +146,62 @@ export default function PaymentPage() {
 
       // Create booking confirmations for each class
       const bookingPromises = Object.entries(passengersByClass).map(async ([classId, passengers]) => {
-        const response = await fetch("/api/bookings/confirm", {
+        const response = await fetch("/api/booking", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             scheduleId: bookingDetailsForPayment.scheduleId,
-            classId: classId,
-            numberOfSeatsBooked: passengers.length,
-            userId: session?.user?.id || userProfile?.id,
-            travelers: passengers,
-            totalFare: bookingDetailsForPayment.fareDetails.totalAmount,
-            pnr: session?.user?.naijaRailsId || userProfile?.naijaRailsId,
+            class: classId,
+            passengers: passengers.map(p => ({
+              name: `${p.firstName} ${p.lastName}`,
+              age: p.age,
+              gender: p.gender,
+              berthPreference: p.berthPreference,
+              seatNumber: p.selectedClassId
+            })),
+            fare: {
+              base: bookingDetailsForPayment.fareDetails.baseFare,
+              taxes: bookingDetailsForPayment.fareDetails.taxes,
+              total: bookingDetailsForPayment.fareDetails.totalAmount,
+              discount: bookingDetailsForPayment.fareDetails.discount || 0
+            }
           }),
         });
 
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Failed to confirm booking for class ${classId}`);
+        }
+
         const result = await response.json();
-        if (!response.ok || !result.success) {
+        if (!result.success) {
           throw new Error(result.message || `Failed to confirm booking for class ${classId}`);
         }
         return result;
       });
 
       // Wait for all booking confirmations
-      await Promise.all(bookingPromises);
-
+      const results = await Promise.all(bookingPromises);
+      
+      // Store the booking details for the success page
+      const successDetails = {
+        ...bookingDetailsForPayment,
+        bookingId: results[0]?.data?._id,
+        status: "CONFIRMED",
+        paymentStatus: "PAID"
+      };
+      
+      localStorage.setItem("lastBookingDetails", JSON.stringify(successDetails));
       toast.success("Booking confirmed and seats updated!");
-      localStorage.setItem("lastBookingDetails", JSON.stringify(bookingDetailsForPayment));
       router.push("/trains/booking-success");
-    } catch (confirmationError) {
-      console.error("Error confirming booking with backend:", confirmationError);
+    } catch (error) {
+      console.error("Error confirming booking:", error);
       toast.error(
         `Payment was successful, but booking confirmation failed: ${
-          confirmationError instanceof Error ? confirmationError.message : 'Unknown error'
+          error instanceof Error ? error.message : 'Unknown error'
         }. Please contact support with PNR: ${session?.user?.naijaRailsId || userProfile?.naijaRailsId}`
       );
+      router.push("/");
     }
   };
 
