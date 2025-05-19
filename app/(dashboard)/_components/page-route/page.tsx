@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import TripSelector from "./_components/rout-selectors/TripSelector";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaTrain } from "react-icons/fa";
-  import { TripType } from "@/types/shared/trains"; 
+import { TripType } from "@/types/shared/trains"; 
 import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails, TRIP_TYPES } from "@/types/shared/trains";
 import type { Route as RouteType } from "@/types/shared/trains";
 
