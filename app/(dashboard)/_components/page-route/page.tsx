@@ -290,7 +290,7 @@ export default function RoutePage() {
       }
 
     
-      const transformedRoutes = data.data.map((route: any) => ({
+      const transformedRoutes = data.data.map((route: any) => ({ 
         _id: route._id.toString(),
         fromStation: {
           _id: route.fromStation._id.toString(),
