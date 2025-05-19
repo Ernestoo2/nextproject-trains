@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/utils/auth/next-auth";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 
 export default async function DashboardLayout({
   children,
@@ -9,10 +9,10 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   try {
-    // Get headers first
-    const headersList = await headers();
+    // Get cookies first
+    const cookieStore = await cookies();
     
-    // Then get session with headers
+    // Then get session
     const session = await getServerSession(authOptions);
 
     if (!session) {
