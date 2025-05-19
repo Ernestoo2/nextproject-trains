@@ -103,7 +103,6 @@ const bookingSchema = new mongoose.Schema<BookingDocument, {}, BookingVirtuals>(
 // Create indexes for better query performance
 bookingSchema.index({ userId: 1, createdAt: -1 });
 bookingSchema.index({ scheduleId: 1, status: 1 });
-bookingSchema.index({ pnr: 1 }, { unique: true });
 bookingSchema.index({ transactionId: 1 });
 
 // Virtual for formatted fare

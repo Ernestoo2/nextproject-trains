@@ -25,6 +25,10 @@ import {
   BERTH_PREFERENCES,
 } from "@/types/booking.types";
 import { z } from "zod";
+import { NextRequest } from "next/server";
+import { Schedule } from "@/utils/mongodb/models/Schedule";
+import { Types } from "mongoose";
+import { headers } from "next/headers";
 
 const bookingState = new Map();
 
@@ -349,62 +353,91 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const authError = await authMiddleware(request);
-    if (authError) {
-      return NextResponse.json(authError, { status: authError.status });
+    // Get headers first
+    const headersList = await headers();
+    
+    // Then get session with headers
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    await connectDB();
     const body = await request.json();
+    const {
+      scheduleId,
+      class: trainClass,
+      passengers,
+      fare,
+      pnr,
+      transactionId,
+    } = body;
 
-    const validationResult = bookingCreateSchema.safeParse(body);
-    if (!validationResult.success) {
+    // Validate required fields
+    if (!scheduleId || !trainClass || !passengers || !fare || !pnr) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Validation Error",
-          status: 400,
-          message: validationResult.error.errors
-            .map((e) => e.message)
-            .join(", "),
-        },
+        { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const validatedData = validationResult.data;
+    // Validate schedule exists and has enough seats
+    await connectDB();
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) {
+      return NextResponse.json(
+        { success: false, message: "Schedule not found" },
+        { status: 404 }
+      );
+    }
 
-    // Generate PNR
-    const pnr = `PNR${Date.now().toString(36).toUpperCase()}${Math.random()
-      .toString(36)
-      .substring(2, 7)
-      .toUpperCase()}`;
+    // Check available seats
+    const availableSeats = schedule.availableSeats.get(trainClass);
+    if (!availableSeats || availableSeats < passengers.length) {
+      return NextResponse.json(
+        { success: false, message: "Not enough seats available" },
+        { status: 409 }
+      );
+    }
 
-    const booking = await Booking.create({
-      ...validatedData,
+    // Create booking
+    const booking = new Booking({
+      userId: session.user.id,
+      scheduleId: scheduleId,
+      class: trainClass,
+      passengers,
+      fare,
       pnr,
-      status: BOOKING_STATUS.INITIATED,
-      paymentStatus: PAYMENT_STATUS.PENDING,
-      isActive: true,
+      transactionId,
+      status: BOOKING_STATUS.CONFIRMED,
+      paymentStatus: PAYMENT_STATUS.COMPLETED,
     });
 
-    await booking.populate([
-      { path: "userId", select: "email name" },
-      { path: "scheduleId", select: "departureTime arrivalTime date" },
-    ]);
+    await booking.save();
 
-    const response: ApiResponse<BookingDocument> = {
+    // Update available seats
+    await Schedule.findByIdAndUpdate(scheduleId, {
+      $inc: { [`availableSeats.${trainClass}`]: -passengers.length }
+    });
+
+    return NextResponse.json({
       success: true,
       data: booking,
-      message: "Booking created successfully",
-    };
-
-    return NextResponse.json(response);
+    });
   } catch (error) {
-    const errorResponse = handleApiError(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.status });
+    console.error("Error creating booking:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to create booking",
+      },
+      { status: 500 }
+    );
   }
 }
 

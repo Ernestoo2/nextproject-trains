@@ -8,10 +8,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Get headers for session
-  const headersList = headers();
-  
   try {
+    // Get headers first
+    const headersList = await headers();
+    
+    // Then get session with headers
     const session = await getServerSession(authOptions);
 
     if (!session) {

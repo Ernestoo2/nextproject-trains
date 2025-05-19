@@ -6,11 +6,11 @@ import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleSt
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Get params safely
-    const id = context.params.id;
+    const { id } = params;
     
     // Get query parameters
     const url = new URL(request.url);
