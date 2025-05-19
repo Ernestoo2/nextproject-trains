@@ -1,5 +1,3 @@
-import { TRIP_TYPES } from "@/(dashboard)/trains/train-search/_constants/train.constants";
-
 export interface RouteSummary {
   _id: string;
   fromStation: {
@@ -64,4 +62,3 @@ export interface DisplayRoute {
   };
 }
 
-export type TripType = (typeof TRIP_TYPES)[keyof typeof TRIP_TYPES];

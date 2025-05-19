@@ -58,15 +58,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
         const userId = sessionUserId || sessionNaijaRailsId;
         if (userId) {
           try {
-            console.log(`Attempting to fetch profile for user ID: ${userId}`);
+            console.error(`Attempting to fetch profile for user ID: ${userId}`);
             const response = await fetch(`/api/user/${userId}`);
             
             const responseStatus = response.status;
-            console.log(`Profile fetch response status: ${responseStatus}`);
+            console.error(`Profile fetch response status: ${responseStatus}`);
             
             if (response.ok) {
               const result = await response.json();
-              console.log("Profile fetch successful:", result.success);
+              console.error("Profile fetch successful:", result.success);
               
               if (result.success && result.data) {
                 profileData = result.data as UserProfile;

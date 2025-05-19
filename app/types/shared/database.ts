@@ -86,6 +86,7 @@ export interface ScheduleWithDetails {
   date: string;
   platform?: string;
   status: ScheduleStatus;
+  fare: Record<string, number>;
   availableClasses: Array<
     TrainClass & { availableSeats: number; fare: number }
   >;

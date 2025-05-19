@@ -80,8 +80,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = getValidRole(user.role);
         token.naijaRailsId = user.naijaRailsId;
-        token.email = user.email;
-        token.name = user.name;
+        token.email = user.email || "";
+        token.name = user.name || "";
       }
       return token;
     },
@@ -101,9 +101,8 @@ export const authOptions: NextAuthOptions = {
       try {
         await connectDB();
         await User.findByIdAndUpdate(user.id, {
-          lastLogin: new Date(),
+          $set: { lastLogin: new Date() },
         });
-        console.log(`Updated lastLogin for user: ${user.email}`);
       } catch (error) {
         console.error("Error updating user login info:", error);
       }

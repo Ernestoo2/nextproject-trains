@@ -13,12 +13,7 @@ export default function Nav() {
   // Get the MongoDB _id from the session
   const Id: string | undefined = session?.user?.id;
 
-  // Debug session data
-  console.log("Session data:", {
-    session,
-    Id,
-    pathname,
-  });
+  
 
   return (
     <div className="w-full py-3 mx-auto text-black">

@@ -48,8 +48,8 @@ export interface Station {
   facilities: string[];
   platforms: number;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ValidStation extends Station {
@@ -109,6 +109,7 @@ export interface Passenger {
   type: PassengerType;
   nationality: string;
   gender: Gender;
+  selectedClassId: string;
   identificationType?: IdentificationType;
   identificationNumber?: string;
   seatNumber?: string;
@@ -180,14 +181,15 @@ export interface Booking extends MongoDocument {
   trainClass: string | TrainClass;
   travelers: Passenger[];
   totalFare: number;
+  totalPrice?: number;
+  baseFare?: number;
+  taxes?: number;
+  promoDiscount?: number;
   status: ScheduleStatus;
   pnr: string;
   paymentStatus: PaymentStatus;
   transactionId?: string;
   promoCode?: string;
-  promoDiscount?: number;
-  taxes?: number;
-  baseFare?: number;
 }
 
 // Additional constants and types for bookings
@@ -209,10 +211,22 @@ export interface BookingState {
   promoCode?: PromoCode;
   has20PercentOffer: boolean;
   has50PercentOffer: boolean;
-  totalFare: number;
+  totalFare?: number;
+  totalPrice?: number;
+  baseFare?: number;
+  taxes?: number;
+  promoDiscount?: number;
+  availableSeats?: Record<string, number>;
+  schedule?: Schedule;
+  fareDetails?: FareDetails;
   bookingDetails?: Partial<Booking>;
 }
-
+export interface FareDetails {
+  perPersonFare: number;
+  baseTicketFare: number;
+  taxes: number;
+  totalFare: number;
+}
 export type BookingAction =
   | { type: "ADD_PASSENGER"; payload: Passenger }
   | { type: "REMOVE_PASSENGER"; payload: number }

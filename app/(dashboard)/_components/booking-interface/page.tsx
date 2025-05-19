@@ -4,76 +4,140 @@ import React, { useEffect, useState } from "react";
 import StationCombobox from "./_components/StationCombobox";
 import train from "../../../../public/Assets/Train1.png";
 import { useRouter, useSearchParams } from "next/navigation";
-import { STATIONS } from "./_constants/stations";
-import { BookingFormState, SearchParams } from "./_types/booking.types";
-import { Station } from "./_types/station.types";
-import { TRIP_TYPES } from "@/(dashboard)/trains/train-search/_constants/train.constants";
-import { TripType } from "@/types/shared";
+import type { Station, TripType, TrainClassType } from "@/types/shared/trains";
 
-// React.FC<BookingInterfacesProps>
+const TRIP_TYPES = {
+  ONE_WAY: "One Way",
+  ROUND_TRIP: "Round Trip",
+} as const;
+
+interface SearchFormState {
+  departureStation: Station | null;
+  arrivalStation: Station | null;
+  date: string;
+  tripType: TripType;
+  classType: TrainClassType;
+  adultCount: number;
+  childCount: number;
+  infantCount: number;
+}
+
 export default function BookingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [formState, setFormState] = useState<BookingFormState>({
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loadingStations, setLoadingStations] = useState(true);
+  const [stationError, setStationError] = useState<string | null>(null);
+
+  const [formState, setFormState] = useState<SearchFormState>({
     departureStation: null,
     arrivalStation: null,
     date: new Date().toISOString().split("T")[0],
-    tripType: "ONE-WAY",
+    tripType: "ONE_WAY",
+    classType: "ECONOMY" as TrainClassType,
+    adultCount: 1,
+    childCount: 0,
+    infantCount: 0,
   });
 
-  // Load initial state from URL parameters
   useEffect(() => {
-    const fromStationId = searchParams?.get("fromStationId")
+    const fetchStationsFromAPI = async () => {
+      setLoadingStations(true);
+      setStationError(null);
+      try {
+        const response = await fetch("/api/stations");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || "Failed to load stations");
+        }
+        const stationsData = data.data?.stations || [];
+        if (!Array.isArray(stationsData)) {
+          throw new Error("Invalid stations data format");
+        }
+        const validStations = stationsData.filter(s => s && s._id && s.stationName);
+        setStations(validStations);
+      } catch (err) {
+        console.error("Error fetching stations for booking interface:", err);
+        setStationError(err instanceof Error ? err.message : "Failed to load stations");
+        setStations([]);
+      } finally {
+        setLoadingStations(false);
+      }
+    };
+    fetchStationsFromAPI();
+  }, []);
+
+  useEffect(() => {
+    if (loadingStations || stations.length === 0) return;
+
+    const fromStationId = searchParams?.get("fromStationId");
     const toStationId = searchParams?.get("toStationId");
-    const date = searchParams?.get("date");
-    const classType = searchParams?.get("classType");
-    const adultCount = searchParams?.get("adultCount");
-    const childCount = searchParams?.get("childCount");
-    const infantCount = searchParams?.get("infantCount");
+    const dateParam = searchParams?.get("date");
+    const classTypeParam = searchParams?.get("classType") as TrainClassType | null;
+    const adultCountParam = searchParams?.get("adultCount");
+    const childCountParam = searchParams?.get("childCount");
+    const infantCountParam = searchParams?.get("infantCount");
+    const tripTypeParam = searchParams?.get("tripType") as TripType | null;
+
+    setFormState(prev => {
+      const newState: SearchFormState = { ...prev };
+      let changed = false;
 
     if (fromStationId) {
-      const station = STATIONS.find((s) => s.id === fromStationId);
-      if (station) {
-        setFormState((prev: BookingFormState) => ({ ...prev, departureStation: station.id }));
+        const station = stations.find((s) => s._id === fromStationId);
+        if (station && prev.departureStation?._id !== station._id) {
+          newState.departureStation = station;
+          changed = true;
       }
     }
-
     if (toStationId) {
-      const station = STATIONS.find((s) => s.id === toStationId);
-      if (station) {
-        setFormState((prev: BookingFormState) => ({ ...prev, arrivalStation: station.id }));
+        const station = stations.find((s) => s._id === toStationId);
+        if (station && prev.arrivalStation?._id !== station._id) {
+          newState.arrivalStation = station;
+          changed = true;
+        }
       }
-    }
-    if (date) {
-      setFormState((prev) => ({ ...prev, date }));
-    }
-  }, [searchParams]);
+      if (dateParam && prev.date !== dateParam) { newState.date = dateParam; changed = true; }
+      if (classTypeParam && prev.classType !== classTypeParam) { newState.classType = classTypeParam; changed = true; }
+      if (tripTypeParam && prev.tripType !== tripTypeParam) { newState.tripType = tripTypeParam; changed = true; }
+      if (adultCountParam && prev.adultCount !== parseInt(adultCountParam)) { newState.adultCount = parseInt(adultCountParam); changed = true;}
+      if (childCountParam && prev.childCount !== parseInt(childCountParam)) { newState.childCount = parseInt(childCountParam); changed = true;}
+      if (infantCountParam && prev.infantCount !== parseInt(infantCountParam)) { newState.infantCount = parseInt(infantCountParam); changed = true;}
+      
+      return changed ? newState : prev;
+    });
+
+  }, [searchParams, stations, loadingStations]);
 
   const handleSearch = () => {
-    const { departureStation, arrivalStation, date, tripType } = formState;
+    const { departureStation, arrivalStation, date, tripType, classType, adultCount, childCount, infantCount } = formState;
 
     if (!departureStation || !arrivalStation) {
       alert("Please select both departure and arrival stations");
       return;
     }
 
-    const queryString = new URLSearchParams({
-      fromStationId: departureStation.id,
-      toStationId: arrivalStation.id,
+    const queryStringParams: Record<string, string> = {
+      fromStationId: departureStation._id,
+      toStationId: arrivalStation._id,
       date,
-      classType: "SC", // Default class type
-      adultCount: "1", // Default adult count
-      childCount: "0", // Default child count
-      infantCount: "0", // Default infant count
-    }).toString();
+      classType: classType as string,
+      adultCount: adultCount.toString(),
+      childCount: childCount.toString(),
+      infantCount: infantCount.toString(),
+      tripType: tripType,
+    };
 
-    router.push(`/trains/train-search?${queryString}`);
+    const queryString = new URLSearchParams(queryStringParams).toString();
+    router.push(`/trains/train-timetable?${queryString}`);
   };
 
   return (
     <div className="flex flex-col w-full h-auto max-w-5xl p-6 mx-auto rounded-lg shadow-md md:flex-row md:items-center md:justify-between">
-      {/* Left Side: Text and Inputs */}
       <div className="space-y-6 md:w-1/2">
         <div className="w-[163px] justify-center text-center">
           <h2 className="bg-[#07561A] text-sm text-white w-full h-auto rounded-lg py-1 mx-auto">
@@ -90,28 +154,26 @@ export default function BookingPage() {
           simple.
         </p>
 
-        {/* Input Section */}
         <div className="grid items-center justify-center grid-cols-1 gap-5">
           <StationCombobox
-            stations={STATIONS}
-            selected={formState.departureStation }
-
+            stations={stations}
+            selected={formState.departureStation}
             onChange={(station) =>
               setFormState((prev) => ({ ...prev, departureStation: station }))
             }
             label="Departure"
-            placeholder="Select departure station"
+            placeholder={loadingStations ? "Loading stations..." : "Select departure station"}
           />
           <StationCombobox
-            stations={STATIONS.filter(
-              (station) => station.id !== formState.departureStation?.id,
+            stations={stations.filter(
+              (s) => s._id !== formState.departureStation?._id,
             )}
             selected={formState.arrivalStation}
             onChange={(station) =>
               setFormState((prev) => ({ ...prev, arrivalStation: station }))
             }
             label="Arrival"
-            placeholder="Select arrival station"
+            placeholder={loadingStations ? "Loading stations..." : "Select arrival station"}
           />
           <div>
             <label htmlFor="date" className="block text-[#4A5568] font-medium">
@@ -147,15 +209,14 @@ export default function BookingPage() {
               className="w-full text-gray-500 border-t-0 border-b-2 border-x-0 focus:outline-none focus:border-green-600"
             >
               {Object.entries(TRIP_TYPES).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value}
+                <option key={key} value={key as TripType}>
+                  {String(value)} 
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Search Button */}
         <div className="flex items-center w-full mx-auto text-center">
           <button
             onClick={handleSearch}
@@ -167,7 +228,6 @@ export default function BookingPage() {
         </div>
       </div>
 
-      {/* Right Side: Image */}
       <div className="mt-6 md:mt-0 md:ml-8 md:w-1/2">
         <div className="w-full h-64 bg-gray-300 rounded-lg flex items-center justify-center">
           <Image

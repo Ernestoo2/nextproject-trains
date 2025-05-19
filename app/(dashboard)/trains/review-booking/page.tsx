@@ -7,20 +7,19 @@ import BookingLeft from "./_components/BookingLeft";
 import BookingRight from "./_components/BookingRight";
 import { useBookingStore } from "@/store/bookingStore";
 import { toast } from "sonner";
-import type { ScheduleWithDetails } from "@/types/shared/database";
-import type { TrainClass } from "@/types/shared/trains";
 
 // Define a more specific type for items in availableClasses array
-type AvailableClassInfo = TrainClass & { availableSeats: number; fare: number };
+// type AvailableClassInfo = TrainClass & { availableSeats: number; fare: number }; // This might not be needed if scheduleDetails has full fare map
 
 const ReviewBooking: React.FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [schedule, setSchedule] = useState<ScheduleWithDetails | null>(null);
+  // const [schedule, setSchedule] = useState<ScheduleWithDetails | null>(null); // Schedule will come from store
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { bookingState, actions } = useBookingStore();
+  const { scheduleDetails } = bookingState; // Get scheduleDetails from the store
 
   useEffect(() => {
     const fetchScheduleDetails = async () => {
@@ -28,40 +27,36 @@ const ReviewBooking: React.FC = () => {
       setError(null);
       try {
         const scheduleId = searchParams.get("scheduleId");
-        const selectedClass = searchParams.get("class");
+        const classIdFromQuery = searchParams.get("class"); // This is the class ID/code
         const date = searchParams.get("date");
 
-        if (!scheduleId || !selectedClass || !date) {
+        if (!scheduleId || !classIdFromQuery || !date) {
           setError("Missing required parameters (scheduleId, class, or date).");
           setLoading(false);
           toast.error("Missing required parameters to fetch schedule.");
           return;
         }
 
-        const response = await fetch(`/api/schedules/${scheduleId}?class=${selectedClass}&date=${date}&populate=train,route,departureStation,arrivalStation`);
+        // The API now returns the full 'fare' map in scheduleDetails
+        const response = await fetch(`/api/schedules/${scheduleId}?class=${classIdFromQuery}&date=${date}&populate=train,route,departureStation,arrivalStation`);
         
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Failed to fetch schedule details");
         }
 
-        const data = await response.json();
-        if (data.success && data.data) {
-          setSchedule(data.data);
-          actions.selectSchedule(data.data);
-          if (data.data.availableClasses && data.data.availableClasses.length > 0) {
-            const classInfo = data.data.availableClasses.find((c: AvailableClassInfo) => c.classCode === selectedClass);
-            if (classInfo) {
-              const passengerCount = bookingState.passengers?.length || 1;
-              actions.calculateFare(classInfo.baseFare || classInfo.fare || 0, passengerCount);
-            }
-          }
+        const apiResponse = await response.json(); // Renamed to avoid conflict
+        if (apiResponse.success && apiResponse.data) {
+          // setSchedule(apiResponse.data); // No longer setting local state for schedule
+          // Use the new action to set schedule and selected classId in the store
+          actions.selectScheduleAndClass(apiResponse.data, classIdFromQuery);
+          // The recalculateBookingTotals is called within selectScheduleAndClass
         } else {
-          setError(data.message || "Schedule not found or invalid data.");
-          toast.error(data.message || "Schedule not found.");
+          setError(apiResponse.message || "Schedule not found or invalid data.");
+          toast.error(apiResponse.message || "Schedule not found.");
         }
       } catch (err) {
-        console.error("Error fetching schedule details:", err);
+        // console.error("Error fetching schedule details:", err); // Keep this for actual errors
         const errorMessage = err instanceof Error ? err.message : "An error occurred while fetching schedule details";
         setError(errorMessage);
         toast.error(errorMessage);
@@ -72,10 +67,11 @@ const ReviewBooking: React.FC = () => {
 
     if (session) {
       fetchScheduleDetails();
-    } else if (session === null) {
-      router.push("/auth/signin");
+    } else if (session === null) { // Check for explicit null, status might be 'loading'
+      router.push("/auth/signin?callbackUrl=" + encodeURIComponent(window.location.pathname + window.location.search));
     }
-  }, [searchParams.toString(), session, router, actions, bookingState.passengers?.length]);
+    // searchParams can be stringified or use individual gets as deps
+  }, [searchParams.get("scheduleId"), searchParams.get("class"), searchParams.get("date"), session, router, actions]);
 
   if (loading) {
     return (
@@ -106,7 +102,7 @@ const ReviewBooking: React.FC = () => {
     );
   }
 
-  if (!schedule && !loading) {
+  if (!scheduleDetails && !loading && !error) { // Check scheduleDetails from store
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-gray-500">No schedule details available for the selected criteria.</div>
@@ -118,7 +114,8 @@ const ReviewBooking: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         <BookingLeft />
-        {schedule && <BookingRight schedule={schedule} travelers={bookingState.passengers || []} />}
+        {/* Pass scheduleDetails from store to BookingRight */}
+        {scheduleDetails && <BookingRight schedule={scheduleDetails} travelers={bookingState.passengers || []} />}
       </div>
     </div>
   );

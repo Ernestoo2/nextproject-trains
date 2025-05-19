@@ -2,13 +2,13 @@
 
 import { Fragment, useState } from "react";
 import { Combobox, Transition } from "@headlessui/react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Station } from "../_types/station.types";
+import { Check, ChevronsUpDown } from "lucide-react"; 
+import type { Station } from "@/types/shared/trains";
 
 interface StationComboboxProps {
   stations: Station[];
   selected: Station | null;
-  onChange: (station: Station) => void;
+  onChange: (station: Station | null) => void;
   label: string;
   placeholder: string;
 }
@@ -26,7 +26,7 @@ export default function StationCombobox({
     query === ""
       ? stations
       : stations.filter((station) =>
-          station.name
+          station.stationName
             .toLowerCase()
             .replace(/\s+/g, "")
             .includes(query.toLowerCase().replace(/\s+/g, "")),
@@ -43,7 +43,7 @@ export default function StationCombobox({
             <div className="relative w-full cursor-default overflow-hidden border-b-2 border-gray-200 focus-within:border-green-600">
               <Combobox.Input
                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:outline-none"
-                displayValue={(station: Station) => station?.name || ""}
+                displayValue={(station: Station | null) => station?.stationName || ""}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setQuery(event.target.value)
                 }
@@ -72,7 +72,7 @@ export default function StationCombobox({
               ) : (
                 filteredStations.map((station) => (
                   <Combobox.Option
-                    key={station.id}
+                    key={station._id}
                     className={({ active }: { active: boolean }) =>
                       `relative cursor-default select-none py-2 pl-10 pr-4 ${
                         active ? "bg-green-600 text-white" : "text-gray-900"
@@ -91,7 +91,7 @@ export default function StationCombobox({
                         <span
                           className={`block truncate ${selected ? "font-medium" : "font-normal"}`}
                         >
-                          {station.name}
+                          {station.stationName}
                           <span className="ml-2 text-sm text-gray-500">
                             ({station.city}, {station.state})
                           </span>

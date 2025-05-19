@@ -120,8 +120,8 @@ export default function PageRoute() {
       />
 
       <DateSelector
+        initialDate={route.date}
         onDateChange={handleDateChange}
-        selectedDate={route.date}
       />
 
       <PassengerClassSelector

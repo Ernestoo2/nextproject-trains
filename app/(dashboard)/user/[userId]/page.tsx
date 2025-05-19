@@ -46,8 +46,7 @@ export default function UserPage() {
 
       try {
         setIsLoading(true);
-        console.log("Fetching user with ID:", effectiveUserId);
-        const response = await fetch(`/api/user/${effectiveUserId}`);
+         const response = await fetch(`/api/user/${effectiveUserId}`);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -60,11 +59,11 @@ export default function UserPage() {
         }
 
         const data = await response.json();
-        console.log("User data received:", data);
+        
         setUser(data);
         setError(null);
       } catch (error) {
-        console.error("Error fetching user:", error);
+         
         setError("Failed to fetch user data");
       } finally {
         setIsLoading(false);

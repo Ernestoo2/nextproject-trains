@@ -265,7 +265,7 @@ export default function SignUp() {
                 disabled={isSubmitting}
             />
             <label htmlFor="isAgreed" className="ml-2 block text-xs sm:text-sm text-gray-700">
-              I agree to Naija Rails' 
+              I agree to Naija Rails 
               <Link href="/terms" className="font-medium text-green-600 hover:text-green-700"> Terms of Service</Link> and 
               <Link href="/privacy" className="font-medium text-green-600 hover:text-green-700"> Privacy Policy</Link>.
             </label>

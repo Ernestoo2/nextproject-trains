@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/utils/mongodb/connect";
 import { Schedule } from "@/utils/mongodb/models/Schedule";
 import { Types } from "mongoose";
-import type { ScheduleWithDetails } from "@/types/shared/database";
-import type { TrainClass } from "@/types/shared/trains";
+import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleStatus } from "@/types/shared/trains";
 
 export async function GET(
   request: Request,
@@ -11,8 +10,7 @@ export async function GET(
 ) {
   try {
     // Get params safely
-    const params = context.params;
-    const id = params.id;
+    const id = context.params.id;
     
     // Get query parameters
     const url = new URL(request.url);
@@ -20,10 +18,7 @@ export async function GET(
     const date = url.searchParams.get('date');
     const populate = url.searchParams.get('populate')?.split(',') || [];
     
-    console.log(`Schedule ID: ${id}, Class: ${selectedClass}, Date: ${date}`);
-    
     if (!Types.ObjectId.isValid(id)) {
-      console.error(`Invalid schedule ID format: ${id}`);
       return NextResponse.json({ 
         success: false, 
         message: "Invalid schedule ID format" 
@@ -32,9 +27,14 @@ export async function GET(
 
     await connectDB();
     
-    // Find the schedule and populate related data
-    const scheduleQuery = Schedule.findById(id)
-      .populate('train')
+    const scheduleDoc = await Schedule.findById(id)
+      .populate({
+        path: 'train',
+        populate: {
+          path: 'classes',
+          model: 'TrainClass'
+        }
+      })
       .populate({
         path: 'route',
         populate: [
@@ -43,66 +43,112 @@ export async function GET(
         ]
       });
     
-    const schedule = await scheduleQuery;
-    
-    if (!schedule) {
-      console.error(`Schedule not found with ID: ${id}`);
+    if (!scheduleDoc) {
       return NextResponse.json({ 
         success: false, 
         message: "Schedule not found" 
       }, { status: 404 });
     }
 
-    console.log(`Schedule found: ${schedule._id}`);
+    let manualFareObject: Record<string, number> = {};
+    if (scheduleDoc.fare instanceof Map) {
+      for (const [key, value] of scheduleDoc.fare) {
+        manualFareObject[key] = value as number;
+      }
+    } else if (typeof scheduleDoc.fare === 'object' && scheduleDoc.fare !== null) {
+      for (const [key, value] of Object.entries(scheduleDoc.fare)) {
+        if (typeof value === 'number') {
+          manualFareObject[key] = value;
+        }
+      }
+    }
 
-    // Transform to ScheduleWithDetails format
-    const availableClasses = Object.entries(schedule.availableSeats || {}).map(([classCode, seats]) => {
-      // Create a valid TrainClass object with all required properties
-      const className = classCode === 'EC' ? 'Executive' : 
-                        classCode === 'FC' ? 'First Class' : 
-                        classCode === 'SL' ? 'Sleeper' : 
-                        classCode === 'AC' ? 'AC Chair' : classCode;
+    let manualAvailableSeatsObject: Record<string, number> = {};
+    if (scheduleDoc.availableSeats instanceof Map) {
+      for (const [key, value] of scheduleDoc.availableSeats) {
+        manualAvailableSeatsObject[key] = value as number;
+      }
+    } else if (typeof scheduleDoc.availableSeats === 'object' && scheduleDoc.availableSeats !== null) {
+      for (const [key, value] of Object.entries(scheduleDoc.availableSeats)) {
+        if (typeof value === 'number') {
+          manualAvailableSeatsObject[key] = value;
+        }
+      }
+    }
+
+    const availableClassesForUI = Object.entries(manualAvailableSeatsObject).map(([classIdString, seats]) => {
+      const trainClassInfo = scheduleDoc.train?.classes?.find(
+        (tc: any) => tc._id.toString() === classIdString
+      );
       
-      const trainClass: TrainClass & { availableSeats: number; fare: number } = {
-        _id: new Types.ObjectId().toString(), // Generate a temporary ID
-        className, // This is required in TrainClass
+      const className = trainClassInfo?.className || classIdString;
+      const classType = trainClassInfo?.classType || className;
+      const classCode = trainClassInfo?.classCode || classIdString; 
+
+      return {
+        _id: classIdString, 
+        className,
         classCode,
-        classType: className, // Use className here as well for classType
-        basePrice: schedule.fare[classCode] || 0,
-        isActive: true,
+        classType: classType as TrainClassTypeAlias['classType'],
+        basePrice: (manualFareObject[classIdString] as number) || trainClassInfo?.basePrice || 0,
+        isActive: trainClassInfo?.isActive !== undefined ? trainClassInfo.isActive : true,
         availableSeats: seats as number,
-        fare: schedule.fare[classCode] || 0
+        fare: (manualFareObject[classIdString] as number) || trainClassInfo?.basePrice || 0,
       };
-      return trainClass;
     });
 
-    const route = schedule.route;
-    const train = schedule.train;
+    const schedule = scheduleDoc.toObject({ virtuals: true });
 
-    // Format response with all required fields
+    const routeDoc = schedule.route as any; 
+    const trainDoc = schedule.train as any;
+
     const scheduleWithDetails: ScheduleWithDetails = {
       _id: schedule._id.toString(),
-      trainId: train?._id?.toString() || '',
-      trainNumber: train?.trainNumber || '',
-      trainName: train?.name || '',
-      departureStation: route?.fromStation || null,
-      arrivalStation: route?.toStation || null,
+      trainNumber: trainDoc?.trainNumber || '',
+      trainName: trainDoc?.name || trainDoc?.trainName || '',
+      train: {
+        id: trainDoc?._id?.toString() || '',
+        name: trainDoc?.name || trainDoc?.trainName || '',
+        number: trainDoc?.trainNumber || '',
+        classes: (trainDoc?.classes || []).map((tc: any) => ({
+          id: tc._id.toString(),
+          name: tc.className,
+          code: tc.classCode,
+          baseFare: tc.basePrice || 0,
+          capacity: tc.capacity || 0
+        }))
+      },
+      route: {
+        id: routeDoc?._id?.toString() || '',
+        name: `${routeDoc?.fromStation?.stationName || ''} to ${routeDoc?.toStation?.stationName || ''}`,
+        distance: routeDoc?.distance || 0,
+        duration: routeDoc?.estimatedDuration || '0h 0m',
+        baseFare: routeDoc?.baseFare || 0,
+        fromStation: routeDoc?.fromStation || null,
+        toStation: routeDoc?.toStation || null
+      },
+      availableClasses: availableClassesForUI.map(ac => ({
+        className: ac.className,
+        classCode: ac.classCode,
+        name: ac.className,
+        code: ac.classCode,
+        baseFare: ac.basePrice,
+        availableSeats: ac.availableSeats,
+        fare: ac.fare
+      })),
+      date: schedule.date.toISOString(),
       departureTime: schedule.departureTime,
       arrivalTime: schedule.arrivalTime,
+      actualDepartureTime: schedule.actualDepartureTime,
+      actualArrivalTime: schedule.actualArrivalTime,
+      delayReason: schedule.delayReason,
       duration: schedule.duration || schedule.calculatedDuration || '0h 0m',
-      date: schedule.date.toISOString(),
-      platform: schedule.platform,
-      status: schedule.status,
-      availableClasses,
-      route: route ? {
-        _id: route._id.toString(),
-        fromStation: route.fromStation,
-        toStation: route.toStation,
-        distance: route.distance || 0,
-        baseFare: route.baseFare || 0,
-        estimatedDuration: route.estimatedDuration || '0h 0m',
-        availableClasses: Object.keys(schedule.availableSeats || {})
-      } : undefined
+      distance: routeDoc?.distance || 0,
+      platform: schedule.platform || 'TBA',
+      status: schedule.status as ScheduleStatus,
+      isActive: schedule.isActive ?? true,
+      departureStation: routeDoc?.fromStation || null,
+      arrivalStation: routeDoc?.toStation || null
     };
 
     return NextResponse.json({ 
@@ -110,7 +156,6 @@ export async function GET(
       data: scheduleWithDetails 
     });
   } catch (error) {
-    console.error("Error fetching schedule:", error);
     const errorMessage = error instanceof Error ? error.message : "Server error";
     return NextResponse.json({ 
       success: false, 

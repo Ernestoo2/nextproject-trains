@@ -3,26 +3,24 @@
 import React, { useState, useEffect } from "react";
 import { useBookingStore } from "@/store/bookingStore";
 import { BERTH_PREFERENCES, GENDER } from "@/types/booking.types";
-import type { Passenger } from "@/types/shared/trains";
+import type { Passenger, TrainClass } from "@/types/shared/trains";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, UserCircle, Mail, Phone } from "lucide-react";
+import { Plus, Trash2, UserCircle, Mail, Phone, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react"; 
 import { UserProfile } from "@/types/shared/users";
 const DEFAULT_NATIONALITY = "Nigerian";
 
-
-
-
-type NewTraveler = {
+type NewTravelerFormState = {
   firstName: string;
   lastName: string;
   age: string;
   gender: typeof GENDER[keyof typeof GENDER];
   nationality: string;
   berthPreference: typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES];
+  selectedClassId: string;
 };
 
 const BookingLeft: React.FC = () => {
@@ -32,68 +30,62 @@ const BookingLeft: React.FC = () => {
   const { bookingState, actions: bookingActions } = useBookingStore();
   const [showAddPassengerDialog, setShowAddPassengerDialog] = useState(false);
   const [isAddingTraveler, setIsAddingTraveler] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
  
-  const [newTraveler, setNewTraveler] = useState<NewTraveler>({
+  const initialNewTravelerState = (): NewTravelerFormState => ({
     firstName: "",
     lastName: "",
     age: "",
     gender: GENDER.MALE,
     nationality: DEFAULT_NATIONALITY,
     berthPreference: BERTH_PREFERENCES.LOWER,
+    selectedClassId: "",
   });
+
+  const [newTraveler, setNewTraveler] = useState<NewTravelerFormState>(initialNewTravelerState());
 
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, [session?.user?.id]);
 
   const fetchUserProfile = async () => {
     if (!session?.user?.id) return;
-    
+    setIsLoadingProfile(true);
     try {
-      setIsLoading(true);
       const response = await fetch(`/api/user/${session.user.id}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-      
+      if (!response.ok) throw new Error('Failed to fetch profile');
       const data = await response.json();
-      if (data.success && data.data) {
-        setUser(data.data);
-      }
+      if (data.success && data.data) setUser(data.data);
     } catch (error) {
       toast.error('Error loading profile');
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoadingProfile(false); }
   };
 
-  // Debug logging
   useEffect(() => {
-    console.log("Booking State:", {
-      passengers: bookingState.passengers,
-      baseFare: bookingState.baseFare,
-      taxes: bookingState.taxes,
-      totalAmount: bookingState.totalAmount
-    });
-  }, [bookingState]);
-
-  // Initialize new traveler with user preferences when profile loads
-  useEffect(() => {
-    if (user) {
-      setNewTraveler(prev => ({
-        ...prev,
-        nationality: user.defaultNationality || DEFAULT_NATIONALITY,
-        berthPreference: (user.preferredBerth as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES]) || BERTH_PREFERENCES.LOWER,
-      }));
-    }
-  }, [user]);
+    setNewTraveler(prev => ({
+      ...prev,
+      nationality: user?.defaultNationality || DEFAULT_NATIONALITY,
+      berthPreference: (user?.preferredBerth as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES]) || BERTH_PREFERENCES.LOWER,
+      selectedClassId: bookingState.currentDefaultClassId || 
+        (bookingState.scheduleDetails?.availableClasses[0]?.classCode || 
+         bookingState.scheduleDetails?.availableClasses[0]?._id || ""),
+    }));
+  }, [user, bookingState.currentDefaultClassId, bookingState.scheduleDetails?.availableClasses]);
 
   const handleAddTraveler = () => {
     setIsAddingTraveler(true);
-    if (!newTraveler.firstName || !newTraveler.lastName || !newTraveler.age) {
-      toast.error("Please fill in all required fields.");
+    if (!newTraveler.firstName || !newTraveler.lastName || !newTraveler.age || !newTraveler.selectedClassId) {
+      toast.error("Please fill in all required fields, including travel class.");
+      setIsAddingTraveler(false);
+      return;
+    }
+
+    // Validate that the selected class exists
+    const selectedClass = bookingState.scheduleDetails?.availableClasses.find(
+      cls => cls.classCode === newTraveler.selectedClassId || cls._id === newTraveler.selectedClassId
+    );
+
+    if (!selectedClass) {
+      toast.error("Selected class is no longer available. Please choose another class.");
       setIsAddingTraveler(false);
       return;
     }
@@ -104,7 +96,6 @@ const BookingLeft: React.FC = () => {
       setIsAddingTraveler(false);
       return;
     }
-
     if (bookingState.passengers.length >= 6) {
       toast.error("You can book up to 6 travelers at once.");
       setIsAddingTraveler(false);
@@ -118,21 +109,13 @@ const BookingLeft: React.FC = () => {
       gender: newTraveler.gender,
       nationality: newTraveler.nationality,
       berthPreference: newTraveler.berthPreference,
+      selectedClassId: selectedClass.classCode || selectedClass._id,
       type: "ADULT",
     };
 
     bookingActions.addPassenger(passengerToAdd);
     toast.success("Traveler added successfully!");
-    
-    // Reset form with user preferences
-    setNewTraveler({
-      firstName: "",
-      lastName: "",
-      age: "",
-      gender: GENDER.MALE,
-      nationality: user?.defaultNationality || DEFAULT_NATIONALITY,
-      berthPreference: (user?.preferredBerth as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES]) || BERTH_PREFERENCES.LOWER,
-    });
+    setNewTraveler(initialNewTravelerState());
     setShowAddPassengerDialog(false);
     setIsAddingTraveler(false);
   };
@@ -141,9 +124,11 @@ const BookingLeft: React.FC = () => {
     bookingActions.removePassenger(index);
     toast.success("Traveler removed successfully!");
   };
+  
+  const availableClassesForDropdown = bookingState.scheduleDetails?.availableClasses || [];
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="w-full flex-1 space-y-6">
       <h2 className="text-2xl font-semibold text-[#07561A]">Review your booking</h2>
 
       {/* User Profile Section */}
@@ -154,7 +139,10 @@ const BookingLeft: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowAddPassengerDialog(true)}
+              onClick={() => {
+                setNewTraveler(initialNewTravelerState());
+                setShowAddPassengerDialog(true);
+              }}
               className="text-[#07561A] hover:text-[#064516] border-[#07561A] hover:bg-[#07561A]/10"
             >
               <Plus className="mr-2 h-4 w-4" /> Add Traveler
@@ -209,10 +197,13 @@ const BookingLeft: React.FC = () => {
         </div>
 
         <ol className="space-y-4">
-          {bookingState.passengers.map((traveler, index) => (
+          {bookingState.passengers.map((traveler, index) => {
+            const travelerClass = availableClassesForDropdown.find(c => c.classCode === traveler.selectedClassId || c._id === traveler.selectedClassId);
+            return (
             <li key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:shadow-sm transition-shadow">
-              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                 <span className="font-medium text-gray-800">{traveler.firstName} {traveler.lastName}</span>
+                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">{travelerClass?.className || traveler.selectedClassId}</span>
                 <button
                   onClick={() => handleRemoveTraveler(index)}
                   className="text-red-500 hover:text-red-600"
@@ -220,14 +211,13 @@ const BookingLeft: React.FC = () => {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">{traveler.age} yrs</span>
-                <span className="text-sm text-gray-600">{traveler.gender}</span>
-                <span className="text-sm text-gray-600">{traveler.nationality}</span>
-                <span className="text-sm text-gray-600">{traveler.berthPreference}</span>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>{traveler.age} yrs</span>
+                  <span>{traveler.gender}</span>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ol>
 
         {bookingState.passengers.length === 0 && (
@@ -238,7 +228,7 @@ const BookingLeft: React.FC = () => {
       </div>
 
       {/* Contact Details */}
-      <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
+      <div className="p-4 mb-6 rounded-lg ">
         <div className="flex items-center justify-between w-4/5 mb-3">
           <h3 className="text-lg font-semibold text-gray-800">Contact Details</h3>
           <p className="text-sm">Your ticket info will be sent here</p>
@@ -268,8 +258,8 @@ const BookingLeft: React.FC = () => {
 
       {/* Add Traveler Dialog */}
       {showAddPassengerDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Add New Traveler</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -294,6 +284,26 @@ const BookingLeft: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <Label htmlFor="travelClass">Travel Class</Label>
+                  <select
+                    id="travelClass"
+                    value={newTraveler.selectedClassId}
+                    onChange={(e) => setNewTraveler({ ...newTraveler, selectedClassId: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    required
+                  >
+                    <option value="" disabled>Select a class</option>
+                    {availableClassesForDropdown.map((tc) => (
+                      <option 
+                        key={tc.classCode || tc._id} 
+                        value={tc.classCode || tc._id}
+                      >
+                        {tc.className} (₦{tc.fare?.toLocaleString() || tc.basePrice?.toLocaleString()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <Label htmlFor="age">Age</Label>
                   <Input
                     id="age"
@@ -303,22 +313,19 @@ const BookingLeft: React.FC = () => {
                     className="mt-1"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="gender">Gender</Label>
                   <select
                     id="gender"
                     value={newTraveler.gender}
                     onChange={(e) => setNewTraveler({ ...newTraveler, gender: e.target.value as typeof GENDER[keyof typeof GENDER] })}
-                    className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
                   >
-                    <option value={GENDER.MALE}>Male</option>
-                    <option value={GENDER.FEMALE}>Female</option>
-                    <option value={GENDER.OTHER}>Other</option>
-                    <option value={GENDER.PREFER_NOT_TO_SAY}>Prefer not to say</option>
+                    {Object.values(GENDER).map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="nationality">Nationality</Label>
                   <Input
@@ -328,17 +335,17 @@ const BookingLeft: React.FC = () => {
                     className="mt-1"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="berthPreference">Berth Preference</Label>
                   <select
                     id="berthPreference"
                     value={newTraveler.berthPreference}
                     onChange={(e) => setNewTraveler({ ...newTraveler, berthPreference: e.target.value as typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES] })}
-                    className="w-full px-4 py-2 border-t-0 border-b-2 border-gray-300 border-x-0 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
                   >
-                    {Object.values(BERTH_PREFERENCES).map(bp => (
-                      <option key={bp} value={bp}>{bp}</option>
-                    ))}
+                    {Object.values(BERTH_PREFERENCES).map(bp => <option key={bp} value={bp}>{bp}</option>)}
                   </select>
                 </div>
               </div>
@@ -347,7 +354,7 @@ const BookingLeft: React.FC = () => {
               <Button variant="outline" onClick={() => setShowAddPassengerDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddTraveler} disabled={isAddingTraveler}>
+              <Button onClick={handleAddTraveler} disabled={isAddingTraveler || !newTraveler.selectedClassId}>
                 {isAddingTraveler ? "Adding..." : "Add Traveler"}
               </Button>
             </div>

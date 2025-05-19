@@ -6,6 +6,7 @@ import type {
   ApiResponse,
   PaginatedApiResponse,
 } from "@/types/shared/database";
+import type { ScheduleWithDetails as TrainScheduleWithDetails, ScheduleStatus } from "@/types/shared/trains";
 import { Schedule } from "@/utils/mongodb/models/Schedule"; 
 import {
   authMiddleware,
@@ -48,37 +49,65 @@ async function getSchedules(
       .exec();
 
     const transformedSchedules: ScheduleWithDetails[] = schedules.map(
-      (schedule: any) => ({
-        _id: schedule._id.toString(),
-        trainId: schedule.train._id.toString(),
-        trainNumber: schedule.train.trainNumber,
-        trainName: schedule.train.trainName,
-        departureStation: schedule.route.fromStation,
-        arrivalStation: schedule.route.toStation,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        duration: schedule.duration || "",
-        date: schedule.date.toISOString(),
-        platform: schedule.platform,
-        status: schedule.status,
-        delayReason: schedule.delayReason,
-        actualDepartureTime: schedule.actualDepartureTime,
-        actualArrivalTime: schedule.actualArrivalTime,
-        availableClasses: schedule.availableClasses.map((cls: any) => ({
-          ...cls,
-          availableSeats: schedule.availableSeats.get(cls.code) || 0,
-          fare: schedule.fare.get(cls.code) || cls.baseFare,
-        })),
-        route: {
-          _id: schedule.route._id.toString(),
-          fromStation: schedule.route.fromStation,
-          toStation: schedule.route.toStation,
+      (schedule: any) => {
+        // Convert Map to Object for fare and availableSeats
+        const fareMap = schedule.fare instanceof Map ? Object.fromEntries(schedule.fare) : schedule.fare || {};
+        const availableSeatsMap = schedule.availableSeats instanceof Map ? Object.fromEntries(schedule.availableSeats) : schedule.availableSeats || {};
+
+        return {
+          _id: schedule._id.toString(),
+          trainId: schedule.train._id.toString(),
+          trainNumber: schedule.train.trainNumber,
+          trainName: schedule.train.trainName,
+          train: {
+            id: schedule.train._id.toString(),
+            name: schedule.train.trainName,
+            number: schedule.train.trainNumber,
+            classes: (schedule.train.classes || []).map((cls: any) => ({
+              id: cls._id.toString(),
+              name: cls.className,
+              code: cls.classCode,
+              baseFare: cls.basePrice || 0,
+              capacity: cls.capacity || 0
+            }))
+          },
+          route: {
+            _id: schedule.route._id.toString(),
+            fromStation: schedule.route.fromStation,
+            toStation: schedule.route.toStation,
+            distance: schedule.route.distance,
+            baseFare: schedule.route.baseFare,
+            estimatedDuration: schedule.route.estimatedDuration,
+            availableClasses: schedule.route.availableClasses.map((cls: any) => cls._id.toString())
+          },
+          availableClasses: schedule.route.availableClasses.map((cls: any) => {
+            const classId = cls._id.toString();
+            return {
+              className: cls.className,
+              classCode: cls.classCode,
+              name: cls.className,
+              code: cls.classCode,
+              baseFare: cls.basePrice || 0,
+              availableSeats: availableSeatsMap[classId] || 0,
+              fare: fareMap[classId] || cls.basePrice || 0
+            };
+          }),
+          date: schedule.date.toISOString(),
+          departureTime: schedule.departureTime,
+          arrivalTime: schedule.arrivalTime,
+          actualDepartureTime: schedule.actualDepartureTime,
+          actualArrivalTime: schedule.actualArrivalTime,
+          delayReason: schedule.delayReason,
+          duration: schedule.duration || schedule.route.estimatedDuration || "",
           distance: schedule.route.distance,
-          baseFare: schedule.route.baseFare,
-          estimatedDuration: schedule.route.estimatedDuration,
-          availableClasses: schedule.route.availableClasses,
-        },
-      })
+          platform: schedule.platform || "TBA",
+          status: schedule.status,
+          isActive: schedule.isActive ?? true,
+          departureStation: schedule.route.fromStation,
+          arrivalStation: schedule.route.toStation,
+          fare: fareMap
+        };
+      }
     );
 
     return {

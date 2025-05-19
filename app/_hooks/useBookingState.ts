@@ -1,19 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import type { IBookingState } from "../(dashboard)/trains/review-booking/_types/booking.types";
-import type { IPassenger } from "../(dashboard)/trains/review-booking/_types/shared.types";
-
-const initialState: IBookingState = {
+import { BookingState, Passenger } from "@/types/shared";
+ 
+const initialState: BookingState = {
   totalPrice: 0,
   baseFare: 0,
   taxes: 0,
   has20PercentOffer: false,
   has50PercentOffer: false,
   promoDiscount: 0,
-  passengers: [] as IPassenger[],
-  selectedClass: "",
+  passengers: [] as Passenger[],
+  selectedClass: "ECONOMY",
   availableSeats: {} as Record<string, number>,
-  schedule: null,
+  schedule: undefined,
   fareDetails: {
     perPersonFare: 0,
     baseTicketFare: 0,
@@ -23,16 +22,16 @@ const initialState: IBookingState = {
 };
 
 interface UseBookingStateReturn {
-  state: IBookingState;
+  state: BookingState;
   isLoading: boolean;
   error: string | null;
-  updateState: (updates: Partial<IBookingState>) => Promise<void>;
-  initializeState: (initialData: Partial<IBookingState>) => Promise<void>;
+  updateState: (updates: Partial<BookingState>) => Promise<void>;
+  initializeState: (initialData: Partial<BookingState>) => Promise<void>;
 }
 
 export function useBookingState(bookingId: string): UseBookingStateReturn {
   const { data: session } = useSession();
-  const [state, setState] = useState<IBookingState>({
+  const [state, setState] = useState<BookingState>({
     ...initialState,
     passengers: [],
   });
@@ -68,7 +67,7 @@ export function useBookingState(bookingId: string): UseBookingStateReturn {
 
   // Update state
   const updateState = useCallback(
-    async (updates: Partial<IBookingState>): Promise<void> => {
+    async (updates: Partial<BookingState>): Promise<void> => {
       if (!session?.user || !bookingId) return;
 
       try {
@@ -90,7 +89,7 @@ export function useBookingState(bookingId: string): UseBookingStateReturn {
         if (data.error) {
           setError(data.error);
         } else {
-          setState((prevState) => ({
+          setState((prevState: BookingState) => ({
             ...prevState,
             ...data.data,
             passengers: data.data?.passengers || prevState.passengers,
@@ -105,7 +104,7 @@ export function useBookingState(bookingId: string): UseBookingStateReturn {
 
   // Initialize state
   const initializeState = useCallback(
-    async (initialData: Partial<IBookingState>): Promise<void> => {
+      async (initialData: Partial<BookingState>): Promise<void> => {
       if (!session?.user || !bookingId) return;
 
       try {
