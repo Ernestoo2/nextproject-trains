@@ -91,7 +91,7 @@ const passengerSchema = z.object({
     .enum(Object.values(BERTH_PREFERENCES) as [string, ...string[]])
     .optional(),
 });
-
+type passenger = { name: string; age: number; gender: string; berthPreference: string; seatNumber: string; }
 const fareSchema = z.object({
   base: z.number().min(0),
   taxes: z.number().min(0),
@@ -355,65 +355,51 @@ export async function GET(request: Request) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get headers first
-    const headersList = await headers();
-    
-    // Then get session with headers
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const {
       scheduleId,
       class: trainClass,
       passengers,
       fare,
-      pnr,
-      transactionId,
     } = body;
 
     // Validate required fields
-    if (!scheduleId || !trainClass || !passengers || !fare || !pnr) {
+    if (!scheduleId || !trainClass || !passengers || !fare) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Validate schedule exists and has enough seats
     await connectDB();
-    const schedule = await Schedule.findById(scheduleId);
-    if (!schedule) {
-      return NextResponse.json(
-        { success: false, message: "Schedule not found" },
-        { status: 404 }
-      );
-    }
 
-    // Check available seats
-    const availableSeats = schedule.availableSeats.get(trainClass);
-    if (!availableSeats || availableSeats < passengers.length) {
-      return NextResponse.json(
-        { success: false, message: "Not enough seats available" },
-        { status: 409 }
-      );
-    }
+    // Generate PNR
+    const pnr = `PNR${Date.now().toString(36).toUpperCase()}${Math.random()
+      .toString(36)
+      .substring(2, 7)
+      .toUpperCase()}`;
 
-    // Create booking
+    // Create booking with payment data
     const booking = new Booking({
-      userId: session.user.id,
-      scheduleId: scheduleId,
+      scheduleId,
       class: trainClass,
-      passengers,
-      fare,
+      passengers: passengers.map((p: passenger) => ({
+        firstName: p.name.split(' ')[0],
+        lastName: p.name.split(' ')[1] || '',
+        age: p.age,
+        gender: p.gender,
+        type: "ADULT", // Default to ADULT if not specified
+        nationality: "Nigerian", // Default to Nigerian if not specified
+        berthPreference: p.berthPreference,
+        seatNumber: p.seatNumber
+      })),
+      fare: {
+        base: fare.base,
+        taxes: fare.taxes,
+        total: fare.total,
+        discount: fare.discount || 0
+      },
       pnr,
-      transactionId,
       status: BOOKING_STATUS.CONFIRMED,
       paymentStatus: PAYMENT_STATUS.COMPLETED,
     });
