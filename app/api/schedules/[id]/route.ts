@@ -4,17 +4,12 @@ import { Schedule } from "@/utils/mongodb/models/Schedule";
 import { Types } from "mongoose";
 import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleStatus } from "@/types/shared/trains";
 
-type RouteContext = {
-  params: Promise<{ id: string }>;
-};
-
 export async function GET(
   request: Request,
-  context: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Get params safely
-    const { id } = await context.params;
+    const { id } = params;
      
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json({ 

@@ -1,35 +1,42 @@
-import { NextResponse } from "next/server"; 
-import connectDB from "@/utils/mongodb/connect"
+import { NextResponse } from "next/server";
+import connectDB from "@/utils/mongodb/connect";
 import { Station } from "@/utils/mongodb/models/Station";
-import mongoose from "mongoose";
+import { Types } from "mongoose";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid station ID format" 
+      }, { status: 400 });
+    }
+
     await connectDB();
-    const stationId = params.id;
-
-    if (!mongoose.Types.ObjectId.isValid(stationId)) {
-      return NextResponse.json(
-        { error: "Invalid Station ID" },
-        { status: 400 },
-      );
-    }
-
-    const station = await Station.findById(stationId).select(
-      "name code city state",
-    ); // Select needed fields
+    
+    const station = await Station.findById(id);
+    
     if (!station) {
-      return NextResponse.json({ error: "Station not found" }, { status: 404 });
+      return NextResponse.json({ 
+        success: false, 
+        message: "Station not found" 
+      }, { status: 404 });
     }
-    return NextResponse.json({ station }, { status: 200 });
+
+    return NextResponse.json({ 
+      success: true, 
+      data: station 
+    });
   } catch (error) {
-    console.error("Error fetching station:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch station" },
-      { status: 500 },
-    );
+    const errorMessage = error instanceof Error ? error.message : "Server error";
+    return NextResponse.json({ 
+      success: false, 
+      message: errorMessage 
+    }, { status: 500 });
   }
 }
