@@ -1,200 +1,170 @@
+import { type NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import connectDB from "@/utils/mongodb/connect"
-import type {
-  Schedule as ISchedule,
-  ScheduleWithDetails,
-  ApiResponse,
-  PaginatedApiResponse,
-} from "@/types/shared/database";
-import type { ScheduleWithDetails as TrainScheduleWithDetails, ScheduleStatus } from "@/types/shared/trains";
-import { Schedule } from "@/utils/mongodb/models/Schedule"; 
-import {
-  authMiddleware,
-  validateRequiredParams,
-  handleApiError,
-} from "@/utils/api/middleware";
-import { Types } from "mongoose";
+import connectDB from "@/utils/mongodb/connect"; 
+import { z } from "zod";
+import { TrainSchedule } from "@/utils/mongodb/models/trainSchedule";
 
-interface ScheduleResponseData {
-  schedules: ScheduleWithDetails[];
-  page: number;
-  limit: number;
-  totalResults: number;
-  hasMore: boolean;
-}
-
-type RouteContext = {
-  searchParams: Promise<URLSearchParams>;
-};
-
-async function getSchedules(
-  fromStationId: string,
-  toStationId: string,
-  date: string
-): Promise<ApiResponse<ScheduleResponseData>> {
-  try {
-    await connectDB();
-    const schedules = await Schedule.find({
-      "departureStation._id": new Types.ObjectId(fromStationId),
-      "arrivalStation._id": new Types.ObjectId(toStationId),
-      date: new Date(date),
-      isActive: true,
-    })
-      .populate({
-        path: "train",
-        select: "trainNumber trainName _id",
-      })
-      .populate({
-        path: "route",
-        select:
-          "fromStation toStation distance baseFare estimatedDuration availableClasses",
-      })
-      .lean()
-      .exec();
-
-    const transformedSchedules: ScheduleWithDetails[] = schedules.map(
-      (schedule: any) => {
-        // Convert Map to Object for fare and availableSeats
-        const fareMap = schedule.fare instanceof Map ? Object.fromEntries(schedule.fare) : schedule.fare || {};
-        const availableSeatsMap = schedule.availableSeats instanceof Map ? Object.fromEntries(schedule.availableSeats) : schedule.availableSeats || {};
-
-        return {
-          _id: schedule._id.toString(),
-          trainId: schedule.train._id.toString(),
-          trainNumber: schedule.train.trainNumber,
-          trainName: schedule.train.trainName,
-          train: {
-            id: schedule.train._id.toString(),
-            name: schedule.train.trainName,
-            number: schedule.train.trainNumber,
-            classes: (schedule.train.classes || []).map((cls: any) => ({
-              id: cls._id.toString(),
-              name: cls.className,
-              code: cls.classCode,
-              baseFare: cls.basePrice || 0,
-              capacity: cls.capacity || 0
-            }))
-          },
-          route: {
-            _id: schedule.route._id.toString(),
-            fromStation: schedule.route.fromStation,
-            toStation: schedule.route.toStation,
-            distance: schedule.route.distance,
-            baseFare: schedule.route.baseFare,
-            estimatedDuration: schedule.route.estimatedDuration,
-            availableClasses: schedule.route.availableClasses.map((cls: any) => cls._id.toString())
-          },
-          availableClasses: schedule.route.availableClasses.map((cls: any) => {
-            const classId = cls._id.toString();
-            return {
-              className: cls.className,
-              classCode: cls.classCode,
-              name: cls.className,
-              code: cls.classCode,
-              baseFare: cls.basePrice || 0,
-              availableSeats: availableSeatsMap[classId] || 0,
-              fare: fareMap[classId] || cls.basePrice || 0
-            };
-          }),
-          date: schedule.date.toISOString(),
-          departureTime: schedule.departureTime,
-          arrivalTime: schedule.arrivalTime,
-          actualDepartureTime: schedule.actualDepartureTime,
-          actualArrivalTime: schedule.actualArrivalTime,
-          delayReason: schedule.delayReason,
-          duration: schedule.duration || schedule.route.estimatedDuration || "",
-          distance: schedule.route.distance,
-          platform: schedule.platform || "TBA",
-          status: schedule.status,
-          isActive: schedule.isActive ?? true,
-          departureStation: schedule.route.fromStation,
-          arrivalStation: schedule.route.toStation,
-          fare: fareMap
-        };
-      }
-    );
-
-    return {
-      success: true,
-      data: {
-        schedules: transformedSchedules,
-        page: 1,
-        limit: schedules.length,
-        totalResults: schedules.length,
-        hasMore: false,
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching schedules:", error);
-    return {
-      success: false,
-      error: "Failed to fetch schedules",
-      status: 400,
-    };
-  }
-}
+// Validation schema for query parameters
+const querySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  date: z.string().optional(),
+  trainId: z.string().optional(),
+  limit: z.string().optional(),
+  page: z.string().optional(),
+});
 
 export async function GET(
-  request: Request,
-  context: RouteContext
+  request: NextRequest,
+  { params }: { params: { [key: string]: string | string[] | undefined } }
 ) {
   try {
-    const authError = await authMiddleware(request);
-    if (authError) {
-      return NextResponse.json(authError, { status: authError.status });
+    await connectDB();
+
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const queryParams = Object.fromEntries(searchParams.entries());
+
+    // Validate query parameters
+    const validatedParams = querySchema.parse(queryParams);
+
+    // Build filter object
+    const filter: any = {};
+    if (validatedParams.from) {
+      filter["routes.0.station.code"] = validatedParams.from.toUpperCase();
+    }
+    if (validatedParams.to) {
+      filter["routes.1.station.code"] = validatedParams.to.toUpperCase();
+    }
+    if (validatedParams.date) {
+      const date = new Date(validatedParams.date);
+      date.setHours(0, 0, 0, 0);
+      const nextDay = new Date(date);
+      nextDay.setDate(date.getDate() + 1);
+      filter.journeyDate = {
+        $gte: date,
+        $lt: nextDay,
+      };
+    }
+    if (validatedParams.trainId) {
+      filter.trainId = validatedParams.trainId;
     }
 
-    const searchParams = await context.searchParams;
-    const date = searchParams.get("date");
-    const fromStationId = searchParams.get("fromStationId");
-    const toStationId = searchParams.get("toStationId");
+    // Pagination
+    const limit = validatedParams.limit ? parseInt(validatedParams.limit) : 10;
+    const page = validatedParams.page ? parseInt(validatedParams.page) : 1;
+    const skip = (page - 1) * limit;
 
-    const validationError = validateRequiredParams(
-      { date, fromStationId, toStationId },
-      ["date", "fromStationId", "toStationId"]
-    );
+    // Execute query
+    const [schedules, total] = await Promise.all([
+      TrainSchedule.find(filter)
+        .sort({ journeyDate: 1, "routes.0.departureTime": 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      TrainSchedule.countDocuments(filter),
+    ]);
 
-    if (validationError) {
-      return NextResponse.json(validationError, {
-        status: validationError.status,
-      });
-    }
-
-    const scheduleResponse = await getSchedules(
-      fromStationId || "",
-      toStationId || "",
-      date || ""
-    );
-
-    if (!scheduleResponse.success || !scheduleResponse.data) {
+    return NextResponse.json({
+      success: true,
+      data: {
+        schedules,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching schedules:", error);
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to fetch schedules",
-          status: 400,
+          message: "Invalid query parameters",
+          errors: error.errors,
         },
         { status: 400 }
       );
     }
-
-    const response: PaginatedApiResponse<ScheduleWithDetails[]> = {
-      success: true,
-      data: scheduleResponse.data.schedules,
-      message: "Schedules fetched successfully",
-      pagination: {
-        currentPage: scheduleResponse.data.page,
-        totalPages: Math.ceil(
-          scheduleResponse.data.totalResults / scheduleResponse.data.limit
-        ),
-        totalItems: scheduleResponse.data.totalResults,
-        limit: scheduleResponse.data.limit,
-        hasMore: scheduleResponse.data.hasMore,
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch schedules",
       },
-    };
+      { status: 500 }
+    );
+  }
+}
 
-    return NextResponse.json(response);
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { [key: string]: string | string[] | undefined } }
+) {
+  try {
+    await connectDB();
+
+    const body = await request.json();
+
+    // Validate request body
+    const scheduleSchema = z.object({
+      trainId: z.string(),
+      journeyDate: z.string(),
+      routes: z.array(
+        z.object({
+          station: z.object({
+            code: z.string(),
+            name: z.string(),
+          }),
+          arrivalTime: z.string().optional(),
+          departureTime: z.string(),
+          distance: z.number(),
+          platform: z.string(),
+        })
+      ),
+      status: z.enum(["SCHEDULED", "DELAYED", "CANCELLED", "COMPLETED"]),
+      classes: z.array(
+        z.object({
+          code: z.string(),
+          name: z.string(),
+          fare: z.number(),
+          availableSeats: z.number(),
+        })
+      ),
+    });
+
+    const validatedData = scheduleSchema.parse(body);
+
+    // Create new schedule
+    const schedule = await TrainSchedule.create(validatedData);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: schedule,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    const errorResponse = handleApiError(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.status });
+    console.error("Error creating schedule:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid request data",
+          errors: error.errors,
+        },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to create schedule",
+      },
+      { status: 500 }
+    );
   }
 }

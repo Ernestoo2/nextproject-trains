@@ -2,8 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/utils/auth/next-auth";
 import { cookies } from "next/headers";
-import Header1Ui from "@/_components/Header/Header1Ui";
-
+ 
 export default async function DashboardLayout({
   children,
 }: {
@@ -22,7 +21,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header1Ui/>
+      
       <main className="flex-grow">{children}</main>
     </div>
   );
