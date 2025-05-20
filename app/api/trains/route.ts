@@ -93,17 +93,18 @@ export async function GET(request: any) {
       .limit(queryParams.limit);
 
     // Create paginated response
-    const response: PaginatedApiResponse<typeof trains> = {
+    const response: PaginatedApiResponse<typeof trains[0]> = {
       success: true,
-      data: trains,
-      message: "Trains fetched successfully",
-      pagination: {
-        currentPage: queryParams.page,
-        totalPages,
-        totalItems: totalCount,
-        limit: queryParams.limit,
-        hasMore: queryParams.page < totalPages,
+      data: {
+        items: trains,
+        pagination: {
+          total: totalCount,
+          page: queryParams.page,
+          limit: queryParams.limit,
+          pages: totalPages
+        }
       },
+      message: "Trains fetched successfully"
     };
 
     return createApiResponse(response);
