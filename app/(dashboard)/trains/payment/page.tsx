@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/_providers/user/UserContext";
 import { useBookingStore } from "@/store/bookingStore";
 import {
@@ -78,13 +78,9 @@ export default function PaymentPage() {
       if (storedDetails) {
         const parsedDetails: IBookingPaymentDetails = JSON.parse(storedDetails);
         setBookingDetailsForPayment(parsedDetails);
-        // Optional: Update zustand store again if needed, though it should be up-to-date
-        // For example, to ensure selectedClassId is correctly in the store for payment confirmation step
         if (parsedDetails.selectedClass && bookingState.currentDefaultClassId !== parsedDetails.selectedClass) {
             actions.updateCurrentDefaultClass(parsedDetails.selectedClass);
         }
-        // The main source of truth for fare calculation should be the store now.
-        // The fareDetails in localStorage are a snapshot.
       } else {
         setError("No booking details found for payment. Please try booking again.");
         toast.error("No booking details found for payment.");
@@ -96,30 +92,30 @@ export default function PaymentPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [actions]);
+  }, [actions, bookingState.currentDefaultClassId]);
 
   const paystackConfig = {
-      reference: (new Date()).getTime().toString(),
+    reference: (new Date()).getTime().toString(),
     email: session?.user?.email || "",
     amount: (bookingDetailsForPayment?.fareDetails.totalAmount || 0) * 100,
-      publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
-      metadata: {
-        custom_fields: [
-          {
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+    metadata: {
+      custom_fields: [
+        {
           display_name: "Booking Information",
           variable_name: "booking_info",
-            value: JSON.stringify({
+          value: JSON.stringify({
             scheduleId: bookingDetailsForPayment?.scheduleId,
             trainName: bookingDetailsForPayment?.trainName,
             selectedClass: bookingDetailsForPayment?.selectedClass,
             passengers: bookingDetailsForPayment?.passengers.length,
             totalAmount: bookingDetailsForPayment?.fareDetails.totalAmount,
             pnr: session?.user?.naijaRailsId || userProfile?.naijaRailsId
-            })
-          }
-        ]
-      }
-    };
+          })
+        }
+      ]
+    }
+  };
 
   const initializePayment = usePaystackPayment(paystackConfig);
 
@@ -134,61 +130,53 @@ export default function PaymentPage() {
     }
 
     try {
-      // Group passengers by their selected class
-      const passengersByClass = bookingDetailsForPayment.passengers.reduce((acc, passenger) => {
-        const classId = passenger.selectedClassId;
-        if (!acc[classId]) {
-          acc[classId] = [];
-        }
-        acc[classId].push(passenger);
-        return acc;
-      }, {} as Record<string, typeof bookingDetailsForPayment.passengers>);
-
-      // Create booking confirmations for each class
-      const bookingPromises = Object.entries(passengersByClass).map(async ([classId, passengers]) => {
-        const response = await fetch("/api/booking", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            scheduleId: bookingDetailsForPayment.scheduleId,
-            class: classId,
-            passengers: passengers.map(p => ({
-              name: `${p.firstName} ${p.lastName}`,
-              age: p.age,
-              gender: p.gender,
-              berthPreference: p.berthPreference,
-              seatNumber: p.selectedClassId
-            })),
-            fare: {
-              base: bookingDetailsForPayment.fareDetails.baseFare,
-              taxes: bookingDetailsForPayment.fareDetails.taxes,
-              total: bookingDetailsForPayment.fareDetails.totalAmount,
-              discount: bookingDetailsForPayment.fareDetails.discount || 0
-            }
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Failed to confirm booking for class ${classId}`);
-        }
-
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.message || `Failed to confirm booking for class ${classId}`);
-        }
-        return result;
+      // Create booking record
+      const bookingResponse = await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleId: bookingDetailsForPayment.scheduleId,
+          class: bookingDetailsForPayment.selectedClass,
+          passengers: bookingDetailsForPayment.passengers.map(p => ({
+            name: `${p.firstName} ${p.lastName}`,
+            age: p.age,
+            gender: p.gender,
+            berthPreference: p.berthPreference,
+            seatNumber: p.selectedClassId
+          })),
+          fare: {
+            base: bookingDetailsForPayment.fareDetails.baseFare,
+            taxes: bookingDetailsForPayment.fareDetails.taxes,
+            total: bookingDetailsForPayment.fareDetails.totalAmount,
+            discount: bookingDetailsForPayment.fareDetails.discount || 0
+          },
+          paymentDetails: {
+            amount: bookingDetailsForPayment.fareDetails.totalAmount,
+            method: "PAYSTACK",
+            status: "COMPLETED",
+            transactionId: paystackConfig.reference,
+            paymentDate: new Date().toISOString()
+          }
+        }),
       });
 
-      // Wait for all booking confirmations
-      const results = await Promise.all(bookingPromises);
+      if (!bookingResponse.ok) {
+        throw new Error('Failed to create booking record');
+      }
+
+      const bookingData = await bookingResponse.json();
       
+      if (!bookingData.success) {
+        throw new Error(bookingData.message || 'Failed to create booking record');
+      }
+
       // Store the booking details for the success page
       const successDetails = {
         ...bookingDetailsForPayment,
-        bookingId: results[0]?.data?._id,
+        bookingId: bookingData.data._id,
         status: "CONFIRMED",
-        paymentStatus: "PAID"
+        paymentStatus: "PAID",
+        pnr: bookingData.data.pnr
       };
       
       localStorage.setItem("lastBookingDetails", JSON.stringify(successDetails));
@@ -201,7 +189,7 @@ export default function PaymentPage() {
           error instanceof Error ? error.message : 'Unknown error'
         }. Please contact support with PNR: ${session?.user?.naijaRailsId || userProfile?.naijaRailsId}`
       );
-      router.push("/");
+      router.push("/trains/review-booking");
     }
   };
 
@@ -216,21 +204,13 @@ export default function PaymentPage() {
       return;
     }
     if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-        toast.error("Payment gateway is not configured. Please contact support.");
-        return;
+      toast.error("Payment gateway is not configured. Please contact support.");
+      return;
     }
-
-    const finalPaystackConfig = {
-        ...paystackConfig,
-        amount: (bookingDetailsForPayment?.fareDetails.totalAmount || 0) * 100,
-        email: session.user.email,
-    };
 
     initializePayment({
       onSuccess: handlePaymentSuccess,
-      onClose: () => {
-        toast.info("Payment window closed.");
-      },
+      onClose: () => toast.error("Payment cancelled")
     });
   };
 

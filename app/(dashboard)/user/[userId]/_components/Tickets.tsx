@@ -4,8 +4,8 @@ import React from "react";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { MdAirlineSeatReclineNormal, MdDateRange } from "react-icons/md";
 import Image from "next/image";
-import { TrainDetails } from "@/app/(dashboard)/trains/train-search/_types/train.types";
-
+import { TrainDetails } from "@/types/shared";
+ 
 interface TicketsProps {
   tickets: TrainDetails[];
 }
@@ -17,7 +17,7 @@ const Tickets: React.FC<TicketsProps> = ({ tickets }) => {
       <div className="space-y-4">
         {tickets.map((ticket) => (
           <div
-            key={ticket.id}
+            key={ticket._id}
             className="flex items-center justify-between p-4 border rounded-lg"
           >
             <div className="flex items-center space-x-4">
@@ -31,27 +31,27 @@ const Tickets: React.FC<TicketsProps> = ({ tickets }) => {
               </div>
               <div>
                 <p className="font-semibold">
-                  {ticket.departureStation} → {ticket.arrivalStation}
+                  {ticket.routes[0]?.station.name} → {ticket.routes[1]?.station.name}
                 </p>
                 <p className="text-sm text-gray-600">{ticket.trainName}</p>
                 <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600">
                   <div className="flex items-center">
                     <MdDateRange size={16} className="mr-1 text-gray-500" />
-                    <p>{ticket.departureTime}</p>
+                    <p>{new Date(ticket.routes[0]?.departureTime).toLocaleTimeString()}</p>
                   </div>
                   <div className="flex items-center">
                     <HiOutlineLocationMarker
                       size={16}
                       className="mr-1 text-gray-500"
                     />
-                    <p>Platform {ticket.id}</p>
+                    <p>Platform {ticket.routes[0]?.station.code}</p>
                   </div>
                   <div className="flex items-center">
                     <MdAirlineSeatReclineNormal
                       size={16}
                       className="mr-1 text-gray-500"
                     />
-                    <p>Coach {ticket.id}</p>
+                    <p>Coach {ticket.classes[0]?.code}</p>
                   </div>
                 </div>
               </div>

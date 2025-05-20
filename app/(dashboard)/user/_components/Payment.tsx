@@ -13,14 +13,12 @@ import {
   Loader2,
 } from "lucide-react";
 
-// Payment.tsx
-
 interface PaymentProps {
   userId?: string;
   onPaymentUpdate?: () => void;
 }
 
-export default function Payment({ userId, onPaymentUpdate }: PaymentProps) {
+const Payment: React.FC<PaymentProps> = ({ userId, onPaymentUpdate }) => {
   const { data: session } = useSession();
   const [payments, setPayments] = useState<PaymentHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,4 +142,6 @@ export default function Payment({ userId, onPaymentUpdate }: PaymentProps) {
       </div>
     </div>
   );
-}
+};
+
+export default Payment;

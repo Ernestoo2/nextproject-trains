@@ -9,6 +9,9 @@ import { TripType } from "@/types/shared/trains";
 import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails, TRIP_TYPES } from "@/types/shared/trains";
 import type { Route as RouteType } from "@/types/shared/trains";
 import TripSelector from "./_components/rout-selectors/TripSelector";
+import { useBookingStore } from "@/store/bookingStore";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export default function RoutePage() {
   const router = useRouter();
@@ -348,6 +351,12 @@ export default function RoutePage() {
   useEffect(() => {
     fetchAvailableRoutes();
   }, [fetchAvailableRoutes]);
+
+  useEffect(() => {
+    if (routeState.passengerDetails.classType) {
+      // Your existing effect code
+    }
+  }, [routeState.passengerDetails.classType]);
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] pb-12">

@@ -20,6 +20,40 @@ export default function UserPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState([
+    {
+      id: 1,
+      name: "Credit Card",
+      icon: "/Assets/creditcard.png",
+      description: "Pay with your credit card",
+      isSelected: false,
+    },
+    {
+      id: 2,
+      name: "PayPal",
+      icon: "/Assets/paypal.jpeg",
+      description: "Pay via PayPal",
+      isSelected: false,
+    },
+    {
+      id: 3,
+      name: "Bank Transfer",
+      icon: "/Assets/bank.png",
+      description: "Direct bank transfer",
+      isSelected: false,
+    },
+  ]);
+
+  const handleMethodSelect = (id: number) => {
+    setPaymentMethods(prev =>
+      prev.map(method => ({
+        ...method,
+        isSelected: method.id === id
+      }))
+    );
+  };
+
   // Use the useParams hook to get the userId
   const params = useParams();
   const userId = params?.userId as string;
@@ -185,7 +219,7 @@ export default function UserPage() {
                   : "bg-gray-100 hover:bg-gray-200"
               }`}
             >
-              Payment Methods
+              Payment History
             </button>
           </div>
 

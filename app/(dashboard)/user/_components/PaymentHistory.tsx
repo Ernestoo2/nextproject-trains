@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
-import { PaymentHistory } from "../_types/payment-history.types";
+import React, { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react"; 
 import { getPaymentHistory } from "../_services/payment-history.service";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,41 +12,57 @@ import {
   Loader2,
 } from "lucide-react";
 
-interface PaymentHistoryProps {
-  userId?: string;
+interface Paymenthistories {
+  id: string;
+  amount: number;
+  method: string;
+  date: string;
+  status: "completed" | "pending" | "failed";
+  metadata?: {
+    trainNumber?: string;
+    departureStation?: string;
+    arrivalStation?: string;
+    class?: string;
+  };
 }
 
-export default function PaymentHistoryComponent({
-  userId,
-}: PaymentHistoryProps) {
+interface PaymentHistoryProps {
+  userId?: string;
+  onPaymentUpdate?: () => void;
+}
+
+const PaymentHistory: React.FC<PaymentHistoryProps> = ({ userId, onPaymentUpdate }) => {
   const { data: session } = useSession();
-  const [payments, setPayments] = useState<PaymentHistory[]>([]);
+  const [payments, setPayments] = useState<Paymenthistories[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const updateRef = useRef<(() => void) | null>(null);
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     const currentUserId = session?.user?.id || userId;
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const history = await getPaymentHistory(currentUserId);
       setPayments(history);
-    } catch (err) {
+    } catch {
       setError("Failed to load payment history");
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id, userId]);
 
   useEffect(() => {
     fetchPayments();
-  }, [session?.user?.id, userId]);
+  }, [fetchPayments]);
 
-  // Expose the update function through the ref
   useEffect(() => {
-    updateRef.current = fetchPayments;
-  }, [session?.user?.id, userId]);
+    if (onPaymentUpdate) {
+      fetchPayments();
+    }
+  }, [onPaymentUpdate, fetchPayments]);
 
   if (!session?.user && !userId) {
     return null;
@@ -134,4 +149,6 @@ export default function PaymentHistoryComponent({
       </div>
     </div>
   );
-}
+};
+
+export default PaymentHistory;

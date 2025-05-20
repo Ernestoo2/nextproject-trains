@@ -1,8 +1,12 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useUser } from "@/_providers/user/UserContext";
 import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 
 // Generate a random 12-digit ID
 const generateNaijaRailsId = () => {
@@ -31,11 +35,6 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
     address: initialUser.address || "",
     dob: initialUser.dob || "",
   });
-
-  // Fetch user data when component mounts
-  useEffect(() => {
-    refreshUserData();
-  }, [session]);
 
   // Fetch latest user data
   const refreshUserData = async () => {
@@ -72,6 +71,13 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
       setIsLoading(false);
     }
   };
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    if (session?.user?.email) {
+      refreshUserData();
+    }
+  }, [session?.user?.email, refreshUserData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -32,16 +32,16 @@ export function useBookingSync() {
             const scheduleResponse = await fetch(`/api/schedules/${scheduleId}`);
             if (scheduleResponse.ok) {
               const scheduleData = await scheduleResponse.json();
-              actions.selectSchedule(scheduleData.data);
+              actions.selectScheduleAndClass(scheduleData.data, classType || 'ECONOMY');
             }
           }
 
           if (classType) {
-            actions.updateClass(classType);
+            actions.updateCurrentDefaultClass(classType);
           }
 
           if (promoCode) {
-            actions.applyPromo(promoCode);
+            actions.applyPromoCode(promoCode);
           }
         } catch (error) {
           console.error('Error syncing booking data:', error);

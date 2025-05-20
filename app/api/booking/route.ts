@@ -326,7 +326,8 @@ export async function GET(request: Request) {
       ])
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(queryParams.limit);
+      .limit(queryParams.limit)
+      .lean() as unknown as BookingDocument[];
 
     const response: PaginatedApiResponse<BookingListResponse> = {
       success: true,
