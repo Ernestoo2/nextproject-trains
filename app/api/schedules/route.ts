@@ -23,6 +23,10 @@ interface ScheduleResponseData {
   hasMore: boolean;
 }
 
+type RouteContext = {
+  searchParams: Promise<URLSearchParams>;
+};
+
 async function getSchedules(
   fromStationId: string,
   toStationId: string,
@@ -130,14 +134,17 @@ async function getSchedules(
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(
+  request: Request,
+  context: RouteContext
+) {
   try {
     const authError = await authMiddleware(request);
     if (authError) {
       return NextResponse.json(authError, { status: authError.status });
     }
 
-    const { searchParams } = new URL(request.url); 
+    const searchParams = await context.searchParams;
     const date = searchParams.get("date");
     const fromStationId = searchParams.get("fromStationId");
     const toStationId = searchParams.get("toStationId");

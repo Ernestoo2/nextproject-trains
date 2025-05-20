@@ -4,6 +4,10 @@ import { User } from "@/utils/mongodb/models/User";
 import { UserDocument } from "@/types/shared/users";
 import bcrypt from "bcryptjs";
 
+type RouteContext = {
+  searchParams: Promise<URLSearchParams>;
+};
+
 function generateNaijaRailsId() {
   const prefix = "NR";
   const randomNum = Math.floor(Math.random() * 10000000000)
@@ -13,7 +17,10 @@ function generateNaijaRailsId() {
 }
 
 // GET: List all users (no auth required for testing)
-export async function GET() {
+export async function GET(
+  request: Request,
+  context: RouteContext
+) {
   try {
     await connectDB();
     
@@ -41,7 +48,10 @@ export async function GET() {
 }
 
 // POST: Create test user (no auth required for testing)
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
     await connectDB();
     

@@ -9,11 +9,18 @@ import { handleApiError, createApiResponse, createErrorResponse } from "@/utils/
 import { Types } from "mongoose";
 // Removed the LeanScheduleWithPopulatedDetails interface as it caused issues
 
-export async function GET(request: Request) {
+type RouteContext = {
+  searchParams: Promise<URLSearchParams>;
+};
+
+export async function GET(
+  request: Request,
+  context: RouteContext
+) {
   try {
     await connectDB();
 
-    const { searchParams } = new URL(request.url);
+    const searchParams = await context.searchParams;
     const date = searchParams.get("date");
 
     if (!date) {

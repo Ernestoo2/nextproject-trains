@@ -4,12 +4,16 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/utils/mongodb/connect";
 import { User } from "@/utils/mongodb/models/User";
 
+type RouteContext = {
+  params: Promise<{ userId: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: RouteContext
 ) {
   try {
-    const userId = params.userId;
+    const { userId } = await context.params;
     
     // Await the session properly to fix NextAuth headers issue
     const session = await getServerSession(authOptions);
@@ -67,10 +71,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: RouteContext
 ) {
   try {
-    const userId = params.userId;
+    const { userId } = await context.params;
     
     if (!userId || userId === "undefined") {
       return NextResponse.json({ 
