@@ -6,7 +6,7 @@ import AppleProvider from "next-auth/providers/apple";
 import { User } from "@/utils/mongodb/models/User";
 import bcrypt from "bcryptjs";
 import { SessionUser, UserRole } from "@/types/shared/users";
-import { connectDB } from "@/utils/mongodb/models/connect";
+import connectDB from "@/utils/mongodb/connect";
 
 // Extend the Session type to include provider
 declare module "next-auth" {

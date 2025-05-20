@@ -3,10 +3,15 @@ import "next-auth/jwt";
 import { SessionUser, UserRole } from "./shared/users";
 
 declare module "next-auth" {
-  interface User extends SessionUser { }
+  interface User extends SessionUser{}
 
   interface Session {
-    user: User;
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+    };
   }
 }
 

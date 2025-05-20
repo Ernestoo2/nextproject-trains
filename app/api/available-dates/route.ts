@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect"
 import { Schedule } from "@/utils/mongodb/models/Schedule";
 // startOfDay, endOfDay from date-fns are not strictly needed here but fine to keep if used elsewhere
 

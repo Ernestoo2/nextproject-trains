@@ -1,14 +1,11 @@
 import { create } from 'zustand';
 import type { 
-  Route, 
-  Schedule as IScheduleFromTypes,
+  Route,  
   Passenger,
   TrainClassType,
-  BookingState as TrainBookingState,
-  BookingAction,
+  BookingState as TrainBookingState, 
   BookingStage,
-  Booking,
-  PromoCode
+  Booking, 
 } from '@/types/shared/trains';
 import type { ScheduleWithDetails } from '@/types/shared/database';
 

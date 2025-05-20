@@ -48,7 +48,11 @@ export default function SetPassword({ onSubmit, onBack }: SetPasswordProps) {
 
     // If all validations pass
     alert(SET_PASSWORD_CONSTANTS.VALIDATION_MESSAGES.SUCCESS);
-    onSubmit?.(password) || router.push("/login");
+    if (onSubmit) {
+      onSubmit(password);
+    } else {
+      router.push("/login");
+    }
   };
 
   return (

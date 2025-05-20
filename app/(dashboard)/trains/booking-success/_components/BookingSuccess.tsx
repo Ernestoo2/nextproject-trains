@@ -8,10 +8,15 @@ import QRcode from "../../../../../public/Assets/QRcode.png";
 import { format } from "date-fns";
 import { IBookingPaymentDetails } from "../../payment/_types/payment.types";
 
+interface ExtendedBookingDetails extends IBookingPaymentDetails {
+  pnr?: string;
+  naijaRailsId?: string;
+}
+
 export default function BookingSuccess() {
   const router = useRouter();
   const { userProfile } = useUser();
-  const [bookingDetails, setBookingDetails] = useState<IBookingPaymentDetails | null>(null);
+  const [bookingDetails, setBookingDetails] = useState<ExtendedBookingDetails | null>(null);
 
   useEffect(() => {
     const storedBookingDetails = localStorage.getItem("lastBookingDetails");
@@ -24,7 +29,7 @@ export default function BookingSuccess() {
         setBookingDetails(parsedDetails);
       } catch (error) {
         console.error("Error parsing booking details:", error);
-        router.push("/");
+        router.push("/trains/payment");
       }
     }
   }, [router]);
@@ -35,10 +40,10 @@ export default function BookingSuccess() {
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-4">No Booking Details Found</h1>
           <button
-            onClick={() => router.push("/trains/train-search")}
+            onClick={() => router.push("/trains/payment")}
             className="bg-[#07561A] text-white px-6 py-2 rounded-md"
           >
-            Search Trains
+            Back to Payment
           </button>
         </div>
       </div>
@@ -100,13 +105,13 @@ export default function BookingSuccess() {
             <span>
               Naija Rails ID:{" "}
               <span className="text-xs sm:text-sm md:text-base font-medium">
-                {userProfile?.naijaRailsId}
+                {bookingDetails.naijaRailsId || userProfile?.naijaRailsId}
               </span>
             </span>
             <span className="text-right">
               Booking Reference:{" "}
               <span className="text-xs sm:text-sm md:text-base font-medium">
-                {bookingDetails.scheduleId}
+                {bookingDetails.pnr || bookingDetails.scheduleId}
               </span>
             </span>
           </div>
@@ -211,10 +216,10 @@ export default function BookingSuccess() {
               Print Ticket
             </button>
             <button
-              onClick={() => router.push("/trains/train-search")}
+              onClick={() => router.push("/trains/payment")}
               className="w-full bg-[#07561A] text-white py-2 px-4 rounded-md text-sm font-medium"
             >
-              Book Another Train
+              Back to Payment
             </button>
             <button
               onClick={handleDownloadTicket}

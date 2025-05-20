@@ -1,8 +1,7 @@
 import { addDays } from "date-fns";
 import { z } from "zod";
 import { ValidationError } from "./api";
-import { ValidationOptions, ValidationRule } from "./errorHandling";
-import { TRIP_TYPES } from "./trains";
+import { ValidationOptions, ValidationRule } from "./errorHandling"; 
 
 //app/types/shared/validation.ts
 

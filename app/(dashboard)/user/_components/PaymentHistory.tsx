@@ -45,10 +45,19 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({ userId, onPaymentUpdate
     }
 
     try {
-      const history = await getPaymentHistory(currentUserId);
-      setPayments(history);
-    } catch {
-      setError("Failed to load payment history");
+      const response = await fetch(`/api/payments/history?userId=${currentUserId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch payment history");
+      }
+      const data = await response.json();
+      if (data.success) {
+        setPayments(data.payments);
+      } else {
+        throw new Error(data.message || "Failed to fetch payment history");
+      }
+    } catch (error) {
+      console.error("Error fetching payment history:", error);
+      setError(error instanceof Error ? error.message : "Failed to load payment history");
     } finally {
       setLoading(false);
     }
@@ -81,6 +90,17 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({ userId, onPaymentUpdate
       <div className="flex justify-center items-center h-64 text-red-600">
         <AlertCircle className="h-8 w-8 mr-2" />
         <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (payments.length === 0) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Payment History</h2>
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-500">No payment history found</p>
+        </div>
       </div>
     );
   }

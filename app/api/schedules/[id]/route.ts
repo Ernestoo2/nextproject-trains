@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect";
 import { Schedule } from "@/utils/mongodb/models/Schedule";
 import { Types } from "mongoose";
 import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleStatus } from "@/types/shared/trains";
@@ -11,13 +11,7 @@ export async function GET(
   try {
     // Get params safely
     const { id } = params;
-    
-    // Get query parameters
-    const url = new URL(request.url);
-    const selectedClass = url.searchParams.get('class');
-    const date = url.searchParams.get('date');
-    const populate = url.searchParams.get('populate')?.split(',') || [];
-    
+     
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json({ 
         success: false, 
@@ -50,7 +44,7 @@ export async function GET(
       }, { status: 404 });
     }
 
-    let manualFareObject: Record<string, number> = {};
+    const manualFareObject: Record<string, number> = {};
     if (scheduleDoc.fare instanceof Map) {
       for (const [key, value] of scheduleDoc.fare) {
         manualFareObject[key] = value as number;
@@ -63,7 +57,7 @@ export async function GET(
       }
     }
 
-    let manualAvailableSeatsObject: Record<string, number> = {};
+    const manualAvailableSeatsObject: Record<string, number> = {};
     if (scheduleDoc.availableSeats instanceof Map) {
       for (const [key, value] of scheduleDoc.availableSeats) {
         manualAvailableSeatsObject[key] = value as number;

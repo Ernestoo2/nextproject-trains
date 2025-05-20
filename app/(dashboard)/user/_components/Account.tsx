@@ -1,21 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useUser } from "@/_providers/user/UserContext";
+import { useSession } from "next-auth/react"; 
 import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
-import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import Image from "next/image"; 
 
 // Generate a random 12-digit ID
-const generateNaijaRailsId = () => {
-  const prefix = "NR";
-  const randomNum = Math.floor(Math.random() * 10000000000)
-    .toString()
-    .padStart(10, "0");
-  return `${prefix}${randomNum}`;
-};
+ 
 
 interface AccountProps {
   user: UserProfile;
@@ -182,21 +174,7 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
     fileInputRef.current?.click();
   };
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "Not set";
-    try {
-      return new Date(dateString).toLocaleString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (error) {
-      return "Invalid Date";
-    }
-  };
+
 
   return (
     <div className="w-full">

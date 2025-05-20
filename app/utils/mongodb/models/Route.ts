@@ -1,5 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
-import type { Route as RouteType } from "@/types/shared/trains";
+import mongoose, {Schema } from "mongoose"; 
 import type { MongoDocument } from "@/types/shared/database";
 import { z } from "zod";
 

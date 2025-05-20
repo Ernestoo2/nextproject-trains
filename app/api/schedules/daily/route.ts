@@ -3,8 +3,8 @@ import { Route } from "@/utils/mongodb/models/Route";
 import { Station } from "@/utils/mongodb/models/Station";
 import { Train } from "@/utils/mongodb/models/Train";
 import { TrainClass } from "@/utils/mongodb/models/TrainClass";
-import { connectDB } from "@/utils/mongodb/connect";
-import type { ScheduleWithDetails, Station as IStation, TrainClass as ITrainClass, ScheduleStatus } from "@/types/shared/trains";
+import connectDB from "@/utils/mongodb/connect"
+import type { ScheduleWithDetails, Station as IStation } from "@/types/shared/trains";
 import { handleApiError, createApiResponse, createErrorResponse } from "@/utils/api/middleware";
 import { Types } from "mongoose";
 // Removed the LeanScheduleWithPopulatedDetails interface as it caused issues

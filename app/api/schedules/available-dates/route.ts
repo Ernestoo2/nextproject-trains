@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server"; 
-import { startOfDay, endOfDay } from "date-fns";
+import { NextResponse } from "next/server";  
 import { Schedule } from "@/utils/mongodb/models/Schedule";
-import { connectDB } from "@/utils/mongodb/models/connect";
+import connectDB from "@/utils/mongodb/connect";
 
 export async function GET() {
   try {
