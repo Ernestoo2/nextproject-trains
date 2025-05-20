@@ -49,7 +49,7 @@ export function Nav1() {
                 ? "text-green-600"
                 : "hover:text-green-600"
             }`}
-            href="/auth/login"
+            href="/login"
           >
             Login
           </Link>
