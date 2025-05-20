@@ -9,7 +9,7 @@ import { TripType } from "@/types/shared/trains";
 import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails, TRIP_TYPES } from "@/types/shared/trains";
 import type { Route as RouteType } from "@/types/shared/trains";
 import TripSelector from "./_components/rout-selectors/TripSelector";
-
+ 
 export default function RoutePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -396,7 +396,7 @@ export default function RoutePage() {
               <div className="lg:col-span-1">
                 <TripSelector
                   value={selectedTripType}
-                  onChange={handleTripTypeChange}
+                  onChange={(value) => handleTripTypeChange(value as TripType)}
                 />
               </div>
               <div className="lg:col-span-1">
