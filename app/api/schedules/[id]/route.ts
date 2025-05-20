@@ -6,10 +6,10 @@ import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleSt
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: any } }
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const { id } = context.params;
      
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json({ 
