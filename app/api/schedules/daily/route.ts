@@ -10,13 +10,14 @@ import { Types } from "mongoose";
 // Removed the LeanScheduleWithPopulatedDetails interface as it caused issues
 
 export async function GET(
-  request: Request,
-  { searchParams }: { searchParams: URLSearchParams }
+  request: Request
 ) {
   try {
     await connectDB();
 
-    const date = searchParams.get("date");
+    // Get date from URL search params
+    const url = new URL(request.url);
+    const date = url.searchParams.get("date");
 
     if (!date) {
       return createErrorResponse({

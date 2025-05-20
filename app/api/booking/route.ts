@@ -130,7 +130,22 @@ function validatePassenger(passenger: Partial<Passenger>): ValidationResponse {
   };
 }
 
-
+// Validation schema for booking creation
+const createBookingSchema = z.object({
+  scheduleId: z.string(),
+  userId: z.string(),
+  passengerDetails: z.array(z.object({
+    name: z.string(),
+    age: z.number(),
+    gender: z.string(),
+    seatNumber: z.string()
+  })),
+  totalAmount: z.number(),
+  paymentStatus: z.string(),
+  bookingStatus: z.string(),
+  paymentMethod: z.string(),
+  paymentId: z.string().optional()
+});
 
 export async function GET(request: Request) {
   try {
@@ -221,99 +236,51 @@ export async function GET(request: Request) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const body = await request.json();
-    const {
-      scheduleId,
-      class: trainClass,
-      passengers,
-      fare,
-    } = body;
-
-    // Validate required fields
-    if (!scheduleId || !trainClass || !passengers || !fare) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    const validatedData = createBookingSchema.parse(body);
 
     await connectDB();
 
-    // Generate PNR
-    const pnr = `PNR${Date.now().toString(36).toUpperCase()}${Math.random()
-      .toString(36)
-      .substring(2, 7)
-      .toUpperCase()}`;
-
-    // Create booking with payment data
-    const booking = new Booking({
-      userId: session.user.id,
-      scheduleId,
-      class: trainClass,
-      passengers: passengers.map((p: passenger) => ({
-        firstName: p.name.split(' ')[0],
-        lastName: p.name.split(' ')[1] || '',
-        age: p.age,
-        gender: p.gender,
-        type: "ADULT", // Default to ADULT if not specified
-        nationality: "Nigerian", // Default to Nigerian if not specified
-        berthPreference: p.berthPreference,
-        seatNumber: p.seatNumber
-      })),
-      fare: {
-        base: fare.base,
-        taxes: fare.taxes,
-        total: fare.total,
-        discount: fare.discount || 0
-      },
-      pnr,
-      status: BOOKING_STATUS.CONFIRMED,
-      paymentStatus: PAYMENT_STATUS.COMPLETED,
-    });
-
-    await booking.save();
-
-    // Save payment history
-    const payment = new PaymentHistory({
-      booking: booking._id,
-      user: session.user.id,
-      amount: fare.total,
-      method: "CREDIT_CARD", // Default to CREDIT_CARD, update based on actual payment method
-      transactionId: `TXN${Date.now()}`,
-      status: "COMPLETED",
-      metadata: {
-        trainNumber: booking.trainNumber,
-        departureStation: booking.departureStation,
-        arrivalStation: booking.arrivalStation,
-        class: trainClass,
-      },
-    });
-
-    await payment.save();
-
-    // Update available seats
-    await Schedule.findByIdAndUpdate(scheduleId, {
-      $inc: { [`availableSeats.${trainClass}`]: -passengers.length }
+    // Create new booking
+    const booking = await Booking.create({
+      ...validatedData,
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
     return NextResponse.json({
       success: true,
-      data: booking,
+      booking: {
+        id: booking._id,
+        scheduleId: booking.scheduleId,
+        userId: booking.userId,
+        passengerDetails: booking.passengerDetails,
+        totalAmount: booking.totalAmount,
+        paymentStatus: booking.paymentStatus,
+        bookingStatus: booking.bookingStatus,
+        paymentMethod: booking.paymentMethod,
+        paymentId: booking.paymentId,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt
+      }
     });
   } catch (error) {
     console.error("Error creating booking:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request data", details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      {
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to create booking",
-      },
+      { error: "Failed to create booking" },
       { status: 500 }
     );
   }

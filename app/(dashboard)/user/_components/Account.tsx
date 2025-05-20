@@ -5,9 +5,23 @@ import { useSession } from "next-auth/react";
 import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
 import Image from "next/image"; 
+import { Loader2 } from "lucide-react";
 
 // Generate a random 12-digit ID
  
+
+interface BookingSummary {
+  _id: string;
+  pnr: string;
+  trainName: string;
+  departureStation: string;
+  arrivalStation: string;
+  journeyDate: string;
+  status: string;
+  fare: {
+    total: number;
+  };
+}
 
 interface AccountProps {
   user: UserProfile;
@@ -19,6 +33,8 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
   const [userData, setUserData] = useState<UserProfile>(initialUser);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [recentBookings, setRecentBookings] = useState<BookingSummary[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -64,12 +80,38 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
     }
   };
 
-  // Fetch user data when component mounts
+  // Fetch recent bookings
+  const fetchRecentBookings = async () => {
+    if (!session?.user?.id) return;
+    
+    try {
+      setLoadingBookings(true);
+      const response = await fetch(`/api/bookings?userId=${session.user.id}&limit=5`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch bookings");
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.data?.bookings) {
+        setRecentBookings(result.data.bookings);
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      toast.error("Failed to load recent bookings");
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  // Fetch user data and bookings when component mounts
   useEffect(() => {
     if (session?.user?.email) {
       refreshUserData();
+      fetchRecentBookings();
     }
-  }, [session?.user?.email, refreshUserData]);
+  }, [session?.user?.email]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -321,6 +363,64 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
         )}
         {userData.updatedAt && (
           <p>Last Updated: {new Date(userData.updatedAt).toLocaleString()}</p>
+        )}
+      </div>
+
+      {/* Recent Bookings Summary Section */}
+      <div className="mt-8">
+        <h2 className="text-lg font-bold mb-4">Recent Bookings</h2>
+        {loadingBookings ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+          </div>
+        ) : recentBookings.length > 0 ? (
+          <div className="space-y-4">
+            {recentBookings.map((booking) => (
+              <div
+                key={booking._id}
+                className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold">{booking.trainName}</h3>
+                    <p className="text-sm text-gray-600">
+                      {booking.departureStation} → {booking.arrivalStation}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(booking.journeyDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={`px-2 py-1 rounded text-sm ${
+                        booking.status === "CONFIRMED"
+                          ? "bg-green-100 text-green-800"
+                          : booking.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {booking.status}
+                    </span>
+                    <p className="mt-2 font-medium">
+                      ₦{booking.fare.total.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-500">PNR: {booking.pnr}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => window.open(`/trains/booking-success?pnr=${booking.pnr}`, '_blank')}
+                  className="mt-3 w-full px-4 py-2 text-sm text-white bg-[#07561A] rounded hover:bg-[#064e15] transition"
+                >
+                  View Details
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No recent bookings found
+          </div>
         )}
       </div>
 

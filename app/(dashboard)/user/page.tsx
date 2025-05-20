@@ -7,12 +7,13 @@ import Account from "./_components/Account";
 import Tickets from "./_components/Tickets";
 import PaymentHistory from "./_components/PaymentHistory";
 import Image from "next/image";
+import { UserProfile } from "@/types/shared/users";
 
 export default function UserPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -106,15 +107,15 @@ export default function UserPage() {
                 : "bg-gray-100 hover:bg-gray-200"
             }`}
           >
-            Payment Methods
+            Payment History
           </button>
         </div>
 
         {/* Content Section */}
         <div className="max-w-7xl mx-auto p-6 mt-6">
           {activeTab === "account" && userData && <Account user={userData} />}
-          {activeTab === "tickets" && <Tickets />}
-          {activeTab === "payment" && <PaymentHistory />}
+          {activeTab === "tickets" && <Tickets userId={session.user.id} />}
+          {activeTab === "payment" && <PaymentHistory userId={session.user.id} />}
         </div>
       </main>
     </div>

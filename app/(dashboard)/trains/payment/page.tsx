@@ -30,6 +30,11 @@ export default function PaymentPage() {
   const [bookingDetailsForPayment, setBookingDetailsForPayment] = useState<IBookingPaymentDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -117,7 +122,7 @@ export default function PaymentPage() {
     }
   };
 
-  const initializePayment = usePaystackPayment(paystackConfig);
+  const initializePayment = isClient ? usePaystackPayment(paystackConfig) : null;
 
   const handlePaymentSuccess = async () => {
     toast.success("Payment successful! Confirming booking...");
@@ -138,9 +143,12 @@ export default function PaymentPage() {
           scheduleId: bookingDetailsForPayment.scheduleId,
           class: bookingDetailsForPayment.selectedClass,
           passengers: bookingDetailsForPayment.passengers.map(p => ({
-            name: `${p.firstName} ${p.lastName}`,
+            firstName: p.firstName,
+            lastName: p.lastName,
             age: p.age,
             gender: p.gender,
+            type: "ADULT",
+            nationality: p.nationality || "Nigerian",
             berthPreference: p.berthPreference,
             seatNumber: p.selectedClassId
           })),
@@ -150,6 +158,9 @@ export default function PaymentPage() {
             total: bookingDetailsForPayment.fareDetails.totalAmount,
             discount: bookingDetailsForPayment.fareDetails.discount || 0
           },
+          pnr: `PNR${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+          status: "CONFIRMED",
+          paymentStatus: "COMPLETED",
           paymentDetails: {
             amount: bookingDetailsForPayment.fareDetails.totalAmount,
             method: "PAYSTACK",
@@ -209,10 +220,14 @@ export default function PaymentPage() {
       return;
     }
 
-    initializePayment({
-      onSuccess: handlePaymentSuccess,
-      onClose: () => toast.error("Payment cancelled")
-    });
+    if (initializePayment) {
+      initializePayment({
+        onSuccess: handlePaymentSuccess,
+        onClose: () => toast.error("Payment cancelled")
+      });
+    } else {
+      toast.error("Payment system is not ready. Please try again.");
+    }
   };
 
   if (isLoading) {

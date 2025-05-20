@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/_providers/user/UserContext";
 import Image from "next/image";
 import QRcode from "../../../../../public/Assets/QRcode.png"; 
 import { format } from "date-fns";
 import { IBookingPaymentDetails } from "../../payment/_types/payment.types";
+import { Loader2 } from "lucide-react";
 
 interface ExtendedBookingDetails extends IBookingPaymentDetails {
   pnr?: string;
@@ -15,35 +16,74 @@ interface ExtendedBookingDetails extends IBookingPaymentDetails {
 
 export default function BookingSuccess() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { userProfile } = useUser();
   const [bookingDetails, setBookingDetails] = useState<ExtendedBookingDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedBookingDetails = localStorage.getItem("lastBookingDetails");
-    if (storedBookingDetails) {
+    const fetchBookingDetails = async () => {
       try {
-        const parsedDetails = JSON.parse(storedBookingDetails);
-        if (!parsedDetails || !parsedDetails.passengers || !parsedDetails.fareDetails) {
-          throw new Error("Invalid booking details format");
+        // First try to get PNR from URL
+        const pnr = searchParams.get('pnr');
+        
+        if (pnr) {
+          // Fetch booking details from API
+          const response = await fetch(`/api/bookings/${pnr}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch booking details');
+          }
+          const data = await response.json();
+          if (data.success) {
+            setBookingDetails(data.data);
+          } else {
+            throw new Error(data.message || 'Failed to fetch booking details');
+          }
+        } else {
+          // Fallback to localStorage if no PNR in URL
+          const storedBookingDetails = localStorage.getItem("lastBookingDetails");
+          if (storedBookingDetails) {
+            const parsedDetails = JSON.parse(storedBookingDetails);
+            if (!parsedDetails || !parsedDetails.passengers || !parsedDetails.fareDetails) {
+              throw new Error("Invalid booking details format");
+            }
+            setBookingDetails(parsedDetails);
+          } else {
+            throw new Error("No booking details found");
+          }
         }
-        setBookingDetails(parsedDetails);
       } catch (error) {
-        console.error("Error parsing booking details:", error);
-        router.push("/trains/payment");
+        console.error("Error loading booking details:", error);
+        setError(error instanceof Error ? error.message : "Failed to load booking details");
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [router]);
+    };
 
-  if (!bookingDetails) {
+    fetchBookingDetails();
+  }, [searchParams]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+      </div>
+    );
+  }
+
+  if (error || !bookingDetails) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">No Booking Details Found</h1>
+          <h1 className="text-2xl font-semibold mb-4 text-red-600">
+            {error || "Unable to load booking details"}
+          </h1>
           <button
             onClick={() => router.push("/trains/payment")}
             className="bg-[#07561A] text-white px-6 py-2 rounded-md"
           >
-            Back to Payment
+            Return to Search
           </button>
         </div>
       </div>
