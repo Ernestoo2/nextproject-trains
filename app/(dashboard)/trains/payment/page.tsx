@@ -141,38 +141,24 @@ export default function PaymentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scheduleId: bookingDetailsForPayment.scheduleId,
-          class: bookingDetailsForPayment.selectedClass,
-          passengers: bookingDetailsForPayment.passengers.map(p => ({
-            firstName: p.firstName,
-            lastName: p.lastName,
+          userId: session?.user?.id,
+          passengerDetails: bookingDetailsForPayment.passengers.map(p => ({
+            name: `${p.firstName} ${p.lastName}`,
             age: p.age,
             gender: p.gender,
-            type: "ADULT",
-            nationality: p.nationality || "Nigerian",
-            berthPreference: p.berthPreference,
             seatNumber: p.selectedClassId
           })),
-          fare: {
-            base: bookingDetailsForPayment.fareDetails.baseFare,
-            taxes: bookingDetailsForPayment.fareDetails.taxes,
-            total: bookingDetailsForPayment.fareDetails.totalAmount,
-            discount: bookingDetailsForPayment.fareDetails.discount || 0
-          },
-          pnr: `PNR${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          status: "CONFIRMED",
+          totalAmount: bookingDetailsForPayment.fareDetails.totalAmount,
           paymentStatus: "COMPLETED",
-          paymentDetails: {
-            amount: bookingDetailsForPayment.fareDetails.totalAmount,
-            method: "PAYSTACK",
-            status: "COMPLETED",
-            transactionId: paystackConfig.reference,
-            paymentDate: new Date().toISOString()
-          }
+          bookingStatus: "CONFIRMED",
+          paymentMethod: "PAYSTACK",
+          paymentId: paystackConfig.reference
         }),
       });
 
       if (!bookingResponse.ok) {
-        throw new Error('Failed to create booking record');
+        const errorData = await bookingResponse.json();
+        throw new Error(errorData.message || 'Failed to create booking record');
       }
 
       const bookingData = await bookingResponse.json();
