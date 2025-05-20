@@ -1,15 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/utils/mongodb/connect";
 import { Schedule } from "@/utils/mongodb/models/Schedule";
 import { Types } from "mongoose";
 import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleStatus } from "@/types/shared/trains";
 
+type Props = {
+  params: { id: string }
+}
+
 export async function GET(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  { params }: Props
 ) {
   try {
-    const { id } = context.params;
+    const { id } = params;
      
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json({ 
