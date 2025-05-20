@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth"; 
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect";
 import { User } from "@/utils/mongodb/models/User";
 
 export async function GET(

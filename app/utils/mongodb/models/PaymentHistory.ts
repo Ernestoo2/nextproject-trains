@@ -1,5 +1,5 @@
 import mongoose, { Document } from "mongoose";
-import { Payment, PaymentMethod, PaymentStatus } from "@/types/shared/payments";
+import { PaymentMethod, PaymentStatus } from "@/types/shared/payments";
 
 // Define enums for schema validation
 const PAYMENT_STATUS = {
@@ -20,7 +20,7 @@ const PAYMENT_METHOD = {
 } as const;
 
 // Define the document interface
-interface PaymentDocument extends Document {
+export interface PaymentDocument extends Document {
   booking: mongoose.Schema.Types.ObjectId;
   user: mongoose.Schema.Types.ObjectId;
   amount: number;
@@ -82,7 +82,6 @@ const paymentHistorySchema = new mongoose.Schema<PaymentDocument>(
 // Indexes for frequent queries
 paymentHistorySchema.index({ user: 1, status: 1 });
 paymentHistorySchema.index({ booking: 1 });
-paymentHistorySchema.index({ transactionId: 1 }, { unique: true });
 
 export const PaymentHistory =
   mongoose.models.PaymentHistory ||

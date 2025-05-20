@@ -1,7 +1,7 @@
 import { BerthPreference } from "../booking.types";
 import { PaymentStatus } from "./payments";
-import { Schedule, ScheduleStatus, TrainClass} from "./trains";
-import { Gender, IdentificationType, UserProfile } from "./users";
+import { IdentificationType, Schedule, TrainClass} from "./trains";
+import { Gender, UserProfile } from "./users";
 
 export interface BookingFormData {
   departure: string;
@@ -159,3 +159,9 @@ export type BookingAction =
   | { type: "RESET_FORM" }
   | { type: "ADD_PASSENGER"; payload: Passenger }
   | { type: "REMOVE_PASSENGER"; payload: number };
+
+export interface BookingMetadata {
+  source: string;
+  deviceInfo?: string;
+  ipAddress?: string;
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { Station, StationDocument } from "@/utils/mongodb/models/Station";
-import { connectDB } from "@/utils/mongodb/connect";
+import { Station, StationDocument } from "@/utils/mongodb/models/Station"; 
+import connectDB from "@/utils/mongodb/connect"
 import { z } from "zod";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/utils/auth/next-auth";

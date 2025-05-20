@@ -1,6 +1,5 @@
 import { z } from "zod";
-import type { TrainClassType } from "./base.types";
-
+ 
 // Validation Types
 export const TrainClassZodSchema = z.object({
   className: z.string().min(3).max(50),

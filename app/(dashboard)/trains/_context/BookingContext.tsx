@@ -2,25 +2,16 @@ import React, {
   createContext,
   useContext,
   useReducer,
-  ReactNode,
-  FC,
+  ReactNode, 
 } from "react";
-import {
-  BookingState,
+import { 
   Passenger as ITraveler,
-  Booking as IBookingDetails,
-  Station as IStation,
+  Booking as IBookingDetails, 
   TrainClassType,
   PromoCode,
   TRAIN_CLASSES,
 } from "@/types/shared/trains";
 
-// Constants
-const TAX_RATE = 0.1;
-const PROMO_CODES: Record<string, number> = {
-  WELCOME20: 0.2,
-  SUMMER50: 0.5,
-};
 
 // Discriminated union for booking status
 type BookingStatus =

@@ -13,12 +13,11 @@ import {
   validateRequiredParams,
   handleApiError,
 } from "@/utils/api/middleware";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect";
 import {
   BookingDocument,
   BookingStatus,
-  BOOKING_STATUS,
-  Gender,
+  BOOKING_STATUS, 
   GENDER,
   Passenger,
   PAYMENT_STATUS,
@@ -26,31 +25,18 @@ import {
 } from "@/types/booking.types";
 import { z } from "zod";
 import { NextRequest } from "next/server";
-import { Schedule } from "@/utils/mongodb/models/Schedule";
-import { Types } from "mongoose";
-import { headers } from "next/headers";
+import { Schedule } from "@/utils/mongodb/models/Schedule";  
+import { PaymentHistory } from "@/utils/mongodb/models/PaymentHistory";
 
-const bookingState = new Map();
-
+ 
 interface BookingListResponse {
   bookings: BookingDocument[];
   totalPages: number;
   currentPage: number;
   totalBookings: number;
 }
-
-interface QueryParams {
-  page: number;
-  limit: number;
-  search?: string;
-  sortBy: string;
-  sortOrder: "asc" | "desc";
-  status?: BookingStatus;
-  fromDate?: string;
-  toDate?: string;
-  userId?: string;
-  trainId?: string;
-}
+ 
+ 
 
 interface ValidationResponse {
   isValid: boolean;
@@ -73,13 +59,7 @@ interface BookingData {
   [key: string]: any;
 }
 
-interface BookingUpdateData {
-  status?: BookingStatus;
-  travelDate?: string;
-  passengers?: Passenger[];
-  specialRequests?: string[];
-  cancellationReason?: string;
-}
+
 
 // Validation Schemas
 const passengerSchema = z.object({
@@ -150,123 +130,7 @@ function validatePassenger(passenger: Partial<Passenger>): ValidationResponse {
   };
 }
 
-function validateBookingData(data: BookingData): ValidationResponse {
-  const errors: Array<{ field: string; message: string }> = [];
 
-  if (!data.scheduleId) {
-    errors.push({ field: "scheduleId", message: "Schedule ID is required" });
-  }
-
-  if (
-    !data.passengers ||
-    !Array.isArray(data.passengers) ||
-    data.passengers.length === 0
-  ) {
-    errors.push({
-      field: "passengers",
-      message: "At least one passenger is required",
-    });
-  } else {
-    // Validate each passenger
-    data.passengers.forEach((passenger, index) => {
-      const passengerValidation = validatePassenger(passenger);
-      if (!passengerValidation.isValid && passengerValidation.errors) {
-        passengerValidation.errors.forEach((error) => {
-          errors.push({
-            field: `passengers[${index}].${error.field}`,
-            message: error.message,
-          });
-        });
-      }
-    });
-  }
-
-  if (!data.class) {
-    errors.push({ field: "class", message: "Train class is required" });
-  }
-
-  if (!data.travelDate) {
-    errors.push({ field: "travelDate", message: "Travel date is required" });
-  } else {
-    const travelDate = new Date(data.travelDate);
-    const today = new Date();
-    if (travelDate < today) {
-      errors.push({
-        field: "travelDate",
-        message: "Travel date cannot be in the past",
-      });
-    }
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors: errors.length > 0 ? errors : undefined,
-  };
-}
-
-function validateUpdateData(data: BookingUpdateData): ValidationResponse {
-  const errors: Array<{ field: string; message: string }> = [];
-
-  if (data.status && !Object.values(BOOKING_STATUS).includes(data.status)) {
-    errors.push({ field: "status", message: "Invalid booking status" });
-  }
-
-  if (data.travelDate) {
-    const travelDate = new Date(data.travelDate);
-    const today = new Date();
-    if (travelDate < today) {
-      errors.push({
-        field: "travelDate",
-        message: "Travel date cannot be in the past",
-      });
-    }
-  }
-
-  if (data.passengers) {
-    if (!Array.isArray(data.passengers) || data.passengers.length === 0) {
-      errors.push({
-        field: "passengers",
-        message: "At least one passenger is required",
-      });
-    } else {
-      data.passengers.forEach((passenger, index) => {
-        const passengerValidation = validatePassenger(passenger);
-        if (!passengerValidation.isValid && passengerValidation.errors) {
-          passengerValidation.errors.forEach((error) => {
-            errors.push({
-              field: `passengers[${index}].${error.field}`,
-              message: error.message,
-            });
-          });
-        }
-      });
-    }
-  }
-
-  if (data.specialRequests && !Array.isArray(data.specialRequests)) {
-    errors.push({
-      field: "specialRequests",
-      message: "Special requests must be an array",
-    });
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors: errors.length > 0 ? errors : undefined,
-  };
-}
-
-// Helper function to validate email
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-// Helper function to validate phone
-function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^\+?[\d\s-]{10,}$/;
-  return phoneRegex.test(phone);
-}
 
 export async function GET(request: Request) {
   try {
@@ -356,6 +220,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       scheduleId,
@@ -382,6 +254,7 @@ export async function POST(request: NextRequest) {
 
     // Create booking with payment data
     const booking = new Booking({
+      userId: session.user.id,
       scheduleId,
       class: trainClass,
       passengers: passengers.map((p: passenger) => ({
@@ -406,6 +279,24 @@ export async function POST(request: NextRequest) {
     });
 
     await booking.save();
+
+    // Save payment history
+    const payment = new PaymentHistory({
+      booking: booking._id,
+      user: session.user.id,
+      amount: fare.total,
+      method: "CREDIT_CARD", // Default to CREDIT_CARD, update based on actual payment method
+      transactionId: `TXN${Date.now()}`,
+      status: "COMPLETED",
+      metadata: {
+        trainNumber: booking.trainNumber,
+        departureStation: booking.departureStation,
+        arrivalStation: booking.arrivalStation,
+        class: trainClass,
+      },
+    });
+
+    await payment.save();
 
     // Update available seats
     await Schedule.findByIdAndUpdate(scheduleId, {

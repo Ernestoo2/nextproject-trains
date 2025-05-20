@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect"
 import { Route } from "@/utils/mongodb/models/Route";
 import { Station } from "@/utils/mongodb/models/Station";
 import { Document } from "mongoose";

@@ -6,7 +6,7 @@ import {
   authMiddleware,
   handleApiError,
 } from "@/utils/api/middleware";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect"
 import { z } from "zod";
 
 // Validation schemas

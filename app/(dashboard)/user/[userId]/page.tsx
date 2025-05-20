@@ -8,7 +8,7 @@ import Account from "../_components/Account";
 import Tickets from "../_components/Tickets";
 import Payment from "../_components/Payment";
 import Image from "next/image";
-import { UserProfile, UserRole } from "@/types/shared/users";
+import { UserProfile } from "@/types/shared/users";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBoundary from "@/_components/ErrorBoundary";
 
@@ -21,38 +21,7 @@ export default function UserPage() {
   const router = useRouter();
 
   // Payment methods state
-  const [paymentMethods, setPaymentMethods] = useState([
-    {
-      id: 1,
-      name: "Credit Card",
-      icon: "/Assets/creditcard.png",
-      description: "Pay with your credit card",
-      isSelected: false,
-    },
-    {
-      id: 2,
-      name: "PayPal",
-      icon: "/Assets/paypal.jpeg",
-      description: "Pay via PayPal",
-      isSelected: false,
-    },
-    {
-      id: 3,
-      name: "Bank Transfer",
-      icon: "/Assets/bank.png",
-      description: "Direct bank transfer",
-      isSelected: false,
-    },
-  ]);
 
-  const handleMethodSelect = (id: number) => {
-    setPaymentMethods(prev =>
-      prev.map(method => ({
-        ...method,
-        isSelected: method.id === id
-      }))
-    );
-  };
 
   // Use the useParams hook to get the userId
   const params = useParams();

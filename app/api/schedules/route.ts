@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect"
 import type {
   Schedule as ISchedule,
   ScheduleWithDetails,
@@ -137,9 +137,7 @@ export async function GET(request: Request) {
       return NextResponse.json(authError, { status: authError.status });
     }
 
-    const { searchParams } = new URL(request.url);
-    const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 10;
+    const { searchParams } = new URL(request.url); 
     const date = searchParams.get("date");
     const fromStationId = searchParams.get("fromStationId");
     const toStationId = searchParams.get("toStationId");

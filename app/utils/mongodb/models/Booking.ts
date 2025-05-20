@@ -1,6 +1,5 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 import {
-  BookingDocument,
   BookingFare,
   Passenger,
   BOOKING_STATUS,
@@ -11,6 +10,21 @@ import {
 
 interface BookingVirtuals {
   formattedFare: string;
+}
+
+interface BookingDocument extends Types.Subdocument {
+  userId: Types.ObjectId;
+  scheduleId: Types.ObjectId;
+  passengers: Passenger[];
+  status: typeof BOOKING_STATUS[keyof typeof BOOKING_STATUS];
+  paymentStatus: typeof PAYMENT_STATUS[keyof typeof PAYMENT_STATUS];
+  fare: BookingFare;
+  pnr: string;
+  class: string;
+  transactionId?: string;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const passengerSchema = new mongoose.Schema<Passenger>(
@@ -49,15 +63,15 @@ const fareSchema = new mongoose.Schema<BookingFare>(
   { _id: false }
 );
 
-const bookingSchema = new mongoose.Schema<BookingDocument, {}, BookingVirtuals>(
+const bookingSchema = new Schema<BookingDocument, {}, BookingVirtuals>(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     scheduleId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Schedule",
       required: true,
     },
@@ -88,10 +102,7 @@ const bookingSchema = new mongoose.Schema<BookingDocument, {}, BookingVirtuals>(
       required: true,
     },
     transactionId: String,
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    metadata: { type: Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true,

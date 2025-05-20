@@ -1,6 +1,5 @@
 import mongoose, { Document } from "mongoose";
-import {
-  UserRole,
+import { 
   UserDocument,
 } from "@/types/shared/users";
 

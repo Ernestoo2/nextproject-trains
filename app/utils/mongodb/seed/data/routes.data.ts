@@ -9,12 +9,7 @@ interface RouteGeneratorParams {
   availableClassIds: Schema.Types.ObjectId[];
 }
 
-function sanitize(str: string): string {
-  return (str || "UNKNOWN")
-    .replace(/\s+/g, "_")
-    .replace(/[^a-zA-Z0-9_]/g, "")
-    .toUpperCase();
-}
+
 
 function calculateDistance(fromStation: Station, toStation: Station): number {
   // TODO: Implement actual distance calculation based on coordinates

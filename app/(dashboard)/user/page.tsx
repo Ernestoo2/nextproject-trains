@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Account from "./_components/Account";
 import Tickets from "./_components/Tickets";
-import Payment from "./_components/Payment";
+import PaymentHistory from "./_components/PaymentHistory";
 import Image from "next/image";
 
 export default function UserPage() {
@@ -114,7 +114,7 @@ export default function UserPage() {
         <div className="max-w-7xl mx-auto p-6 mt-6">
           {activeTab === "account" && userData && <Account user={userData} />}
           {activeTab === "tickets" && <Tickets />}
-          {activeTab === "payment" && <Payment />}
+          {activeTab === "payment" && <PaymentHistory />}
         </div>
       </main>
     </div>

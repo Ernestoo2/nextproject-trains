@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { connectDB } from "../connect";
+import connectDB  from "../connect";
 import { Route } from "../models/Route";
 import { Schedule } from "../models/Schedule";
 import { Station } from "../models/Station";

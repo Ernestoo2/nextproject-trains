@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect"
 import { User } from "@/utils/mongodb/models/User";
 import bcrypt from "bcryptjs";
 import { z } from "zod";

@@ -37,6 +37,7 @@ export interface IBookingPaymentDetails {
   };
   has20PercentOffer?: boolean;
   has50PercentOffer?: boolean;
+  pnr?: string;
 }
 
 export interface IPaymentResponse {

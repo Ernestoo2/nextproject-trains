@@ -176,7 +176,8 @@ export default function PaymentPage() {
         bookingId: bookingData.data._id,
         status: "CONFIRMED",
         paymentStatus: "PAID",
-        pnr: bookingData.data.pnr
+        pnr: bookingData.data.pnr,
+        naijaRailsId: userProfile?.naijaRailsId || session?.user?.naijaRailsId
       };
       
       localStorage.setItem("lastBookingDetails", JSON.stringify(successDetails));

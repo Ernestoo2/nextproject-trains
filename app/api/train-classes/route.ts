@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import type { ApiResponse } from "@/types/shared/api";
 import { authOptions } from "@/utils/auth/next-auth";
-import { connectDB } from "@/utils/mongodb/connect"; 
+import connectDB from "@/utils/mongodb/connect";
 import type { TrainClassDocument } from "@/utils/mongodb/models/TrainClass";
 import { CLASS_TYPE, TrainClass } from '@/utils/mongodb/models/TrainClass';
 import { handleApiError } from "@/utils/api/middleware";
-import { TrainClassResponse } from "@/types/shared/trains";
-// Create a type-safe array of class types
+import { TrainClassResponse } from "@/types/shared/trains"; 
+
 const CLASS_TYPE_VALUES = [
   CLASS_TYPE.FIRST_CLASS,
   CLASS_TYPE.BUSINESS,

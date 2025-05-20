@@ -1,6 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import type { MongoDocument } from "@/types/shared/database";
-import type { Station as StationType } from "@/types/shared/trains";
+import type { MongoDocument } from "@/types/shared/database"; 
 import { z } from "zod";
 
 // Define the document interface

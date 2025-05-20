@@ -1,4 +1,4 @@
-import { connectDB } from "@/utils/mongodb/connect";
+import connectDB from "@/utils/mongodb/connect";
 import { Train } from "@/utils/mongodb/models/Train";
 import { z } from "zod";
 import {

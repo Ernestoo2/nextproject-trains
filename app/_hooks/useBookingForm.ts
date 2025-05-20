@@ -1,11 +1,9 @@
 import { useState, useCallback } from "react";
-
-import type { NaijaRailsProfile } from "../_providers/profile/ProfileContext";
 import { useBookingState } from "./useBookingState";
 import { toast } from "sonner";
-import { Passenger, TripType, TrainClassType } from "@/types/shared/trains";
+import { Passenger} from "@/types/shared/trains";
 import { BookingFormState } from "@/types/shared/booking";
-import { BERTH_PREFERENCES, GENDER } from "@/types/booking.types";
+import { BERTH_PREFERENCES} from "@/types/booking.types";
 import type { UserProfile } from "@/types/shared/users";
 
 interface FormState extends BookingFormState {

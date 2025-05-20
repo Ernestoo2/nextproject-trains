@@ -1,7 +1,5 @@
 "use client";
 
-import type { ScheduleWithDetails } from "@/types/shared/database";
-import type { TrainClass } from "@/types/shared/trains";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

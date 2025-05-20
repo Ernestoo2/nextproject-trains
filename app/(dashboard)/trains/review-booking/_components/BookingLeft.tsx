@@ -3,15 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useBookingStore } from "@/store/bookingStore";
 import { BERTH_PREFERENCES, GENDER } from "@/types/booking.types";
-import type { Passenger, TrainClass } from "@/types/shared/trains";
+import type { Passenger} from "@/types/shared/trains";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, UserCircle, Mail, Phone, ChevronDown, Loader2 } from "lucide-react";
+import { Plus, Trash2, UserCircle, Mail, Phone, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react"; 
 import { UserProfile } from "@/types/shared/users";
-import { useUser } from "@/_providers/user/UserContext";
 const DEFAULT_NATIONALITY = "Nigerian";
 
 type NewTravelerFormState = {
@@ -44,6 +43,10 @@ const BookingLeft: React.FC = () => {
 
   const [newTraveler, setNewTraveler] = useState<NewTravelerFormState>(initialNewTravelerState());
 
+  useEffect(() => {
+    fetchUserProfile();
+  }, [session?.user?.id]);
+
   const fetchUserProfile = async () => {
     if (!session?.user?.id) return;
     setIsLoadingProfile(true);
@@ -56,12 +59,6 @@ const BookingLeft: React.FC = () => {
       toast.error('Error loading profile');
     } finally { setIsLoadingProfile(false); }
   };
-
-  useEffect(() => {
-    if (session?.user?.email) {
-      fetchUserProfile();
-    }
-  }, [session?.user?.email, fetchUserProfile]);
 
   useEffect(() => {
       setNewTraveler(prev => ({
@@ -364,11 +361,6 @@ const BookingLeft: React.FC = () => {
           </div>
         </div>
       )}
-
-      <p className="text-sm text-gray-600">
-        Please ensure all passenger details are correct before proceeding to payment.
-        You can&apos;t modify these details after booking.
-      </p>
     </div>
   );
 };

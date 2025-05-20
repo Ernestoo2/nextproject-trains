@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoose, { Types } from "mongoose";
-import { connectDB } from "@/utils/mongodb/connect";
+import mongoose from "mongoose"; 
+import connectDB from "@/utils/mongodb/connect";
 import { Route } from "@/utils/mongodb/models/Route";
-import { Schedule } from "@/utils/mongodb/models/Schedule";
-import type { ScheduleWithDetails, ScheduleStatus } from "@/types/shared/trains";
+import { Schedule } from "@/utils/mongodb/models/Schedule"; 
 import type { ScheduleSearchResponse } from "@/types/schedule.types";
 
 export async function GET(request: NextRequest) {
@@ -42,7 +41,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Parse the input date and create start/end range for the full day
-    const searchDate = new Date(date);
     const startOfDay = new Date(date);
     startOfDay.setUTCHours(0, 0, 0, 0);
     
