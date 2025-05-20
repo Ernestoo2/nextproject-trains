@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { SessionProvider } from "next-auth/react";
 import { ProfileProvider } from "./_providers/profile/ProfileContext";
 import { BookingProvider } from "./_providers/booking/BookingContext";
