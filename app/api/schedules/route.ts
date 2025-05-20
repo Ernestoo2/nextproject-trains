@@ -14,11 +14,7 @@ const querySchema = z.object({
   page: z.string().optional(),
 });
 
-// @ts-expect-error - Next.js route handler type issue
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { [key: string]: string | string[] | undefined } }
-) {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
@@ -100,11 +96,7 @@ export async function GET(
   }
 }
 
-// @ts-expect-error - Next.js route handler type issue
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { [key: string]: string | string[] | undefined } }
-) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
