@@ -30,7 +30,7 @@ const trainCreateSchema = z.object({
 
 type TrainQueryParams = z.infer<typeof trainQuerySchema>;
 
-export async function GET(request: Request) {
+export async function GET(request: any) {
   try {
     const authError = await authMiddleware(request);
     if (authError) return createErrorResponse(authError);
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: any) {
   try {
     const authError = await authMiddleware(request);
     if (authError) return createErrorResponse(authError);

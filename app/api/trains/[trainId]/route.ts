@@ -9,8 +9,8 @@ import { TrainDetails } from "@/types/shared/trains";
 import { authOptions } from "@/utils/auth/next-auth";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { trainId: string } }
+  request: any,
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
