@@ -6,10 +6,6 @@ import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-type RouteContext = {
-  searchParams: Promise<URLSearchParams>;
-};
-
 // Schema for user creation
 const createUserSchema = z.object({
   name: z.string().min(2),
@@ -28,10 +24,7 @@ function generateNaijaRailsId() {
 }
 
 // GET: Get all users (admin only in the future)
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function GET(request: any) {
   try {
     await connectDB();
 
@@ -42,7 +35,7 @@ export async function GET(
     }
 
     // Get query parameters for pagination
-    const searchParams = await context.searchParams;
+    const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
@@ -84,10 +77,7 @@ export async function GET(
 }
 
 // POST: Create a new user
-export async function POST(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function POST(request: any) {
   try {
     await connectDB();
 

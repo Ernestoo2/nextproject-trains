@@ -4,13 +4,9 @@ import { Schedule } from "@/utils/mongodb/models/Schedule";
 import { Types } from "mongoose";
 import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleStatus } from "@/types/shared/trains";
 
-type Props = {
-  params: { id: string }
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: Props
+  { params }: any
 ) {
   try {
     const { id } = params;

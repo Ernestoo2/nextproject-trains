@@ -4,8 +4,8 @@ import { Station } from "@/utils/mongodb/models/Station";
 import { Types } from "mongoose";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: any,
+  { params }: any
 ) {
   try {
     const { id } = params;

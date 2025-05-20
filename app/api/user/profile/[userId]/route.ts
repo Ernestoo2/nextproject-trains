@@ -20,8 +20,8 @@ const profileUpdateSchema = z.object({
 
 // GET: Fetch a user profile
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  request: any,
+  { params }: any
 ) {
   try {
     await connectDB();
@@ -71,8 +71,8 @@ export async function GET(
 
 // PATCH: Update a user profile
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  request: any,
+  { params }: any
 ) {
   try {
     await connectDB();
@@ -138,8 +138,8 @@ export async function PATCH(
 
 // DELETE: Delete a user account
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  request: any,
+  { params }: any
 ) {
   try {
     await connectDB();

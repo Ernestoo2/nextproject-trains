@@ -14,7 +14,7 @@ const querySchema = z.object({
   page: z.string().optional(),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(request: any) {
   try {
     await connectDB();
 
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: any) {
   try {
     await connectDB();
 

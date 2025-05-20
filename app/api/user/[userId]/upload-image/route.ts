@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from "uuid";
 import { User } from "@/utils/mongodb/models/User";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  request: any,
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
