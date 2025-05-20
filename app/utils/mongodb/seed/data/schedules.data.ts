@@ -78,7 +78,7 @@ function generateScheduleForDate(
   const totalMinutes = (hours * 60) + minutes;
   
   // Calculate arrival time
-  const { time: arrivalTime, nextDay } = addMinutesWithDayChange(departureTime, totalMinutes);
+  const { time: arrivalTime} = addMinutesWithDayChange(departureTime, totalMinutes);
 
   // Calculate fares for each class
   const fares = new Map<string, number>();
