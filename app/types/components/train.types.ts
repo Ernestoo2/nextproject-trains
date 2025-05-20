@@ -1,5 +1,5 @@
-import type { TrainClass } from "../shared/base.types";
-import type { TrainClassResponse } from "../shared/api.types";
+import { TrainClassResponse } from "../shared";
+import type { TrainClass } from "../shared/base.types"; 
 import { Schedule } from "../shared/database";
 
 export interface TrainClassSelectorProps {
