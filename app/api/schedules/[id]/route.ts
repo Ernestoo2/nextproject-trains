@@ -6,7 +6,7 @@ import type { ScheduleWithDetails, TrainClass as TrainClassTypeAlias, ScheduleSt
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: any } }
 ) {
   try {
     const { id } = params;
