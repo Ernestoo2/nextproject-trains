@@ -157,7 +157,6 @@ export interface SearchParams {
   fromStationId: string;
   toStationId: string;
   date: string;
-  tripType: TripType;
   classType: string;
   passengers: PassengerDetails;
 }

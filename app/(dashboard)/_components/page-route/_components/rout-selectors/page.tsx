@@ -3,11 +3,9 @@ import DateSelector from "./DateSelector";
 import FromToSelector from "./FromToSelector";
 import PassengerClassSelector from "./PassengerClassSelector";
 import React, { useEffect, useState } from "react";
-import TripSelector from "./TripSelector";
-import { PassengerDetails, SearchParams, Station, TrainClass, TripType } from "@/types/shared/trains";
+import { PassengerDetails, SearchParams, Station, TrainClass } from "@/types/shared/trains";
 
 interface RouteState {
-  trip: TripType;
   selectedFrom: string;
   selectedTo: string;
   date: string;
@@ -19,7 +17,6 @@ export default function PageRoute() {
   const [stations, setStations] = useState<Station[]>([]);
   const [trainClasses, setTrainClasses] = useState<TrainClass[]>([]);
   const [route, setRoute] = useState<RouteState>({
-    trip: "ONE_WAY",
     selectedFrom: "",
     selectedTo: "",
     date: new Date().toISOString().split("T")[0],
@@ -58,10 +55,6 @@ export default function PageRoute() {
     setRoute(prev => ({ ...prev, date }));
   };
 
-  const handleTripTypeChange = (tripType: TripType) => {
-    setRoute(prev => ({ ...prev, trip: tripType }));
-  };
-
   const handlePassengerClassChange = (details: Partial<PassengerDetails>) => {
     setRoute(prev => ({
       ...prev,
@@ -82,7 +75,6 @@ export default function PageRoute() {
       fromStationId: route.selectedFrom,
       toStationId: route.selectedTo,
       date: route.date,
-      tripType: route.trip,
       classType: route.selectedClass,
       passengers: route.passengerDetails
     };
@@ -92,7 +84,6 @@ export default function PageRoute() {
       fromStationId: route.selectedFrom,
       toStationId: route.selectedTo,
       date: route.date,
-      tripType: route.trip,
       classType: route.selectedClass,
       adultCount: route.passengerDetails.adultCount.toString(),
       childCount: route.passengerDetails.childCount.toString(),
@@ -112,11 +103,6 @@ export default function PageRoute() {
         onToChange={handleToChange}
         date={route.date}
         classType={route.selectedClass}
-      />
-
-      <TripSelector
-        value={route.trip}
-        onChange={(value) => handleTripTypeChange(value as TripType)}
       />
 
       <DateSelector
