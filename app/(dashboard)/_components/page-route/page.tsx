@@ -5,18 +5,13 @@ import PassengerClassSelector from "./_components/rout-selectors/PassengerClassS
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaTrain } from "react-icons/fa";
-import { TripType } from "@/types/shared/trains"; 
-import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails, TRIP_TYPES } from "@/types/shared/trains";
+import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails } from "@/types/shared/trains";
 import type { Route as RouteType } from "@/types/shared/trains";
-import TripSelector from "@/(dashboard)/_components/page-route/_components/rout-selectors/TripSelector";
- 
+
 export default function RoutePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [stations, setStations] = useState<Station[]>([]);
-  const [selectedTripType, setSelectedTripType] = useState<TripType>(
-    TRIP_TYPES.ONE_WAY,
-  );
   const [routeState, setRouteState] = useState<RouteState>({
     selectedRoute: null,
     selectedTrip: null,
@@ -202,12 +197,8 @@ export default function RoutePage() {
   const handleDatesChange = (departureDate: string, returnD: string) => {
     setDates({
       departure: departureDate,
-      return: selectedTripType === TRIP_TYPES.ROUND_TRIP ? returnD : departureDate,
+      return: returnD,
     });
-  };
-
-  const handleTripTypeChange = (tripType: string) => {
-    setSelectedTripType(tripType as TripType);
   };
 
   const handleViewTimetable = () => {
@@ -225,12 +216,7 @@ export default function RoutePage() {
       adultCount: routeState.passengerDetails.adultCount.toString(),
       childCount: routeState.passengerDetails.childCount.toString(),
       infantCount: routeState.passengerDetails.infantCount.toString(),
-      tripType: selectedTripType
     });
-
-    if (selectedTripType === TRIP_TYPES.ROUND_TRIP) {
-      searchParams.append("returnDate", dates.return);
-    }
 
     router.push(`/trains/train-timetable?${searchParams.toString()}`);
   };
@@ -248,7 +234,6 @@ export default function RoutePage() {
         adultCount: routeState.passengerDetails.adultCount.toString(),
         childCount: routeState.passengerDetails.childCount.toString(),
         infantCount: routeState.passengerDetails.infantCount.toString(),
-        tripType: selectedTripType
       });
 
    
@@ -268,7 +253,7 @@ export default function RoutePage() {
     } finally {
       setLoadingSchedules(prev => ({ ...prev, [route._id]: false }));
     }
-  }, [dates.departure, routeState.passengerDetails, selectedTripType]);
+  }, [dates.departure, routeState.passengerDetails]);
 
   const fetchAvailableRoutes = useCallback(async () => {
     if (!selectedFromStationId || !selectedToStationId) {
@@ -349,12 +334,6 @@ export default function RoutePage() {
     fetchAvailableRoutes();
   }, [fetchAvailableRoutes]);
 
-  useEffect(() => {
-    if (routeState.passengerDetails.classType) {
-      // Your existing effect code
-    }
-  }, [routeState.passengerDetails.classType]);
-
   return (
     <div className="min-h-screen bg-[#F3F3F3] pb-12">
       <div className="bg-container mb-12 md:mb-16">
@@ -381,7 +360,7 @@ export default function RoutePage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div className="lg:col-span-1">
                 <FromToSelector
                   stations={stations}
@@ -391,12 +370,6 @@ export default function RoutePage() {
                   onToChange={handleToSelect}
                   date={dates.departure}
                   classType={routeState.passengerDetails.classType}
-                />
-              </div>
-              <div className="lg:col-span-1">
-                <TripSelector
-                  value={selectedTripType}
-                  onChange={(value) => handleTripTypeChange(value as TripType)}
                 />
               </div>
               <div className="lg:col-span-1">
