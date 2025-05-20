@@ -3,25 +3,42 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
+import { HiOutlineLocationMarker } from "react-icons/hi";
+import { MdAirlineSeatReclineNormal, MdDateRange } from "react-icons/md";
+import Image from "next/image";
 
-// Define the types locally since the shared types module is not found
 interface Passenger {
-  name: string;
+  firstName: string;
+  lastName: string;
   age: number;
   gender: string;
-  seatNumber?: string;
+  type: string;
+  nationality: string;
+  berthPreference: string;
+  seatNumber: string;
 }
 
 interface Booking {
-  id: string;
+  _id: string;
   scheduleId: string;
-  userId: string;
-  passengerDetails: Passenger[];
-  totalAmount: number;
+  class: string;
+  passengers: Passenger[];
+  fare: {
+    base: number;
+    taxes: number;
+    total: number;
+    discount: number;
+  };
+  pnr: string;
+  status: string;
   paymentStatus: string;
-  bookingStatus: string;
-  paymentMethod: string;
-  paymentId?: string;
+  paymentDetails: {
+    amount: number;
+    method: string;
+    status: string;
+    transactionId: string;
+    paymentDate: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -43,7 +60,7 @@ export default function Tickets({ userId }: TicketsProps) {
           throw new Error("Failed to fetch bookings");
         }
         const data = await response.json();
-        setBookings(data.bookings);
+        setBookings(data.bookings || []);
       } catch (error) {
         console.error("Error fetching bookings:", error);
         setError("Failed to load bookings. Please try again later.");
@@ -83,37 +100,40 @@ export default function Tickets({ userId }: TicketsProps) {
     <div className="space-y-6">
       {bookings.map((booking) => (
         <div
-          key={booking.id}
+          key={booking._id}
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
         >
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Booking #{booking.id.slice(-6).toUpperCase()}
+                Booking #{booking._id.slice(-6).toUpperCase()}
               </h3>
+              <p className="text-sm text-gray-600">
+                PNR: {booking.pnr}
+              </p>
               <p className="text-sm text-gray-600">
                 {format(new Date(booking.createdAt), "PPP")}
               </p>
             </div>
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
-                booking.bookingStatus === "CONFIRMED"
+                booking.status === "CONFIRMED"
                   ? "bg-green-100 text-green-800"
-                  : booking.bookingStatus === "CANCELLED"
+                  : booking.status === "CANCELLED"
                   ? "bg-red-100 text-red-800"
                   : "bg-yellow-100 text-yellow-800"
               }`}
             >
-              {booking.bookingStatus}
+              {booking.status}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Passenger Details</h4>
-              {booking.passengerDetails.map((passenger: Passenger, index: number) => (
+              {booking.passengers.map((passenger, index) => (
                 <div key={index} className="text-sm text-gray-600">
-                  {passenger.name} - {passenger.age} years - {passenger.gender}
+                  {passenger.firstName} {passenger.lastName} - {passenger.age} years - {passenger.gender}
                   {passenger.seatNumber && ` (Seat ${passenger.seatNumber})`}
                 </div>
               ))}
@@ -122,9 +142,10 @@ export default function Tickets({ userId }: TicketsProps) {
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Payment Details</h4>
               <div className="text-sm text-gray-600">
-                <p>Amount: ₦{booking.totalAmount.toLocaleString()}</p>
+                <p>Amount: ₦{booking.fare.total.toLocaleString()}</p>
                 <p>Status: {booking.paymentStatus}</p>
-                <p>Method: {booking.paymentMethod}</p>
+                <p>Method: {booking.paymentDetails.method}</p>
+                <p>Transaction ID: {booking.paymentDetails.transactionId}</p>
               </div>
             </div>
           </div>

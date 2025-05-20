@@ -130,115 +130,78 @@ function validatePassenger(passenger: Partial<Passenger>): ValidationResponse {
   };
 }
 
-// Validation schema for booking creation
+// Validation schema matching exactly with the JSON data structure
 const createBookingSchema = z.object({
-  scheduleId: z.string(),
   userId: z.string(),
-  passengerDetails: z.array(z.object({
-    name: z.string(),
-    age: z.number(),
-    gender: z.string(),
-    seatNumber: z.string()
-  })),
-  totalAmount: z.number(),
+  scheduleId: z.string(),
+  pnr: z.string(),
+  status: z.string(),
   paymentStatus: z.string(),
-  bookingStatus: z.string(),
-  paymentMethod: z.string(),
-  paymentId: z.string().optional()
+  passengers: z.array(z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    age: z.number(),
+    type: z.string(),
+    nationality: z.string(),
+    gender: z.string(),
+    seatNumber: z.string(),
+    berthPreference: z.string().optional()
+  })),
+  fare: z.object({
+    base: z.number(),
+    taxes: z.number(),
+    total: z.number(),
+    discount: z.number().optional()
+  }),
+  class: z.string(),
+  isActive: z.boolean().optional().default(true)
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const authError = await authMiddleware(request);
-    if (authError) {
-      return NextResponse.json(authError, { status: authError.status });
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    await connectDB();
     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
 
-    const queryResult = querySchema.safeParse({
-      page: Number(searchParams.get("page")) || 1,
-      limit: Number(searchParams.get("limit")) || 10,
-      status: searchParams.get("status"),
-      fromDate: searchParams.get("fromDate"),
-      toDate: searchParams.get("toDate"),
-    });
-
-    if (!queryResult.success) {
+    if (!userId) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Validation Error",
-          status: 400,
-          message: queryResult.error.errors.map((e) => e.message).join(", "),
-        },
+        { success: false, message: "User ID is required" },
         { status: 400 }
       );
     }
 
-    const queryParams = queryResult.data;
-    const query: Record<string, any> = { isActive: true };
+    await connectDB();
 
-    if (queryParams.status) {
-      query.status = queryParams.status;
-    }
-
-    if (queryParams.fromDate || queryParams.toDate) {
-      query.createdAt = {};
-      if (queryParams.fromDate) {
-        query.createdAt.$gte = new Date(queryParams.fromDate);
-      }
-      if (queryParams.toDate) {
-        query.createdAt.$lte = new Date(queryParams.toDate);
-      }
-    }
-
-    const skip = (queryParams.page - 1) * queryParams.limit;
-    const totalCount = await Booking.countDocuments(query);
-    const totalPages = Math.ceil(totalCount / queryParams.limit);
-
-    const bookings = await Booking.find(query)
-      .populate([
-        { path: "userId", select: "email name" },
-        { path: "scheduleId", select: "departureTime arrivalTime date" },
-      ])
+    const bookings = await Booking.find({ userId })
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(queryParams.limit)
-      .lean() as unknown as BookingDocument[];
+      .populate("scheduleId");
 
-    const response: PaginatedApiResponse<BookingListResponse> = {
+    return NextResponse.json({
       success: true,
-      data: {
-        bookings,
-        totalPages,
-        currentPage: queryParams.page,
-        totalBookings: totalCount,
-      },
-      message: "Bookings fetched successfully",
-      pagination: {
-        currentPage: queryParams.page,
-        totalPages,
-        totalItems: totalCount,
-        limit: queryParams.limit,
-        hasMore: queryParams.page * queryParams.limit < totalCount,
-      },
-    };
-
-    return NextResponse.json(response);
+      data: bookings
+    });
   } catch (error) {
-    const errorResponse = handleApiError(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.status });
+    console.error("Error fetching bookings:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch bookings" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { success: false, message: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -248,39 +211,23 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    // Create new booking
-    const booking = await Booking.create({
-      ...validatedData,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
+    const booking = await Booking.create(validatedData);
 
     return NextResponse.json({
       success: true,
-      booking: {
-        id: booking._id,
-        scheduleId: booking.scheduleId,
-        userId: booking.userId,
-        passengerDetails: booking.passengerDetails,
-        totalAmount: booking.totalAmount,
-        paymentStatus: booking.paymentStatus,
-        bookingStatus: booking.bookingStatus,
-        paymentMethod: booking.paymentMethod,
-        paymentId: booking.paymentId,
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt
-      }
+      message: "Booking created successfully",
+      data: booking
     });
   } catch (error) {
     console.error("Error creating booking:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request data", details: error.errors },
+        { success: false, message: "Invalid request data", errors: error.errors },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { error: "Failed to create booking" },
+      { success: false, message: "Failed to create booking" },
       { status: 500 }
     );
   }

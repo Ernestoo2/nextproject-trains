@@ -36,6 +36,31 @@ export default function PaymentPage() {
     setIsClient(true);
   }, []);
 
+  const paystackConfig = {
+    reference: (new Date()).getTime().toString(),
+    email: session?.user?.email || "",
+    amount: (bookingDetailsForPayment?.fareDetails.totalAmount || 0) * 100,
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+    metadata: {
+      custom_fields: [
+        {
+          display_name: "Booking Information",
+          variable_name: "booking_info",
+          value: JSON.stringify({
+            scheduleId: bookingDetailsForPayment?.scheduleId,
+            trainName: bookingDetailsForPayment?.trainName,
+            selectedClass: bookingDetailsForPayment?.selectedClass,
+            passengers: bookingDetailsForPayment?.passengers.length,
+            totalAmount: bookingDetailsForPayment?.fareDetails.totalAmount,
+            pnr: session?.user?.naijaRailsId || userProfile?.naijaRailsId
+          })
+        }
+      ]
+    }
+  };
+
+  const initializePayment = isClient ? usePaystackPayment(paystackConfig) : null;
+
   useEffect(() => {
     const loadUserProfile = async () => {
       if (session?.user?.email) {
@@ -99,30 +124,30 @@ export default function PaymentPage() {
     }
   }, [actions, bookingState.currentDefaultClassId]);
 
-  const paystackConfig = {
-    reference: (new Date()).getTime().toString(),
-    email: session?.user?.email || "",
-    amount: (bookingDetailsForPayment?.fareDetails.totalAmount || 0) * 100,
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
-    metadata: {
-      custom_fields: [
-        {
-          display_name: "Booking Information",
-          variable_name: "booking_info",
-          value: JSON.stringify({
-            scheduleId: bookingDetailsForPayment?.scheduleId,
-            trainName: bookingDetailsForPayment?.trainName,
-            selectedClass: bookingDetailsForPayment?.selectedClass,
-            passengers: bookingDetailsForPayment?.passengers.length,
-            totalAmount: bookingDetailsForPayment?.fareDetails.totalAmount,
-            pnr: session?.user?.naijaRailsId || userProfile?.naijaRailsId
-          })
-        }
-      ]
+  const handlePayment = () => {
+    if (!bookingDetailsForPayment) {
+      toast.error("Booking details not found. Cannot proceed to payment.");
+      return;
+    }
+    if (!session?.user?.email) {
+      toast.error("Please sign in to make a payment.");
+      router.push("/auth/signin?callbackUrl=/trains/payment");
+      return;
+    }
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      toast.error("Payment gateway is not configured. Please contact support.");
+      return;
+    }
+
+    if (isClient && initializePayment) {
+      initializePayment({
+        onSuccess: handlePaymentSuccess,
+        onClose: () => toast.error("Payment cancelled")
+      });
+    } else {
+      toast.error("Payment system is not ready. Please try again.");
     }
   };
-
-  const initializePayment = isClient ? usePaystackPayment(paystackConfig) : null;
 
   const handlePaymentSuccess = async () => {
     toast.success("Payment successful! Confirming booking...");
@@ -130,7 +155,7 @@ export default function PaymentPage() {
     if (!bookingDetailsForPayment || !bookingDetailsForPayment.selectedClass) {
       console.error("Critical: Booking details or selected class missing at payment success.");
       toast.error("Failed to finalize booking. Critical data missing. Please contact support.");
-      router.push("/");
+      router.push("/trains/payment");
       return;
     }
 
@@ -142,17 +167,26 @@ export default function PaymentPage() {
         body: JSON.stringify({
           scheduleId: bookingDetailsForPayment.scheduleId,
           userId: session?.user?.id,
-          passengerDetails: bookingDetailsForPayment.passengers.map(p => ({
-            name: `${p.firstName} ${p.lastName}`,
+          class: bookingDetailsForPayment.selectedClass,
+          passengers: bookingDetailsForPayment.passengers.map(p => ({
+            firstName: p.firstName,
+            lastName: p.lastName,
             age: p.age,
             gender: p.gender,
+            type: "ADULT",
+            nationality: p.nationality || "Nigerian",
+            berthPreference: p.berthPreference,
             seatNumber: p.selectedClassId
           })),
-          totalAmount: bookingDetailsForPayment.fareDetails.totalAmount,
-          paymentStatus: "COMPLETED",
-          bookingStatus: "CONFIRMED",
-          paymentMethod: "PAYSTACK",
-          paymentId: paystackConfig.reference
+          fare: {
+            base: bookingDetailsForPayment.fareDetails.baseFare,
+            taxes: bookingDetailsForPayment.fareDetails.taxes,
+            total: bookingDetailsForPayment.fareDetails.totalAmount,
+            discount: bookingDetailsForPayment.fareDetails.discount || 0
+          },
+          pnr: `PNR${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+          status: "CONFIRMED",
+          paymentStatus: "COMPLETED"
         }),
       });
 
@@ -165,6 +199,29 @@ export default function PaymentPage() {
       
       if (!bookingData.success) {
         throw new Error(bookingData.message || 'Failed to create booking record');
+      }
+
+      // Create payment record
+      const paymentResponse = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking: bookingData.data._id,
+          user: session?.user?.id,
+          amount: bookingDetailsForPayment.fareDetails.totalAmount,
+          currency: "NGN",
+          status: "COMPLETED",
+          method: "CREDIT_CARD",
+          transactionId: `TXN${Date.now()}`,
+          metadata: {
+            class: bookingDetailsForPayment.selectedClass
+          }
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        throw new Error(errorData.message || 'Failed to create payment record');
       }
 
       // Store the booking details for the success page
@@ -188,31 +245,6 @@ export default function PaymentPage() {
         }. Please contact support with PNR: ${session?.user?.naijaRailsId || userProfile?.naijaRailsId}`
       );
       router.push("/trains/review-booking");
-    }
-  };
-
-  const handlePayment = () => {
-    if (!bookingDetailsForPayment) {
-      toast.error("Booking details not found. Cannot proceed to payment.");
-      return;
-    }
-    if (!session?.user?.email) {
-      toast.error("Please sign in to make a payment.");
-      router.push("/auth/signin?callbackUrl=/trains/payment");
-      return;
-    }
-    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-      toast.error("Payment gateway is not configured. Please contact support.");
-      return;
-    }
-
-    if (initializePayment) {
-      initializePayment({
-        onSuccess: handlePaymentSuccess,
-        onClose: () => toast.error("Payment cancelled")
-      });
-    } else {
-      toast.error("Payment system is not ready. Please try again.");
     }
   };
 

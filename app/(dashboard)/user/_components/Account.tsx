@@ -86,20 +86,18 @@ const Account: React.FC<AccountProps> = ({ user: initialUser }) => {
     
     try {
       setLoadingBookings(true);
-      const response = await fetch(`/api/bookings?userId=${session.user.id}&limit=5`);
+      const response = await fetch(`/api/booking?userId=${session.user.id}&limit=3`);
       
       if (!response.ok) {
-        throw new Error("Failed to fetch bookings");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch bookings");
       }
       
       const result = await response.json();
-      
-      if (result.success && result.data?.bookings) {
-        setRecentBookings(result.data.bookings);
-      }
+      setRecentBookings(result.bookings || []);
     } catch (error) {
-      console.error("Error fetching bookings:", error);
-      toast.error("Failed to load recent bookings");
+      console.error("Error fetching recent bookings:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load recent bookings");
     } finally {
       setLoadingBookings(false);
     }
