@@ -1,4 +1,3 @@
-
 import { TRIP_TYPES, TripType } from "@/types/shared/trains";
 import { useState, useEffect, useCallback } from "react";
 import { FaCaretDown } from "react-icons/fa";
@@ -99,4 +98,4 @@ export default function TripSelector(props: TripSelectorProps) {
       </div>
     </div>
   );
-}
+} 
