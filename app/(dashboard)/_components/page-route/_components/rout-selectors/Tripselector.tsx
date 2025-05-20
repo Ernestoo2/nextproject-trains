@@ -1,9 +1,10 @@
-import type { TripSelectorProps } from '@/types/shared/selectors';
+
 import { TRIP_TYPES, TripType } from "@/types/shared/trains";
 import { useState, useEffect, useCallback } from "react";
 import { FaCaretDown } from "react-icons/fa";
 import { TripSelectorPropsSchema, validateProps } from '@/types/shared/validation';
 import { useTrainSearchStore } from '@/store/trainSearchStore';
+import { TripSelectorProps } from "@/types/shared/selectors";
 
 export default function TripSelector(props: TripSelectorProps) {
   // Validate props at runtime

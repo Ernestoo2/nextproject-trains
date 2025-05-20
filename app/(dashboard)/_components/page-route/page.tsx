@@ -8,7 +8,7 @@ import { FaTrain } from "react-icons/fa";
 import { TripType } from "@/types/shared/trains"; 
 import { Route, TrainClass, RouteState, SearchParams, Station, PassengerDetails, ScheduleWithDetails, TRIP_TYPES } from "@/types/shared/trains";
 import type { Route as RouteType } from "@/types/shared/trains";
-import TripSelector from "./_components/rout-selectors/TripSelector"; 
+import TripSelector from "./_components/rout-selectors/TripSelector";
 
 export default function RoutePage() {
   const router = useRouter();
