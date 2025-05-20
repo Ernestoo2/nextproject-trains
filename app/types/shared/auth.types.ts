@@ -1,6 +1,6 @@
-import { Types } from "mongoose";
-import { ApiResponse } from "./api.types";
+import { Types } from "mongoose"; 
 import { BaseModel } from "@/utils/mongodb/types/base.types";
+import { ApiResponse } from "./database";
 
 //app/types/shared/auth.types.ts
 
