@@ -10,7 +10,7 @@ import { ScheduleWithDetails } from "@/types/shared/schedule.types";
 import type { ScheduleStatus } from "@/types/shared/trains";
 import { parseISO } from 'date-fns';
 
-export const dynamic = 'force-dynamic';
+
 
 export default function DailyTrainsPage() {
   const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);
@@ -152,7 +152,7 @@ export default function DailyTrainsPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Daily Schedules</h1>
         <p className="text-gray-600">
-          Showing schedules for: {date ? format(new Date(`${date}T00:00:00`), "EEEE, MMMM d, yyyy") : 'N/A'}
+          Showing schedules for: {format(new Date(`${date}T00:00:00`), "EEEE, MMMM d, yyyy")}
         </p>
         <p className="text-sm text-gray-500">All times are in Nigerian Time (WAT)</p>
       </div>
@@ -171,10 +171,12 @@ export default function DailyTrainsPage() {
               <div className="md:w-2/3">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h2 className="text-xl font-semibold">{schedule.trainNumber || 'N/A'} - {schedule.trainName || 'N/A'}</h2>
+                    <h2 className="text-xl font-semibold">
+                            {schedule.trainNumber} - {schedule.trainName}
+                    </h2>
                     <p className="text-gray-600">
-                            {schedule.departureStation?.stationName || 'N/A'} ({schedule.departureStation?.stationCode || 'N/A'}) → {" "}
-                            {schedule.arrivalStation?.stationName || 'N/A'} ({schedule.arrivalStation?.stationCode || 'N/A'})
+                            {schedule.departureStation.stationName} ({schedule.departureStation.stationCode}) → {" "}
+                            {schedule.arrivalStation.stationName} ({schedule.arrivalStation.stationCode})
                     </p>
                           {schedule.platform && <p className="text-sm text-gray-500 mt-1">Platform {schedule.platform}</p>}
                   </div>
@@ -188,14 +190,14 @@ export default function DailyTrainsPage() {
 
                       <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
                         <div className="text-center">
-                          <p className="text-lg font-semibold">{formatTime(schedule.departureTime || '')}</p>
-                    <p className="text-sm text-gray-600">{formatDate(schedule.date || '')}</p>
-                          <p className="text-sm text-gray-600">{schedule.departureStation?.stationName || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">{`${schedule.departureStation?.city || 'N/A'}, ${schedule.departureStation?.state || 'N/A'}`}</p>
+                          <p className="text-lg font-semibold">{formatTime(schedule.departureTime)}</p>
+                    <p className="text-sm text-gray-600">{formatDate(schedule.date)}</p>
+                          <p className="text-sm text-gray-600">{schedule.departureStation.stationName}</p>
+                          <p className="text-xs text-gray-500">{`${schedule.departureStation.city}, ${schedule.departureStation.state}`}</p>
                   </div>
                         <div className="text-center px-4">
                     <p className="text-sm text-gray-500">
-                            {schedule.duration || calculateDuration(schedule.departureTime || '', schedule.arrivalTime || '')}
+                            {schedule.duration || calculateDuration(schedule.departureTime, schedule.arrivalTime)}
                     </p>
                           <div className="relative w-full h-1 bg-gray-200 my-1 rounded-full">
                             <div className="absolute left-0 top-0 h-1 w-full bg-green-500 rounded-full animate-pulse"></div>
@@ -203,10 +205,10 @@ export default function DailyTrainsPage() {
                           <p className="text-xs text-gray-500">{schedule.route?.distance ?? 'N/A'} km</p>
                   </div>
                         <div className="text-center">
-                          <p className="text-lg font-semibold">{formatTime(schedule.arrivalTime || '')}</p>
-                    <p className="text-sm text-gray-600">{formatDate(schedule.date || '')}</p>
-                          <p className="text-sm text-gray-600">{schedule.arrivalStation?.stationName || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">{`${schedule.arrivalStation?.city || 'N/A'}, ${schedule.arrivalStation?.state || 'N/A'}`}</p>
+                          <p className="text-lg font-semibold">{formatTime(schedule.arrivalTime)}</p>
+                    <p className="text-sm text-gray-600">{formatDate(schedule.date)}</p>
+                          <p className="text-sm text-gray-600">{schedule.arrivalStation.stationName}</p>
+                          <p className="text-xs text-gray-500">{`${schedule.arrivalStation.city}, ${schedule.arrivalStation.state}`}</p>
                   </div>
                 </div>
               </div>
@@ -215,19 +217,19 @@ export default function DailyTrainsPage() {
                     <div className="md:w-1/3 lg:w-1/4 border-l md:pl-6 md:border-l-gray-200">
                        <h3 className="text-md font-semibold mb-3 text-gray-700">Available Classes</h3>
                       <div className="space-y-3">
-                        {schedule.availableClasses && schedule.availableClasses.length > 0 ? (
+                        {schedule.availableClasses.length > 0 ? (
                           schedule.availableClasses.map((cls) => (
                       <div
-                              key={cls.classCode || cls._id}
+                              key={cls.classCode}
                               className="flex justify-between items-center text-sm p-2 rounded bg-white border border-gray-100"
                       >
-                              <span className="font-medium text-gray-800">{cls.className || 'N/A'}</span>
+                              <span className="font-medium text-gray-800">{cls.className}</span>
                         <div className="flex items-center gap-2">
                                 <span className="font-semibold text-green-700">
                                   ₦{(cls.fare ?? cls.baseFare ?? 0).toLocaleString()}
                           </span>
                                 <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                                  {cls.capacity ?? 'N/A'} seats
+                                  {cls.capacity} seats
                           </span>
                         </div>
                       </div>
@@ -236,9 +238,9 @@ export default function DailyTrainsPage() {
                             <p className="text-sm text-gray-500">No classes available.</p>
                         )}
 
-                        {schedule.status === "SCHEDULED" && schedule.availableClasses && schedule.availableClasses.length > 0 && (
+                        {schedule.status === "SCHEDULED" && schedule.availableClasses.length > 0 && (
                     <Link
-                            href={`/trains/review-booking?scheduleId=${schedule._id}&class=${schedule.availableClasses[0]?.classCode || schedule.availableClasses[0]?._id || ''}&date=${date}`}
+                            href={`/trains/review-booking?scheduleId=${schedule._id}&class=${schedule.availableClasses[0]?.classCode}&date=${date}`}
                             className="block mt-4"
                     >
                             <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
@@ -246,7 +248,7 @@ export default function DailyTrainsPage() {
                       </Button>
                     </Link>
                   )}
-                        {(schedule.status !== "SCHEDULED" || !schedule.availableClasses || schedule.availableClasses.length === 0) && (
+                        {(schedule.status !== "SCHEDULED" || schedule.availableClasses.length === 0) && (
                            <Button disabled className="w-full mt-4">
                               Booking Unavailable
                             </Button>

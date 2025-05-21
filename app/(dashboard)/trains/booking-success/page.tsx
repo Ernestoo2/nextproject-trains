@@ -7,8 +7,6 @@ import { toast } from "sonner";
 import { IBookingPaymentDetails } from "../payment/_types/payment.types";
 import BookingSuccess from "./_components/BookingSuccess";
 
-export const dynamic = 'force-dynamic';
-
 export default function BookingSuccessPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
