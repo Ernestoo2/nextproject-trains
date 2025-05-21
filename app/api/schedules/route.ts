@@ -88,7 +88,7 @@ export async function GET(request: any) {
     }
     return NextResponse.json(
       {
-        success: false,
+      success: false,
         message: "Failed to fetch schedules",
       },
       { status: 500 }

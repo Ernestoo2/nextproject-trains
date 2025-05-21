@@ -9,9 +9,7 @@ import {
   TrainClassType,
 } from "@/types/shared/trains";
 
-import { UserProfile, BaseUser } from "@/types/shared/users";
-
-import { Ticket, TicketDetails } from "@/types/shared/tickets";
+import { UserProfile, } from "@/types/shared/users"; 
 
 import { Payment, PaymentMethod } from "@/types/shared/payments";
 
@@ -28,10 +26,7 @@ export type {
   TrainCardProps,
   TripType,
   TrainClassType,
-  UserProfile,
-  BaseUser,
-  Ticket,
-  TicketDetails,
+  UserProfile, 
   Payment,
   PaymentMethod,
 };

@@ -9,12 +9,14 @@ export interface ISchedule extends MongoDocument {
   departureTime: string;
   arrivalTime: string;
   date: Date;
-  availableSeats: Record<string, number>;
+  availableSeats: Map<string, number>;
   status: ScheduleStatus;
   platform?: string;
-  fare: Record<string, number>;
+  fare: Map<string, number>;
   duration?: string;
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Frontend Schedule Interface with Details

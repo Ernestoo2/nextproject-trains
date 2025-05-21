@@ -44,11 +44,11 @@ export default function BookingSuccess() {
           // Fallback to localStorage if no PNR in URL
           const storedBookingDetails = localStorage.getItem("lastBookingDetails");
           if (storedBookingDetails) {
-            const parsedDetails = JSON.parse(storedBookingDetails);
-            if (!parsedDetails || !parsedDetails.passengers || !parsedDetails.fareDetails) {
-              throw new Error("Invalid booking details format");
-            }
-            setBookingDetails(parsedDetails);
+        const parsedDetails = JSON.parse(storedBookingDetails);
+        if (!parsedDetails || !parsedDetails.passengers || !parsedDetails.fareDetails) {
+          throw new Error("Invalid booking details format");
+        }
+        setBookingDetails(parsedDetails);
           } else {
             throw new Error("No booking details found");
           }

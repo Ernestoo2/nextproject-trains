@@ -47,7 +47,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid password");
           }
 
-          console.log(`Successful login for user: ${credentials.email}`);
+          console.error(`Successful login for user: ${credentials.email}`);
           
           // Return user data for session
           return {

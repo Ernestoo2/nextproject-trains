@@ -13,8 +13,8 @@ export const stationsData: Station[] = [
     platforms: 3,
     isActive: true,
     facilities: ["parking", "restrooms", "waiting_room", "ticket_office"],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     _id: new Types.ObjectId().toString(),
@@ -27,8 +27,8 @@ export const stationsData: Station[] = [
     platforms: 4,
     isActive: true,
     facilities: ["parking", "restrooms", "waiting_room", "ticket_office"],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     _id: new Types.ObjectId().toString(),
@@ -41,8 +41,8 @@ export const stationsData: Station[] = [
     platforms: 2,
     isActive: true,
     facilities: ["parking", "restrooms", "waiting_room", "ticket_office"],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     _id: new Types.ObjectId().toString(),
@@ -55,8 +55,8 @@ export const stationsData: Station[] = [
     platforms: 3,
     isActive: true,
     facilities: ["parking", "restrooms", "waiting_room", "ticket_office"],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     _id: new Types.ObjectId().toString(),
@@ -69,8 +69,8 @@ export const stationsData: Station[] = [
     platforms: 2,
     isActive: true,
     facilities: ["parking", "restrooms", "waiting_room", "ticket_office"],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     _id: new Types.ObjectId().toString(),
@@ -83,7 +83,7 @@ export const stationsData: Station[] = [
     platforms: 2,
     isActive: true,
     facilities: ["parking", "restrooms", "waiting_room", "ticket_office"],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ];

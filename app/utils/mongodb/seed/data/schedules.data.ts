@@ -1,9 +1,9 @@
-import { Types } from "mongoose";
-import type { ISchedule } from "@/types/schedule/scheduleBase.types";
+import { Types } from "mongoose"; 
 import type {
   Route,
   TrainClass
 } from "@/types/shared/trains";
+import { ISchedule } from "@/types/shared/schedule.types";
 
 const OPERATING_HOURS = {
   START: 5,  // 5:00
@@ -81,7 +81,7 @@ function generateScheduleForDate(
   const { time: arrivalTime} = addMinutesWithDayChange(departureTime, totalMinutes);
 
   // Calculate fares for each class
-  const fares = new Map<string, number>();
+  const fares: Map<string, number> = new Map();
   params.classIds.forEach(id => {
     const trainClass = params.trainClasses.find(tc => tc._id.toString() === id.toString());
     const classType = trainClass?.classType || "STANDARD";
@@ -89,27 +89,26 @@ function generateScheduleForDate(
   });
 
   // Create available seats map
-  const availableSeats = new Map<string, number>();
+  const availableSeatsMap: Map<string, number> = new Map();
   Object.entries(params.availableSeats).forEach(([id, seats]) => {
-    availableSeats.set(id, seats);
+    availableSeatsMap.set(id, seats);
   });
-
-  // Convert departure date string to Date object for the schema
-  const departureDateObject = new Date(date); 
 
   // Create schedule
   const schedule: Omit<ISchedule, "_id"> = {
     train: params.trainId,
-    route: new Types.ObjectId(params.route._id),
-    departureTime,
-    arrivalTime,
-    date: departureDateObject,
-    availableSeats,
+    route: params.route._id as any,
+    departureTime: new Date(`${date}T${departureTime}`).toISOString(),
+    arrivalTime: new Date(`${date}T${arrivalTime}`).toISOString(),
+    date: new Date(date),
+    availableSeats: availableSeatsMap,
     fare: fares,
     status: "SCHEDULED",
     isActive: true,
     duration: params.route.estimatedDuration,
     platform: `${Math.floor(Math.random() * 10) + 1}`,
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 
   return schedule;
@@ -190,11 +189,11 @@ export function generateSchedulesForRoutes(
 
 export function generateInitialAvailableSeats(
   classCapacities: Record<string, number>
-): Record<string, number> {
-  return Object.fromEntries(
-    Object.entries(classCapacities).map(([classId, capacity]) => [
-      classId,
-      capacity,
-    ])
-  );
+): Map<string, number> {
+  // Directly create the Map from the input record's entries
+  // Ensure the values are numbers
+  return new Map(Object.entries(classCapacities).map(([classId, capacity]) => [
+    classId,
+    Number(capacity),
+  ]));
 }

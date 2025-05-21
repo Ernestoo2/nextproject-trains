@@ -3,7 +3,6 @@ export * from "./api";
 export * from "./bookingApi"; 
 export * from "./users";
 export * from "./scheduleApi";
-export * from "./searchApi";
-export * from "./validation";   
+export * from "./searchApi";   
 export * from "./paymentApi";
 export * from "./config";  

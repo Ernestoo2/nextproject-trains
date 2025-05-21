@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Clock, Train, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
 
 interface TrainScheduleCardProps {
   schedule: import("@/types/shared/trains").ScheduleWithDetails;
@@ -20,6 +21,11 @@ export function TrainScheduleCard({
   // Use the first available class if selectedClass is not provided
   const defaultClass = schedule.availableClasses[0]?.classCode || "";
   const classToUse = selectedClass || defaultClass;
+
+  // Format the date for display
+  const formattedDate = date ? format(parseISO(date), 'M/d/yyyy') : 'N/A';
+  const formattedDepartureTime = schedule.departureTime ? format(schedule.departureTime, 'HH:mm') : 'N/A';
+  const formattedArrivalTime = schedule.arrivalTime ? format(schedule.arrivalTime, 'HH:mm') : 'N/A';
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -82,7 +88,7 @@ export function TrainScheduleCard({
             {/* Departure */}
             <div className="space-y-1">
               <p className="text-lg sm:text-xl font-bold">
-                {schedule.departureTime}
+                {formattedDepartureTime}
               </p>
               {schedule.actualDepartureTime && (schedule.status === "DELAYED" || schedule.status === "IN_PROGRESS" || schedule.status === "COMPLETED") && (
                 <p className="text-sm text-orange-600">
@@ -117,7 +123,7 @@ export function TrainScheduleCard({
             {/* Arrival */}
             <div className="space-y-1 text-right">
               <p className="text-lg sm:text-xl font-bold">
-                {schedule.arrivalTime}
+                {formattedArrivalTime}
               </p>
               {schedule.actualArrivalTime && (schedule.status === "DELAYED" || schedule.status === "COMPLETED") && (
                 <p className="text-sm text-orange-600">

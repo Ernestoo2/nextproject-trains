@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useBookingStore } from "@/store/bookingStore";
-import { BERTH_PREFERENCES, GENDER } from "@/types/booking.types";
-import type { Passenger} from "@/types/shared/trains";
+import { useBookingStore } from "@/store/bookingStore"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +9,8 @@ import { toast } from "sonner";
 import { Plus, Trash2, UserCircle, Mail, Phone, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react"; 
 import { UserProfile } from "@/types/shared/users";
+import { BERTH_PREFERENCES, GENDER, Passenger } from "@/types/shared/booking.types";
+import type { BerthPreference } from "@/types/shared/trains";
 const DEFAULT_NATIONALITY = "Nigerian";
 
 type NewTravelerFormState = {

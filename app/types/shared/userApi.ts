@@ -1,9 +1,6 @@
 import { Types } from "mongoose";
 import { BaseApiResponse, PaginatedApiResponse } from "./api";
-import { NotificationChannel, NotificationType } from "./notificationApi";
-
-//app/types/shared/userApi.ts
-
+ 
 export interface UserAddress {
   street?: string;
   city?: string;
@@ -11,15 +8,7 @@ export interface UserAddress {
   country?: string;
   postalCode?: string;
 }
-
-export interface NotificationPreferences {
-  BOOKING_CONFIRMATION: NotificationChannel[];
-  PAYMENT_SUCCESS: NotificationChannel[];
-  PAYMENT_FAILED: NotificationChannel[];
-  SCHEDULE_CHANGE: NotificationChannel[];
-  BOOKING_REMINDER: NotificationChannel[];
-  PLATFORM_UPDATE: NotificationChannel[];
-}
+ 
 
 export interface TravelPreferences {
   preferredClass?: string;
@@ -29,20 +18,25 @@ export interface TravelPreferences {
 }
 
 export interface UserPreferences {
-  language?: string;
-  currency?: string;
-  notifications: {
-    channels: {
-      [key in NotificationType]: NotificationChannel[];
-    };
-    unsubscribed: NotificationType[];
-  };
-  travelPreferences: {
-    preferredClass?: string;
-    berthPreference?: 'LOWER' | 'MIDDLE' | 'UPPER' | 'SIDE';
-    mealPreference?: 'VEG' | 'NON_VEG' | 'VEGAN' | 'NONE';
-    specialAssistance?: string[];
-  };
+  preferredClass?: string;
+  preferredSeat?: string;
+  dietaryRestrictions?: string[];
+  accessibilityNeeds?: string[];
+}
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: 'male' | 'female' | 'other';
+  nationality?: string;
+  address?: UserAddress;
+  preferences?: UserPreferences;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserDocument {
@@ -65,35 +59,6 @@ export interface UserUpdateRequest {
   nationality?: string;
   address?: UserAddress;
   preferences?: Partial<UserPreferences>;
-}
-
-export interface UserResponse {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  nationality?: string;
-  address?: UserAddress;
-  preferences: UserPreferences;
-  documents: UserDocument[];
-  isVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  stats?: {
-    totalBookings: number;
-    cancelledBookings: number;
-    totalSpent: number;
-    preferredRoutes: string[];
-    membershipTier?: string;
-    loyaltyPoints?: number;
-  };
-}
-
-export interface UserProfileResponse extends BaseApiResponse {
-  data: UserResponse;
 }
 
 export interface UserSearchParams {

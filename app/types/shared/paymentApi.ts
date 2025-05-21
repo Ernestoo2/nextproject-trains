@@ -1,6 +1,5 @@
 import { Types } from "mongoose";
-import {PaginatedApiResponse } from "./api";
-import { NotificationType } from "./notificationApi";
+import {PaginatedApiResponse } from "./api"; 
 
 export type PaymentStatus = 
   | 'PENDING'
@@ -18,18 +17,7 @@ export type PaymentMethod =
   | 'WALLET'
   | 'PAYPAL';
 
-export interface PaymentCreateRequest {
-  bookingId: Types.ObjectId;
-  amount: number;
-  method: PaymentMethod;
-  currency?: string;
-  description?: string;
-  metadata?: Record<string, any>;
-  notificationPreferences?: {
-    channels: ('EMAIL' | 'SMS' | 'PUSH')[];
-    types: NotificationType[];
-  };
-}
+ 
 
 export interface PaymentVerificationRequest {
   paymentId: Types.ObjectId;

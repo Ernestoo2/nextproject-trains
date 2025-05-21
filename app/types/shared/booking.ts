@@ -142,7 +142,7 @@ export interface BookingDetails {
   totalFare: number;
   status: BookingStatus;
   pnr: string;
-  paymentStatus: "PENDING" | "COMPLETED" | "FAILED";
+  paymentStatus: PaymentStatus;
   transactionId?: string;
   promoCode?: string;
   promoDiscount?: number;

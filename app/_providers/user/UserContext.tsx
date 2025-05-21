@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { UserProfile, UserContextType } from "./types";
-import { BERTH_PREFERENCES } from "@/types/booking.types";
+import { UserProfile, UserContextType } from "./types"; 
 import { USER_ROLES, UserRole } from "@/types/shared/users";
+import { BERTH_PREFERENCES } from "@/types/shared/booking.types";
 
 // Helper function to safely get UserRole
 const getValidUserRole = (roleString?: string | null): UserRole => {

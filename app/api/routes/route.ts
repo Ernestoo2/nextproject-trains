@@ -124,18 +124,22 @@ export async function GET(request: Request) {
       .lean()
       .then((docs) => docs as unknown as RouteDocument[]);
 
-    const response: PaginatedApiResponse<RouteDocument> = {
+    const response: PaginatedApiResponse<RouteListResponse> = {
       success: true,
       data: {
-        items: routes,
-        pagination: {
-          total: totalCount,
-          page: queryParams.page,
-          limit: queryParams.limit,
-          pages: totalPages
-        }
+        routes,
+        totalPages,
+        currentPage: queryParams.page,
+        totalRoutes: totalCount,
       },
-      message: "Routes fetched successfully"
+      message: "Routes fetched successfully",
+      pagination: {
+        currentPage: queryParams.page,
+        totalPages,
+        totalItems: totalCount,
+        limit: queryParams.limit,
+        hasMore: queryParams.page * queryParams.limit < totalCount,
+      },
     };
 
     return NextResponse.json(response);

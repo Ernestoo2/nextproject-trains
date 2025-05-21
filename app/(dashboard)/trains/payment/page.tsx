@@ -8,9 +8,10 @@ import { useBookingStore } from "@/store/bookingStore";
 import {
   IBookingPaymentDetails
 } from "./_types/payment.types";
-import { BERTH_PREFERENCES } from "@/types/booking.types";
 import { toast } from "sonner";
 import { usePaystackPayment } from "react-paystack";
+import { BERTH_PREFERENCES } from "@/types/shared/booking.types";
+import { format, parseISO } from 'date-fns';
 
 // Generate Naija Rails ID
 function generateNaijaRailsId(): string {
@@ -89,7 +90,7 @@ export default function PaymentPage() {
               phone: data.data.phone || "",
               address: data.data.address || "",
               defaultNationality: data.data.defaultNationality || "Nigerian",
-              preferredBerth: data.data.preferredBerth || BERTH_PREFERENCES.LOWER,
+              preferredBerth: data.data.preferredBerth || "LOWER",
             };
             updateUserProfile(profileData);
           }
@@ -175,8 +176,8 @@ export default function PaymentPage() {
             gender: p.gender,
             type: "ADULT",
             nationality: p.nationality || "Nigerian",
-            berthPreference: p.berthPreference,
-            seatNumber: p.selectedClassId
+            berthPreference: p.berthPreference || "LOWER",
+            selectedClassId: p.selectedClassId
           })),
           fare: {
             base: bookingDetailsForPayment.fareDetails.baseFare,
@@ -248,6 +249,54 @@ export default function PaymentPage() {
     }
   };
 
+  // Format time to HH:mm, handling Date objects or strings
+  const formatTime = (timeValue: string | Date | undefined) => {
+    if (!timeValue) return 'N/A';
+    try {
+      let dateObj: Date;
+      if (typeof timeValue === 'string') {
+        // Try parsing as ISO first (handles full date-time strings)
+        dateObj = parseISO(timeValue);
+        // If parsing as ISO results in an invalid date, try parsing as just time (assuming HH:mm)
+        if (isNaN(dateObj.getTime())) {
+             const [hours, minutes] = timeValue.split(':').map(Number);
+             const today = new Date();
+             dateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
+        }
+      } else {
+        dateObj = timeValue; // It's already a Date object
+      }
+      
+      // Check if the date object is valid before formatting
+      if (isNaN(dateObj.getTime())) {
+         console.error("Invalid date object after parsing/handling:", timeValue);
+         return 'Invalid Time';
+      }
+
+      return format(dateObj, 'HH:mm');
+    } catch(e) {
+      console.error("Error formatting time:", timeValue, e);
+      return 'Invalid Time';
+    }
+  };
+
+  // Format date to M/d/yyyy, handling Date objects or strings
+  const formatDate = (dateValue: string | Date | undefined) => {
+     if (!dateValue) return 'N/A';
+     try {
+       const dateObj = typeof dateValue === 'string' ? parseISO(dateValue) : dateValue;
+        // Check if the date object is valid before formatting
+      if (isNaN(dateObj.getTime())) {
+         console.error("Invalid date object after parsing/handling:", dateValue);
+         return 'Invalid Date';
+      }
+       return format(dateObj, 'M/d/yyyy');
+     } catch(e) {
+       console.error("Error formatting date:", dateValue, e);
+       return 'Invalid Date';
+     }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -308,15 +357,15 @@ export default function PaymentPage() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="font-medium">{bookingDetailsForPayment?.departureStationName}</p>
-                <p className="text-sm text-gray-600">{bookingDetailsForPayment?.departureTime}</p>
+                <p className="text-sm text-gray-600">{formatTime(bookingDetailsForPayment?.departureTime)}</p>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-sm text-gray-600">→</span>
-                <span className="text-xs text-gray-500">{bookingDetailsForPayment?.journeyDate}</span>
+                <span className="text-xs text-gray-500">{formatDate(bookingDetailsForPayment?.journeyDate)}</span>
               </div>
               <div className="text-right">
                 <p className="font-medium">{bookingDetailsForPayment?.arrivalStationName}</p>
-                <p className="text-sm text-gray-600">{bookingDetailsForPayment?.arrivalTime}</p>
+                <p className="text-sm text-gray-600">{formatTime(bookingDetailsForPayment?.arrivalTime)}</p>
             </div>
           </div>
         </div>

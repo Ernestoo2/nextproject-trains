@@ -1,9 +1,8 @@
 import { Types } from "mongoose";
 import { BaseApiResponse, PaginatedApiResponse } from "./api";
-import { Booking } from "./database";
-import { NotificationType } from "./notificationApi";
-import { PaymentStatus } from "./paymentApi";
+import { Booking } from "./database";  
 import { BookingDetails } from "./trains";
+import { PaymentStatus } from "./payments";
 
 
 export interface PassengerRequest {
@@ -14,17 +13,7 @@ export interface PassengerRequest {
   berthPreference?: 'LOWER' | 'MIDDLE' | 'UPPER' | 'SIDE';
   specialRequirements?: string[];
 }
-
-export interface BookingCreateRequest {
-  scheduleId: Types.ObjectId;
-  passengers: PassengerRequest[];
-  class: string;
-  promoCode?: string;
-  notificationPreferences?: {
-    channels: ('EMAIL' | 'SMS' | 'PUSH')[];
-    types: NotificationType[];
-  };
-}
+ 
 
 export interface BookingUpdateRequest {
   status?: 'CONFIRMED' | 'CANCELLED';

@@ -1,10 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import {
-  ApiErrorResponse,
   ApiResponse,
-  ApiSuccessResponse,
-  PaginatedApiResponse,
 } from "@/types/shared/api";
 import { authOptions } from "@/utils/auth/next-auth";
 import { Booking } from "@/utils/mongodb/models/Booking";
@@ -14,19 +11,13 @@ import {
   handleApiError,
 } from "@/utils/api/middleware";
 import connectDB from "@/utils/mongodb/connect";
-import {
-  BookingDocument,
-  BookingStatus,
-  BOOKING_STATUS, 
-  GENDER,
-  Passenger,
-  PAYMENT_STATUS,
-  BERTH_PREFERENCES,
-} from "@/types/booking.types";
+
 import { z } from "zod";
 import { NextRequest } from "next/server";
 import { Schedule } from "@/utils/mongodb/models/Schedule";  
 import { PaymentHistory } from "@/utils/mongodb/models/PaymentHistory";
+import { BOOKING_STATUS, BookingDocument, GENDER, Passenger, PAYMENT_STATUS } from "@/types/shared/booking.types";
+import { Train } from "@/utils/mongodb/models/Train";
 
  
 interface BookingListResponse {
@@ -63,13 +54,15 @@ interface BookingData {
 
 // Validation Schemas
 const passengerSchema = z.object({
-  name: z.string().min(2).max(100),
+  firstName: z.string().min(2).max(100),
+  lastName: z.string().min(2).max(100),
   age: z.number().int().min(0).max(120),
   gender: z.enum(Object.values(GENDER) as [string, ...string[]]),
+  type: z.enum(["ADULT", "CHILD", "INFANT"]),
+  nationality: z.string(),
+  selectedClassId: z.string(),
   seatNumber: z.string().optional(),
-  berthPreference: z
-    .enum(Object.values(BERTH_PREFERENCES) as [string, ...string[]])
-    .optional(),
+  berthPreference: z.enum(["LOWER", "MIDDLE", "UPPER", "SIDE_LOWER", "SIDE_UPPER"]).default("LOWER"),
 });
 type passenger = { name: string; age: number; gender: string; berthPreference: string; seatNumber: string; }
 const fareSchema = z.object({
@@ -130,32 +123,6 @@ function validatePassenger(passenger: Partial<Passenger>): ValidationResponse {
   };
 }
 
-// Validation schema matching exactly with the JSON data structure
-const createBookingSchema = z.object({
-  userId: z.string(),
-  scheduleId: z.string(),
-  pnr: z.string(),
-  status: z.string(),
-  paymentStatus: z.string(),
-  passengers: z.array(z.object({
-    firstName: z.string(),
-    lastName: z.string(),
-    age: z.number(),
-    type: z.string(),
-    nationality: z.string(),
-    gender: z.string(),
-    seatNumber: z.string(),
-    berthPreference: z.string().optional()
-  })),
-  fare: z.object({
-    base: z.number(),
-    taxes: z.number(),
-    total: z.number(),
-    discount: z.number().optional()
-  }),
-  class: z.string(),
-  isActive: z.boolean().optional().default(true)
-});
 
 export async function GET(request: NextRequest) {
   try {
@@ -181,11 +148,44 @@ export async function GET(request: NextRequest) {
 
     const bookings = await Booking.find({ userId })
       .sort({ createdAt: -1 })
-      .populate("scheduleId");
+      .populate({
+        path: "scheduleId",
+        select: "train route departureTime arrivalTime date",
+        populate: [
+          {
+            path: "route",
+            select: "fromStation toStation",
+            populate: [
+              {
+                path: "fromStation",
+                select: "stationName stationCode",
+              },
+              {
+                path: "toStation",
+                select: "stationName stationCode",
+              },
+            ],
+          }
+        ]
+      }).lean();
+
+    const bookingsWithTrainNames = await Promise.all(bookings.map(async (booking: any) => {
+      if (booking.scheduleId && booking.scheduleId.train) {
+        const train = await Train.findById(booking.scheduleId.train).select("trainName").lean();
+        if (train) {
+          const trainData = train as { trainName?: string };
+          if (trainData.trainName) {
+            booking.scheduleId.trainName = trainData.trainName;
+          }
+          booking.scheduleId.train = train as any;
+        }
+      }
+      return booking;
+    }));
 
     return NextResponse.json({
       success: true,
-      data: bookings
+      data: bookingsWithTrainNames
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);
@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
@@ -207,11 +207,75 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = createBookingSchema.parse(body);
+
+    // Validate required fields
+    if (!body.scheduleId || !body.passengers || !body.fare || !body.class) {
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
     await connectDB();
 
-    const booking = await Booking.create(validatedData);
+    // Generate a unique PNR
+    const pnr = `PNR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+    // Fetch the schedule to check and update available seats
+    const schedule = await Schedule.findById(body.scheduleId);
+
+    if (!schedule) {
+      return NextResponse.json(
+        { success: false, message: "Schedule not found" },
+        { status: 404 }
+      );
+    }
+
+    const requestedClass = body.class;
+    const numberOfPassengers = body.passengers.length;
+    const requestedClassId = body.passengers[0]?.selectedClassId;
+
+    // Check if enough seats are available for the requested class ID
+    if (!requestedClassId || !schedule.availableSeats.has(requestedClassId) || schedule.availableSeats.get(requestedClassId)! < numberOfPassengers) {
+        return NextResponse.json(
+            { success: false, message: `Not enough seats available for ${requestedClass} class` },
+            { status: 400 }
+        );
+    }
+
+    // Assign basic sequential seat numbers and update available seats (using class code for display)
+    const updatedPassengers = body.passengers.map((p: any, index: number) => ({
+        ...p,
+        // Use the class code string for the display seat number
+        seatNumber: `${requestedClass}-${index + 1}`, // Basic seat assignment using class code
+    }));
+
+    // Decrement available seats for the requested class ID
+    schedule.availableSeats.set(requestedClassId, schedule.availableSeats.get(requestedClassId)! - numberOfPassengers);
+    await schedule.save();
+
+
+    const booking = await Booking.create({
+      userId: session.user.id,
+      scheduleId: body.scheduleId,
+      pnr,
+      status: BOOKING_STATUS.PENDING, // Or BOOKING_STATUS.CONFIRMED if payment is confirmed
+      paymentStatus: PAYMENT_STATUS.PENDING, // Or PAYMENT_STATUS.COMPLETED if payment is confirmed
+      passengers: updatedPassengers, // Use updated passengers with seat numbers
+      fare: {
+        base: body.fare.base || 0,
+        taxes: body.fare.taxes || 0,
+        total: body.fare.total || 0,
+        discount: body.fare.discount || 0,
+        promoCode: body.fare.promoCode
+      },
+      class: body.class,
+      metadata: {
+        travelDate: body.travelDate,
+        trainId: body.trainId,
+        routeId: body.routeId
+      }
+    });
 
     return NextResponse.json({
       success: true,
@@ -220,14 +284,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error creating booking:", error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, message: "Invalid request data", errors: error.errors },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
-      { success: false, message: "Failed to create booking" },
+      { success: false, message: "Failed to create booking", error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
@@ -319,7 +377,7 @@ function isValidStatusTransition(
   newStatus: string
 ): boolean {
   const validTransitions: Record<string, string[]> = {
-    [BOOKING_STATUS.INITIATED]: [
+    [BOOKING_STATUS.PENDING]: [
       BOOKING_STATUS.CONFIRMED,
       BOOKING_STATUS.CANCELLED,
     ],

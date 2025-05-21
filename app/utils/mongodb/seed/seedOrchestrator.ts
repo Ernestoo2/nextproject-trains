@@ -11,9 +11,9 @@ import { generateSchedulesForRoutes } from "./data/schedules.data";
 import { stationsData } from "./data/stations.data";
 import { trainClassesData } from "./data/trainClasses.data";
 import { trainsData } from "./data/trains.data";
-import { validateAll } from "./validation";
-import type { ISchedule } from "@/types/schedule/scheduleBase.types";
+import { validateAll } from "./validation";  
 import type { ITrain } from "@/types/shared/trains";
+import type { ISchedule } from "@/types/shared/schedule.types";
 
 interface WriteError {
   index: number;

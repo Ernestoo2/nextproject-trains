@@ -6,7 +6,21 @@ interface Booking {
   _id: string;
   pnr: string;
   scheduleId: {
+    train: {
     trainName: string;
+      // Add other necessary train fields here if populated and used
+    };
+    route: {
+      fromStation: {
+        stationName: string;
+        stationCode: string;
+      };
+      toStation: {
+        stationName: string;
+        stationCode: string;
+      };
+      // Add other necessary route fields here if populated and used
+    };
     fromStation: {
       stationName: string;
       stationCode: string;
@@ -18,6 +32,7 @@ interface Booking {
     departureTime: string;
     arrivalTime: string;
     date: string;
+    // Add other necessary schedule fields here if populated and used
   };
   class: string;
   passengers: Array<{
@@ -45,21 +60,40 @@ interface BookingHistoryProps {
 const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
+      if (!userId) {
+        setError("User ID is required");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
+        setError(null);
         const response = await fetch(`/api/booking?userId=${userId}`);
+        
         if (!response.ok) {
           throw new Error('Failed to fetch bookings');
         }
+
         const data = await response.json();
-        if (data.success) {
-          setBookings(data.data.bookings);
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to fetch bookings');
         }
+
+        // The API returns data directly in the data field
+        if (!data.data || !Array.isArray(data.data)) {
+          throw new Error('Invalid response format');
+        }
+
+        setBookings(data.data);
       } catch (error) {
         console.error("Error fetching bookings:", error);
+        setError(error instanceof Error ? error.message : "Failed to load booking history");
         toast.error("Failed to load booking history");
       } finally {
         setLoading(false);
@@ -77,11 +111,22 @@ const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4">Booking Tickets History</h2>
+        <div className="text-center text-red-600 py-4">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">Booking History</h2>
+      <h2 className="text-xl font-semibold mb-4">Booking Tickets History</h2>
       <div className="space-y-4">
-        {bookings.length === 0 ? (
+        {!bookings || bookings.length === 0 ? (
           <p className="text-gray-500 text-center py-4">No bookings found</p>
         ) : (
           bookings.map((booking) => (
@@ -89,26 +134,33 @@ const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
             <div className="flex justify-between items-start">
               <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold">{booking.scheduleId.trainName}</h3>
+                    <h3 className="font-semibold">{booking.scheduleId?.train?.trainName || 'Train Name N/A'}</h3>
                     <span className="text-sm text-gray-500">PNR: {booking.pnr}</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    {booking.scheduleId.fromStation.stationName} ({booking.scheduleId.fromStation.stationCode}) → {booking.scheduleId.toStation.stationName} ({booking.scheduleId.toStation.stationCode})
+                    {booking.scheduleId?.route?.fromStation?.stationName || 'N/A'} 
+                    ({booking.scheduleId?.route?.fromStation?.stationCode || 'N/A'}) → 
+                    {booking.scheduleId?.route?.toStation?.stationName || 'N/A'} 
+                    ({booking.scheduleId?.route?.toStation?.stationCode || 'N/A'})
                   </p>
                 <p className="text-sm text-gray-600">
-                    {new Date(booking.scheduleId.departureTime).toLocaleTimeString()} - {new Date(booking.scheduleId.arrivalTime).toLocaleTimeString()}
+                    {booking.scheduleId?.departureTime ? new Date(booking.scheduleId.departureTime).toLocaleTimeString() : 'N/A'} - 
+                    {booking.scheduleId?.arrivalTime ? new Date(booking.scheduleId.arrivalTime).toLocaleTimeString() : 'N/A'}
                 </p>
                 <p className="text-sm text-gray-600">
-                    Date: {new Date(booking.scheduleId.date).toLocaleDateString()}
+                    Date: {booking.scheduleId?.date ? new Date(booking.scheduleId.date).toLocaleDateString() : 'N/A'}
                   </p>
                   <div className="mt-2">
                     <p className="text-sm font-medium">Passengers:</p>
                     <ul className="text-sm text-gray-600">
-                      {booking.passengers.map((passenger, index) => (
+                      {booking.passengers?.map((passenger, index) => {
+                        
+                        return (
                         <li key={index}>
-                          {passenger.name} - {passenger.age} years - {passenger.gender} - Seat {passenger.seatNumber}
+                            {passenger.name} - {passenger.age} years - {passenger.gender} - Seat {passenger.seatNumber || 'N/A'} {/* TODO: Backend needs to assign/store actual seat number here */}
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   </div>
               </div>
@@ -118,13 +170,13 @@ const BookingHistory: React.FC<BookingHistoryProps> = ({ userId }) => {
                     booking.status === "CANCELLED" ? "bg-red-100 text-red-800" :
                     "bg-yellow-100 text-yellow-800"
                   }`}>
-                    {booking.status}
+                    {booking.status || 'PENDING'}
                   </span>
                   <p className="mt-2 text-sm font-medium">
-                    ₦{booking.fare.total.toLocaleString()}
+                    ₦{booking.fare?.total?.toLocaleString() || '0'}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Booked on {new Date(booking.createdAt).toLocaleDateString()}
+                    Booked on {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import type { ScheduleWithDetails } from "@/types/shared/database";
 import type { Passenger } from "@/types/shared/booking";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { format, parseISO } from 'date-fns';
 
 interface BookingRightProps {
   schedule: ScheduleWithDetails;
@@ -53,6 +54,53 @@ export function BookingRight({ schedule, travelers }: BookingRightProps) {
     });
   };
 
+  // Format time to HH:mm, handling Date objects or strings
+  const formatTime = (timeValue: string | Date | undefined) => {
+    if (!timeValue) return 'N/A';
+    try {
+      let dateObj: Date;
+      if (typeof timeValue === 'string') {
+        // Try parsing as ISO first (handles full date-time strings)
+        dateObj = parseISO(timeValue);
+        // If parsing as ISO results in an invalid date, try parsing as just time (assuming HH:mm)
+        if (isNaN(dateObj.getTime())) {
+             const [hours, minutes] = timeValue.split(':').map(Number);
+             const today = new Date();
+             dateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
+        }
+      } else {
+        dateObj = timeValue; // It's already a Date object
+      }
+      
+      // Check if the date object is valid before formatting
+      if (isNaN(dateObj.getTime())) {
+         console.error("Invalid date object after parsing/handling:", timeValue);
+         return 'Invalid Time';
+      }
+
+      return format(dateObj, 'HH:mm');
+    } catch(e) {
+      console.error("Error formatting time:", timeValue, e);
+      return 'Invalid Time';
+    }
+  };
+
+  // Format date to M/d/yyyy, handling Date objects or strings
+  const formatDate = (dateValue: string | Date | undefined) => {
+     if (!dateValue) return 'N/A';
+     try {
+       const dateObj = typeof dateValue === 'string' ? parseISO(dateValue) : dateValue;
+        // Check if the date object is valid before formatting
+      if (isNaN(dateObj.getTime())) {
+         console.error("Invalid date object after parsing/handling:", dateValue);
+         return 'Invalid Date';
+      }
+       return format(dateObj, 'M/d/yyyy');
+     } catch(e) {
+       console.error("Error formatting date:", dateValue, e);
+       return 'Invalid Date';
+     }
+  };
 
   const handleBookNow = async () => {
     if (!travelers || travelers.length === 0) {
@@ -109,8 +157,8 @@ export function BookingRight({ schedule, travelers }: BookingRightProps) {
         </div>
         <div className="flex justify-between mt-4">
           <div className="w-full">
-            <p className="text-sm font-normal">{new Date(schedule.date).toLocaleDateString()}</p>
-            <p className="text-sm font-medium">{schedule.departureTime}</p>
+            <p className="text-sm font-normal">{formatDate(schedule.date)}</p>
+            <p className="text-sm font-medium">{formatTime(schedule.departureTime)}</p>
             <p className="text-sm text-[#6B7280]">{schedule.departureStation?.stationName}</p>
           </div>
           <div className="flex flex-col w-full items-center">
@@ -118,8 +166,8 @@ export function BookingRight({ schedule, travelers }: BookingRightProps) {
             <hr className="border-t border-[#D1D5DB] w-full mt-1" />
           </div>
           <div className="text-right w-4/5">
-            <p className="text-sm font-normal">{new Date(schedule.date).toLocaleDateString()}</p>
-            <p className="text-sm font-medium">{schedule.arrivalTime}</p>
+            <p className="text-sm font-normal">{formatDate(schedule.date)}</p>
+            <p className="text-sm font-medium">{formatTime(schedule.arrivalTime)}</p>
             <p className="text-sm text-[#6B7280]">{schedule.arrivalStation?.stationName}</p>
           </div>
         </div>

@@ -6,7 +6,9 @@ import {
   PAYMENT_STATUS,
   BERTH_PREFERENCES,
   GENDER,
-} from "@/types/booking.types";
+  PassengerType
+} from "@/types/shared/booking.types";
+import { IdentificationType } from "@/types/shared/trains";
 
 interface BookingVirtuals {
   formattedFare: string;
@@ -32,19 +34,17 @@ const passengerSchema = new mongoose.Schema<Passenger>(
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     age: { type: Number, required: true },
-    type: { type: String, required: true, enum: ["ADULT", "CHILD", "INFANT"] },
+    type: { type: String, enum: ["ADULT", "CHILD", "INFANT"], required: true },
     nationality: { type: String, required: true },
-    gender: {
-      type: String,
-      enum: Object.values(GENDER),
-      required: true,
-    },
-    identificationType: String,
+    gender: { type: String, enum: Object.values(GENDER), required: true },
+    selectedClassId: { type: String, required: true },
+    identificationType: { type: String, enum: ["PASSPORT", "NATIONAL_ID", "DRIVER_LICENSE"] },
     identificationNumber: String,
     seatNumber: String,
     berthPreference: {
       type: String,
       enum: Object.values(BERTH_PREFERENCES),
+      default: BERTH_PREFERENCES.LOWER 
     },
     seat: String,
     phone: String,
@@ -83,7 +83,7 @@ const bookingSchema = new Schema<BookingDocument, {}, BookingVirtuals>(
     status: {
       type: String,
       enum: Object.values(BOOKING_STATUS),
-      default: BOOKING_STATUS.INITIATED,
+      default: BOOKING_STATUS.PENDING,
       required: true,
     },
     paymentStatus: {

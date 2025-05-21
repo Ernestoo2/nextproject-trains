@@ -41,18 +41,8 @@ export interface PaginationMeta {
   hasMore: boolean;
 }
 
-export interface PaginatedApiResponse<T> {
-  success: true;
-  data: {
-    items: T[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-      pages: number;
-    };
-  };
-  message: string;
+export interface PaginatedApiResponse<T> extends ApiSuccessResponse<T> {
+  pagination: PaginationMeta;
 }
 
 // Query Types
@@ -118,8 +108,5 @@ export const paginationSchema = z.object({
 
 // Generic API Response Type
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
-
-// Entity Status
-export type EntityStatus = "ACTIVE" | "INACTIVE" | "DELETED" | "PENDING";
 
 

@@ -3,7 +3,7 @@ import { useBookingState } from "./useBookingState";
 import { toast } from "sonner";
 import { Passenger} from "@/types/shared/trains";
 import { BookingFormState } from "@/types/shared/booking";
-import { BERTH_PREFERENCES} from "@/types/booking.types";
+import { BERTH_PREFERENCES} from "@/types/shared/booking.types";
 import type { UserProfile } from "@/types/shared/users";
 
 interface FormState extends BookingFormState {

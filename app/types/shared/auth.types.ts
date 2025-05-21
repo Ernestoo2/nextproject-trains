@@ -1,6 +1,11 @@
 import { Types } from "mongoose"; 
-import { BaseModel } from "@/utils/mongodb/types/base.types";
 import { ApiResponse } from "./database";
+
+export interface BaseModel {
+  _id: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 //app/types/shared/auth.types.ts
 

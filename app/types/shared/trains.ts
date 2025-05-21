@@ -3,8 +3,7 @@ import { Types } from "mongoose";
 import type { MongoDocument } from "./database";
 import { PassengerType } from "./booking";
 import { PaymentStatus } from "./paymentApi";
-import { BERTH_PREFERENCES, BerthPreference } from "../booking.types";
-import { z } from "zod";
+import { BERTH_PREFERENCES, Passenger as BookingPassenger } from "./booking.types";
 
 // Base Types
 export type TripType = "ONE_WAY" | "ROUND_TRIP";
@@ -16,6 +15,10 @@ export type ScheduleStatus =
   | "DELAYED";
 export type TrainClassType = "ECONOMY" | "BUSINESS" | "FIRST_CLASS" | "SLEEPER" | "STANDARD";
 export type IdentificationType = "PASSPORT" | "NATIONAL_ID" | "DRIVER_LICENSE";
+export type BerthPreference = typeof BERTH_PREFERENCES[keyof typeof BERTH_PREFERENCES];
+
+// Re-export Passenger type from booking.types.ts
+export type Passenger = BookingPassenger;
 
 // Constants
 export const TRIP_TYPES = {
@@ -59,17 +62,17 @@ export interface ValidStation extends Station {
 }
 
 export interface TrainClass {
+  fare?: number;
+  baseFare?: number;
   _id: string;
   className: string;
   classCode: string;
-  classType: TrainClassType;
+  classType: string;
   basePrice: number;
   isActive: boolean;
   capacity?: number;
   amenities?: string[];
   description?: string;
-  fare?: number;
-  baseFare?: number;
 }
 
 export interface TrainClassResponse {
@@ -103,29 +106,15 @@ export interface PassengerDetails {
   infantCount: number;
 }
 
-export interface Passenger {
-  firstName: string;
-  lastName: string;
-  age: number;
-  type: PassengerType;
-  nationality: string;
-  gender: Gender;
-  selectedClassId: string;
-  identificationType?: IdentificationType;
-  identificationNumber?: string;
-  seatNumber?: string;
-  berthPreference?: BerthPreference;
-  seat?: string;
-  phone?: string;
-}
-
 // Schedule Related Types
 export interface Schedule extends MongoDocument {
-  train: string | {
-    _id: string;
-    trainNumber: string;
-    trainName: string;
-  };
+  train:
+    | string
+    | {
+        _id: string;
+        trainNumber: string;
+        trainName: string;
+      };
   route: string | Route;
   departureStation: Station;
   arrivalStation: Station;
@@ -190,17 +179,19 @@ export interface Booking extends MongoDocument {
   promoCode?: string;
 }
 
-// Constants
-export const TAX_RATE = 0.18;
+// Additional constants and types for bookings
+
+ 
+export const TAX_RATE = 0.18; // 18% tax rate
 export const PROMO_CODES = {
-  WELCOME20: 0.2,
-  WELCOME10: 0.1,
-  SEASONAL50: 0.5,
+  WELCOME20: 0.2, // 20% discount
+  WELCOME10: 0.1, // 10% discount
+  SEASONAL50: 0.5, // 50% seasonal discount
 } as const;
 
 export type PromoCode = keyof typeof PROMO_CODES;
 
-// Booking State Types
+// Booking state related types
 export interface BookingState {
   passengers: Passenger[];
   selectedClass: TrainClassType;
@@ -217,14 +208,12 @@ export interface BookingState {
   fareDetails?: FareDetails;
   bookingDetails?: Partial<Booking>;
 }
-
 export interface FareDetails {
   perPersonFare: number;
   baseTicketFare: number;
   taxes: number;
   totalFare: number;
 }
-
 export type BookingAction =
   | { type: "ADD_PASSENGER"; payload: Passenger }
   | { type: "REMOVE_PASSENGER"; payload: number }
@@ -283,10 +272,33 @@ export interface RouteState {
   selectedRoute: Route | null;
   selectedTrip: string | null;
   passengerDetails: PassengerDetails;
-  bookingStage: BookingStage;
+  bookingStage: 'ROUTE_SELECTION' | 'PASSENGER_DETAILS' | 'PAYMENT' | 'CONFIRMATION';
 }
 
-// Train Details Types
+// Unified train details type that works for both API and frontend
+export interface UnifiedTrainDetails {
+  _id: string;
+  trainName: string;
+  trainNumber: string;
+  classes: Array<{
+    _id: string;
+    name: string;
+    code: string;
+    baseFare?: number;
+  }>;
+  routes: Array<{
+    station: {
+      _id: string;
+      name: string;
+      code: string;
+    };
+    arrivalTime: string;
+    departureTime: string;
+    day: number;
+  }>;
+  isActive: boolean;
+}
+
 export interface TrainDetails {
   _id: string;
   trainName: string;
@@ -308,6 +320,30 @@ export interface TrainDetails {
     day: number;
   }>;
   isActive: boolean;
+}
+
+// Legacy train details type for backward compatibility
+export interface LegacyTrainDetails {
+  id: number;
+  trainName: string;
+  runsOn: string;
+  startDate: string;
+  endDate: string;
+  departureTime: string;
+  arrivalTime: string;
+  departureStation: string;
+  arrivalStation: string;
+  duration: string;
+}
+
+// Component props using the unified type
+export interface TrainCardProps {
+  train: UnifiedTrainDetails;
+}
+
+export interface BookingRightProps {
+  bookingId: string;
+  schedule: Schedule;
 }
 
 export interface ScheduleWithDetails {
@@ -359,24 +395,6 @@ export interface ScheduleWithDetails {
   arrivalStation: Station;
 }
 
-// Validation Types
-export const TrainClassZodSchema = z.object({
-  className: z.string().min(3).max(50),
-  classCode: z.string().min(2).max(10),
-  classType: z.enum([
-    "FIRST_CLASS",
-    "BUSINESS",
-    "ECONOMY",
-    "SLEEPER",
-    "STANDARD",
-  ]),
-  basePrice: z.number().min(0),
-  capacity: z.number().min(1).max(1000).optional(),
-  amenities: z.array(z.string()).optional(),
-  description: z.string().min(10).max(500).optional(),
-  isActive: z.boolean().default(true),
-});
-
 // Centralized shared type definitions for trains
 
 export interface ITrainRoute {
@@ -409,52 +427,4 @@ export interface ITrain {
   capacity: number;
   facilities: string[];
   status: string;
-}
-
-// Legacy train details type for backward compatibility
-export interface LegacyTrainDetails {
-  id: number;
-  trainName: string;
-  runsOn: string;
-  startDate: string;
-  endDate: string;
-  departureTime: string;
-  arrivalTime: string;
-  departureStation: string;
-  arrivalStation: string;
-  duration: string;
-}
-
-// Component props using the unified type
-export interface TrainCardProps {
-  train: UnifiedTrainDetails;
-}
-
-export interface BookingRightProps {
-  bookingId: string;
-  schedule: Schedule;
-}
-
-// Unified train details type that works for both API and frontend
-export interface UnifiedTrainDetails {
-  _id: string;
-  trainName: string;
-  trainNumber: string;
-  classes: Array<{
-    _id: string;
-    name: string;
-    code: string;
-    baseFare?: number;
-  }>;
-  routes: Array<{
-    station: {
-      _id: string;
-      name: string;
-      code: string;
-    };
-    arrivalTime: string;
-    departureTime: string;
-    day: number;
-  }>;
-  isActive: boolean;
 }

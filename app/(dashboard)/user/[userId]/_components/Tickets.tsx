@@ -19,7 +19,7 @@ interface Ticket {
     };
     departureTime: string;
     arrivalTime: string;
-  date: string;
+    date: string;
   };
   class: string;
   passengers: Array<{
@@ -39,7 +39,7 @@ interface Ticket {
   };
   createdAt: string;
 }
-
+ 
 interface TicketsProps {
   userId: string;
 }
@@ -67,18 +67,13 @@ const Tickets: React.FC<TicketsProps> = ({ userId }) => {
         }
 
         const data = await response.json();
-      
+        
         if (!data.success) {
           throw new Error(data.message || 'Failed to fetch tickets');
         }
 
-        // The API returns data directly in the data field
-        if (!data.data || !Array.isArray(data.data)) {
-          throw new Error('Invalid response format');
-        }
-
         // Filter only confirmed bookings
-        const confirmedTickets = data.data.filter(
+        const confirmedTickets = data.data.bookings.filter(
           (booking: Ticket) => booking.status === "CONFIRMED"
         );
         
@@ -117,18 +112,18 @@ const Tickets: React.FC<TicketsProps> = ({ userId }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <h2 className="text-xl font-semibold mb-4">My Tickets</h2>
-    <div className="space-y-6">
+      <div className="space-y-6">
         {!tickets || tickets.length === 0 ? (
           <div className="text-center py-8">
             <div className="mb-4">
-              <Image
+                <Image
                 src="/images/no-tickets.svg"
                 alt="No tickets"
                 width={200}
                 height={200}
                 className="mx-auto"
-              />
-            </div>
+                />
+              </div>
             <p className="text-gray-500">You don't have any active tickets</p>
           </div>
         ) : (
@@ -137,7 +132,7 @@ const Tickets: React.FC<TicketsProps> = ({ userId }) => {
               {/* Ticket Header */}
               <div className="bg-green-600 text-white p-4">
                 <div className="flex justify-between items-center">
-                  <div>
+              <div>
                     <h3 className="font-semibold text-lg">{ticket.scheduleId.trainName}</h3>
                     <p className="text-sm opacity-90">PNR: {ticket.pnr}</p>
                   </div>
@@ -180,8 +175,8 @@ const Tickets: React.FC<TicketsProps> = ({ userId }) => {
                         <p className="text-gray-500">Departure</p>
                         <p className="font-medium">{new Date(ticket.scheduleId.departureTime).toLocaleTimeString()}</p>
                         <p className="text-gray-600">{new Date(ticket.scheduleId.date).toLocaleDateString()}</p>
-                </div>
-                <div>
+                      </div>
+                      <div>
                         <p className="text-gray-500">Arrival</p>
                         <p className="font-medium">{new Date(ticket.scheduleId.arrivalTime).toLocaleTimeString()}</p>
                         <p className="text-gray-600">{new Date(ticket.scheduleId.date).toLocaleDateString()}</p>
@@ -222,9 +217,9 @@ const Tickets: React.FC<TicketsProps> = ({ userId }) => {
                     onClick={() => window.print()}
                     className="text-green-600 hover:text-green-700 text-sm font-medium"
                   >
-                    Download Ticket
-                  </button>
-                </div>
+              Download Ticket
+            </button>
+          </div>
               </div>
             </div>
           ))

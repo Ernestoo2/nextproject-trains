@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { ScheduleWithDetails } from "@/types/shared/schedule.types";
 import type { ScheduleStatus } from "@/types/shared/trains";
+import { parseISO } from 'date-fns';
 
 
 
@@ -31,13 +32,27 @@ export default function DailyTrainsPage() {
   const date = searchParams.get("date") || getNigerianDate();
 
   // Format time to 12-hour format with AM/PM
-  const formatTime = (time: string) => {
-    if (!time || !time.includes(':')) return 'Invalid Time';
-    const [hours, minutes] = time.split(':').map(Number);
-    if (isNaN(hours) || isNaN(minutes)) return 'Invalid Time';
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  const formatTime = (timeString: string | Date) => {
+    if (!timeString) return 'N/A';
+    try {
+      const dateObj = typeof timeString === 'string' ? parseISO(timeString) : timeString;
+      return format(dateObj, 'HH:mm');
+    } catch(e) {
+      console.error("Error formatting time:", timeString, e);
+      return 'Invalid Time';
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString: string | Date) => {
+     if (!dateString) return 'N/A';
+     try {
+       const dateObj = typeof dateString === 'string' ? parseISO(dateString) : dateString;
+       return format(dateObj, 'M/d/yyyy');
+     } catch(e) {
+       console.error("Error formatting date:", dateString, e);
+       return 'Invalid Date';
+     }
   };
 
   // Group trains by status for better organization
@@ -176,10 +191,9 @@ export default function DailyTrainsPage() {
                       <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
                         <div className="text-center">
                           <p className="text-lg font-semibold">{formatTime(schedule.departureTime)}</p>
-                    <p className="text-sm text-gray-600">
-                            {schedule.departureStation.stationName} ({schedule.departureStation.stationCode})
-                    </p>
-                          <p className="text-xs text-gray-500">{schedule.departureStation.city}, {schedule.departureStation.state}</p>
+                    <p className="text-sm text-gray-600">{formatDate(schedule.date)}</p>
+                          <p className="text-sm text-gray-600">{schedule.departureStation.stationName}</p>
+                          <p className="text-xs text-gray-500">{`${schedule.departureStation.city}, ${schedule.departureStation.state}`}</p>
                   </div>
                         <div className="text-center px-4">
                     <p className="text-sm text-gray-500">
@@ -192,10 +206,9 @@ export default function DailyTrainsPage() {
                   </div>
                         <div className="text-center">
                           <p className="text-lg font-semibold">{formatTime(schedule.arrivalTime)}</p>
-                    <p className="text-sm text-gray-600">
-                            {schedule.arrivalStation.stationName} ({schedule.arrivalStation.stationCode})
-                    </p>
-                           <p className="text-xs text-gray-500">{schedule.arrivalStation.city}, {schedule.arrivalStation.state}</p>
+                    <p className="text-sm text-gray-600">{formatDate(schedule.date)}</p>
+                          <p className="text-sm text-gray-600">{schedule.arrivalStation.stationName}</p>
+                          <p className="text-xs text-gray-500">{`${schedule.arrivalStation.city}, ${schedule.arrivalStation.state}`}</p>
                   </div>
                 </div>
               </div>

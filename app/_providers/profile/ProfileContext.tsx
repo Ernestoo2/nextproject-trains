@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { BERTH_PREFERENCES } from "@/types/booking.types";
+import { useSession } from "next-auth/react";  
+import { BERTH_PREFERENCES } from "@/types/shared/booking.types";
 
 export interface NaijaRailsProfile {
   naijaRailsId: string;

@@ -4,9 +4,9 @@ import { getTrainDetails } from "@/api/api";
 import {
   ApiErrorResponse,
   ApiSuccessResponse,
-} from "@/types/shared/api";
-import { TrainDetails } from "@/types/shared/trains";
+} from "@/types/shared/api"; 
 import { authOptions } from "@/utils/auth/next-auth";
+import { TrainDetails } from "@/types/shared";
 
 export async function GET(
   request: any,

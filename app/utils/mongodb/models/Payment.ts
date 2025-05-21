@@ -1,8 +1,7 @@
+import { PAYMENT_METHOD } from "@/types/payment.types";
+import { PAYMENT_STATUS } from "@/types/shared/booking.types";
 import mongoose, { Schema, Types } from "mongoose";
-import {
-  PAYMENT_METHOD,
-  PAYMENT_STATUS,
-} from "@/types/payment.types";
+
 
 interface PaymentVirtuals {
   formattedAmount: string;

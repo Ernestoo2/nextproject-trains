@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUserProfileStore } from "@/store/userProfileStore";
+import HeaderPage from "@/_components/Header/page";
 
 export default function UserLayout({
     children,
@@ -30,5 +31,5 @@ export default function UserLayout({
         fetchProfile();
     }, [session, setProfile, profile]);
 
-    return <>{children}</>;
+    return <><HeaderPage/>{children}</>;
 }
