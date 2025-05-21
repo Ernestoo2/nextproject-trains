@@ -1,9 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/utils/auth/next-auth";
-import { cookies } from "next/headers";
-import Header1Ui from "../_components/Header/Header1Ui";
-import FooterPage from "../_components/Footer";
+import { cookies } from "next/headers"; 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardLayout({
@@ -24,9 +22,9 @@ export default async function DashboardLayout({
 
     return (
       <div className="min-h-screen flex flex-col">
-        <Header1Ui />
+        
         <main className="flex-grow">{children}</main>
-        <FooterPage />
+       
       </div>
     );
   } catch (error) {
