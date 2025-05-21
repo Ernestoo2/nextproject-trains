@@ -2,8 +2,8 @@
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/utils/auth/next-auth";
-import Header1Ui from "../_components/Header/Header1Ui";
-import FooterPage from "../_components/Footer";
+import Header1Ui from "../../_components/Header/Header1Ui";
+import FooterPage from "../../_components/Footer";
 
 export default async function DashboardLayout({
   children,
