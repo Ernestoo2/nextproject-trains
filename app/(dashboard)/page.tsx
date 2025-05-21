@@ -10,10 +10,14 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import BookingPage from "./_components/booking-interface/page";
 export const dynamic = 'force-dynamic';
+import { redirect } from 'next/navigation';
+
 
 export default function DashboardContent() {
   const { data: session } = useSession();
   const router = useRouter();
+  redirect('/auth/sign-in');
+  
   useEffect(() => {
     if (!session?.user) {
       router.push("/auth/login"); // Redirect to login page without route group parentheses
