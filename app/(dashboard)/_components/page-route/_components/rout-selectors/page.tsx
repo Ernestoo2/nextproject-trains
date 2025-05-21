@@ -71,13 +71,7 @@ export default function PageRoute() {
   };
 
   const handleSearch = () => {
-    const searchParams: SearchParams = {
-      fromStationId: route.selectedFrom,
-      toStationId: route.selectedTo,
-      date: route.date,
-      classType: route.selectedClass,
-      passengers: route.passengerDetails
-    };
+   
 
     // Navigate to timetable page with params
     const queryString = new URLSearchParams({

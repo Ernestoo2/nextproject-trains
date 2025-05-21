@@ -66,7 +66,7 @@ export const useTrainSearchStore = create<TrainSearchState>((set) => ({
     })),
 
   resetFilters: () =>
-    set((state) => ({
+    set(() => ({
       filters: initialState.filters,
     })),
 

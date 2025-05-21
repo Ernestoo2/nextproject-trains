@@ -5,11 +5,9 @@ import {
   BOOKING_STATUS,
   PAYMENT_STATUS,
   BERTH_PREFERENCES,
-  GENDER,
-  PassengerType
+  GENDER 
 } from "@/types/shared/booking.types";
-import { IdentificationType } from "@/types/shared/trains";
-
+ 
 interface BookingVirtuals {
   formattedFare: string;
 }

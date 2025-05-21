@@ -90,7 +90,7 @@ export const updateTravleRoute = (
 };
 
 export const deleteTravelRoute = (
-  id: number,
+  
 ): Promise<ApiResponse<TravelFormState[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {

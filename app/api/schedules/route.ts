@@ -1,4 +1,4 @@
-import { type NextRequest } from "next/server";
+
 import { NextResponse } from "next/server";
 import connectDB from "@/utils/mongodb/connect"; 
 import { z } from "zod";

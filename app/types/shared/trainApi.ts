@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { BaseApiResponse, PaginatedApiResponse } from "./api";
+import { PaginatedApiResponse } from "./api";
 import { ITrain, ITrainClass, Route, TrainDetails } from "@/types/shared/trains";
 
 //app/types/shared/trainApi.ts

@@ -40,10 +40,9 @@ export default function DateSelector({ initialDate, onDateChange }: DateSelector
     if (initialDate !== internalSelectedDate) {
         setInternalSelectedDate(initialDate);
     }
-  }, [initialDate]); // Removed internalSelectedDate from deps to avoid loop with parent potentially
-
-  // This function now returns the validation state, instead of setting it directly
-  const calculateValidationState = useCallback((dateStrToValidate: string): ValidationState => {
+  }, [initialDate]);  
+  
+    const calculateValidationState = useCallback((dateStrToValidate: string): ValidationState => {
     if (isLoadingDates) {
       return { isValid: true, error: "Loading available dates..." }; // isValid: true might be debatable, but consistent with prev. error message
     }

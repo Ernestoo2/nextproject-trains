@@ -14,10 +14,9 @@ export const dynamic = 'force-dynamic';
 export default function DashboardContent() {
   const { data: session } = useSession();
   const router = useRouter();
-
   useEffect(() => {
     if (!session?.user) {
-      router.push("/login");
+      router.push("/auth/login"); // Redirect to login page without route group parentheses
     }
   }, [session, router]);
 
