@@ -3,13 +3,11 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    const token = req.nextauth.token;
-
-    // Check if accessing own profile
+    const token = req.nextauth.token;    // Check if accessing own profile
     if (req.nextUrl.pathname.startsWith("/user/")) {
       const userId = req.nextUrl.pathname.split("/")[2];
       if (token?.id !== userId) {
-        return NextResponse.redirect(new URL("/(dashboard)", req.url));
+        return NextResponse.redirect(new URL("/dashboard", req.url));
       }
     }
 
@@ -22,7 +20,7 @@ export default withAuth(
       },
     },
     pages: {
-      signIn: "/(auth)/login",
+      signIn: "/auth/login",
     },
   }
 );
@@ -30,7 +28,7 @@ export default withAuth(
 // Protect all routes that require authentication
 export const config = {
   matcher: [
-    "/(dashboard)/:path*",
+    "/dashboard/:path*",
     "/user/:path*",
     "/booking/:path*",
     "/payment/:path*",
