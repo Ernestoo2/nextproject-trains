@@ -122,3 +122,5 @@ const ReviewBooking: React.FC = () => {
 };
 
 export default ReviewBooking;
+
+export const dynamic = 'force-dynamic';

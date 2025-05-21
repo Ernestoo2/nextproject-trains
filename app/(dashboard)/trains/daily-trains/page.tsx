@@ -10,7 +10,7 @@ import { ScheduleWithDetails } from "@/types/shared/schedule.types";
 import type { ScheduleStatus } from "@/types/shared/trains";
 import { parseISO } from 'date-fns';
 
-
+export const dynamic = 'force-dynamic';
 
 export default function DailyTrainsPage() {
   const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);

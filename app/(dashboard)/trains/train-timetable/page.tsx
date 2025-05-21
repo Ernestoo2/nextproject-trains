@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import type { ScheduleWithDetails, TrainClass } from "@/types/shared/trains";
 
+export const dynamic = 'force-dynamic';
+
 export default function TrainTimetablePage() {
   const searchParams = useSearchParams();
   const [schedules, setSchedules] = useState<ScheduleWithDetails[]>([]);
