@@ -2,8 +2,6 @@ import { Types } from "mongoose";
 
 import { Document } from "mongoose";
 import {
-  Station,
-  TrainClass,
   ScheduleStatus,
   Schedule as SharedSchedule,
   Route as SharedRoute,

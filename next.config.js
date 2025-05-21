@@ -3,6 +3,14 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: ["your-production-image-domain.com"],
+    // Remove unoptimized: true for Vercel deployment
+  },
+  // Remove output: 'standalone' for now
+  // Keep serverActions but make sure it's compatible with your Next.js version
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000', 'your-production-domain.com']
+    }
   },
 
   async headers() {

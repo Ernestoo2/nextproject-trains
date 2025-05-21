@@ -6,26 +6,18 @@ import {
 import { authOptions } from "@/utils/auth/next-auth";
 import { Booking } from "@/utils/mongodb/models/Booking";
 import {
-  authMiddleware,
-  validateRequiredParams,
+  authMiddleware, 
   handleApiError,
 } from "@/utils/api/middleware";
 import connectDB from "@/utils/mongodb/connect";
-
 import { z } from "zod";
 import { NextRequest } from "next/server";
 import { Schedule } from "@/utils/mongodb/models/Schedule";  
-import { PaymentHistory } from "@/utils/mongodb/models/PaymentHistory";
-import { BOOKING_STATUS, BookingDocument, GENDER, Passenger, PAYMENT_STATUS } from "@/types/shared/booking.types";
+ import { BOOKING_STATUS, BookingDocument, GENDER, Passenger, PAYMENT_STATUS } from "@/types/shared/booking.types";
 import { Train } from "@/utils/mongodb/models/Train";
 
  
-interface BookingListResponse {
-  bookings: BookingDocument[];
-  totalPages: number;
-  currentPage: number;
-  totalBookings: number;
-}
+ 
  
  
 
@@ -64,8 +56,7 @@ const passengerSchema = z.object({
   seatNumber: z.string().optional(),
   berthPreference: z.enum(["LOWER", "MIDDLE", "UPPER", "SIDE_LOWER", "SIDE_UPPER"]).default("LOWER"),
 });
-type passenger = { name: string; age: number; gender: string; berthPreference: string; seatNumber: string; }
-const fareSchema = z.object({
+ const fareSchema = z.object({
   base: z.number().min(0),
   taxes: z.number().min(0),
   total: z.number().min(0),
@@ -73,12 +64,7 @@ const fareSchema = z.object({
   promoCode: z.string().optional(),
 });
 
-const bookingCreateSchema = z.object({
-  scheduleId: z.string().length(24),
-  passengers: z.array(passengerSchema).min(1).max(6),
-  class: z.string(),
-  fare: fareSchema,
-});
+ 
 
 const bookingUpdateSchema = z.object({
   bookingId: z.string().length(24),
@@ -92,36 +78,8 @@ const bookingUpdateSchema = z.object({
   transactionId: z.string().optional(),
 });
 
-const querySchema = z.object({
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(50).default(10),
-  status: z
-    .enum(Object.values(BOOKING_STATUS) as [string, ...string[]])
-    .optional(),
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
-});
-
-function validatePassenger(passenger: Partial<Passenger>): ValidationResponse {
-  const errors: Array<{ field: string; message: string }> = [];
-
-  if (!("name" in passenger) || !passenger.name) {
-    errors.push({ field: "name", message: "Name is required" });
-  }
-
-  if (!passenger.age || passenger.age < 0 || passenger.age > 120) {
-    errors.push({ field: "age", message: "Valid age is required (0-120)" });
-  }
-
-  if (!passenger.gender || !Object.values(GENDER).includes(passenger.gender)) {
-    errors.push({ field: "gender", message: "Valid gender is required" });
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors: errors.length > 0 ? errors : undefined,
-  };
-}
+ 
+ 
 
 
 export async function GET(request: NextRequest) {

@@ -20,6 +20,7 @@ const ReviewBooking: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { bookingState, actions } = useBookingStore();
   const { scheduleDetails } = bookingState; // Get scheduleDetails from the store
+  
 
   useEffect(() => {
     const fetchScheduleDetails = async () => {
@@ -122,3 +123,4 @@ const ReviewBooking: React.FC = () => {
 };
 
 export default ReviewBooking;
+export const dynamic = 'force-dynamic';

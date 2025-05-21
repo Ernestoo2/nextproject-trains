@@ -206,7 +206,7 @@ export const useBookingStore = create<BookingStoreState>((set, get) => ({
         };
       }),
 
-    setBookingDetails: (details) =>
+    setBookingDetails: () =>
       set((state) => {
         
         return state;

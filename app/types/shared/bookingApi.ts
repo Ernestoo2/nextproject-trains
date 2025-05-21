@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { BaseApiResponse, PaginatedApiResponse } from "./api";
+import { PaginatedApiResponse } from "./api";
 import { Booking } from "./database";  
 import { BookingDetails } from "./trains";
 import { PaymentStatus } from "./payments";

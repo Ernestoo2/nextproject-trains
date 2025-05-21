@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import connectDB from "@/utils/mongodb/connect";
 import { User } from "@/utils/mongodb/models/User";
 import { getServerSession } from "next-auth";

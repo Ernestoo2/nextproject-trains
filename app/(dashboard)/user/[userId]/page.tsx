@@ -16,6 +16,8 @@ interface PageParams {
   userId: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function UserProfilePage({ params }: { params: Promise<PageParams> }) {
   const { data: session, status } = useSession();
   const router = useRouter();

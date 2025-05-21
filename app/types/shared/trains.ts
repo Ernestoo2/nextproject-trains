@@ -1,7 +1,4 @@
-import { Gender} from "./users";
-import { Types } from "mongoose";
 import type { MongoDocument } from "./database";
-import { PassengerType } from "./booking";
 import { PaymentStatus } from "./paymentApi";
 import { BERTH_PREFERENCES, Passenger as BookingPassenger } from "./booking.types";
 

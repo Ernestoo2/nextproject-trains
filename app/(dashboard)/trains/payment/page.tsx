@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { usePaystackPayment } from "react-paystack";
 import { BERTH_PREFERENCES } from "@/types/shared/booking.types";
 import { format, parseISO } from 'date-fns';
-
+export const dynamic = 'force-dynamic';
 // Generate Naija Rails ID
 function generateNaijaRailsId(): string {
   const prefix = "NR";
