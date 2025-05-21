@@ -12,11 +12,18 @@ declare global {
 
 
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
+    "Please define the MONGODB_URI environment variable. Check your environment variables configuration."
+  );
+}
+
+// Validate MongoDB URI format
+if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+  throw new Error(
+    "Invalid MONGODB_URI format. URI must start with mongodb:// or mongodb+srv://"
   );
 }
 
@@ -46,7 +53,7 @@ async function dbConnect() {
     };
 
     cached.promise = mongoose
-      .connect(MONGODB_URI, opts)
+      .connect(MONGODB_URI!, opts)
       .then((mongoose) => {
         return mongoose;
       })
