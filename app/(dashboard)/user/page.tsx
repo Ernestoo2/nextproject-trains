@@ -5,6 +5,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { UserProfile } from "@/types/shared/users";
+import Tickets from "./_components/Tickets";
+import Account from "./[userId]/_components/Account";
+import PaymentHistory from "./_components/PaymentHistory";
 
 export const dynamic = 'force-dynamic';
 
