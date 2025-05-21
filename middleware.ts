@@ -28,6 +28,7 @@ export default withAuth(
 // Protect all routes that require authentication
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/user/:path*",
     "/booking/:path*",
