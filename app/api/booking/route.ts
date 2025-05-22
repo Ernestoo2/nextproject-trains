@@ -123,27 +123,17 @@ export async function GET(request: NextRequest) {
                 select: "stationName stationCode",
               },
             ],
-          }
+          },
+           {
+            path: "train", // Populate the train details
+            select: "trainName",
+          },
         ]
       }).lean();
 
-    const bookingsWithTrainNames = await Promise.all(bookings.map(async (booking: any) => {
-      if (booking.scheduleId && booking.scheduleId.train) {
-        const train = await Train.findById(booking.scheduleId.train).select("trainName").lean();
-        if (train) {
-          const trainData = train as { trainName?: string };
-          if (trainData.trainName) {
-            booking.scheduleId.trainName = trainData.trainName;
-          }
-          booking.scheduleId.train = train as any;
-        }
-      }
-      return booking;
-    }));
-
     return NextResponse.json({
       success: true,
-      data: bookingsWithTrainNames
+      data: bookings
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);
