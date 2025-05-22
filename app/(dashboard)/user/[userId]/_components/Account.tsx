@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -29,7 +29,8 @@ export default function Account({
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingUpdate, setIsLoadingUpdate] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: user.name || "",
@@ -46,6 +47,14 @@ export default function Account({
       dob: user.dob || "",
     });
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) {
+        URL.revokeObjectURL(previewImageUrl);
+      }
+    };
+  }, [previewImageUrl]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,7 +73,6 @@ export default function Account({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Basic validation
     if (!file.type.startsWith('image/')) {
       toast.error('Invalid file type', {
         description: 'Please upload an image file (JPEG, PNG, etc.)',
@@ -78,40 +86,44 @@ export default function Account({
       });
       return;
     }
-    
+
+    const newPreviewUrl = URL.createObjectURL(file);
+    setPreviewImageUrl(newPreviewUrl);
+    setIsUploading(true);
+
     try {
-      setIsUploading(true);
       await onImageFileSelect(file);
+
     } catch (error: any) {
       console.error("Error handling file selection:", error);
-      
-      // More robust error handling
+
       let userMessage = 'There was a problem uploading your image. Please try again.';
       let errorDetails = '';
 
       if (error.response && error.response.data) {
-        // Assuming the error response has a data property (e.g., from Axios)
         const errorData = error.response.data as ErrorResponse;
         if (typeof errorData === 'object' && errorData !== null && errorData.success === false) {
              userMessage = errorData.message || userMessage;
              errorDetails = errorData.details || '';
         } else {
-            // Fallback if response.data exists but is not the expected JSON structure
             userMessage = `Upload failed: Unexpected response format.`;
-            errorDetails = `Details: ${JSON.stringify(error.response.data).substring(0, 100)}...`; // Log partial unexpected data
+            errorDetails = `Details: ${error.response.data?.toString()?.substring(0, 100) || 'N/A'}...`;
         }
       } else if (error.message) {
-          // Handle errors that don't have a response (e.g., network errors)
           userMessage = `Upload failed: ${error.message}`;
       } else {
-          // Generic fallback
           userMessage = 'An unknown error occurred during upload. Please try again.';
       }
 
       toast.error(userMessage, { description: errorDetails });
-      
+
+      setPreviewImageUrl(null);
+
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -135,7 +147,14 @@ export default function Account({
         {/* Profile Image Section */}
         <div className="flex items-center space-x-4">
           <div className="relative w-24 h-24">
-            {user.image ? (
+            {previewImageUrl ? (
+              <Image
+                src={previewImageUrl}
+                alt="Preview"
+                fill
+                className="rounded-full object-cover"
+              />
+            ) : user.image ? (
               <Image
                 src={user.image}
                 alt="Profile"
@@ -151,7 +170,7 @@ export default function Account({
           <button
             onClick={triggerImageUpload}
             disabled={isUploading}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUploading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -165,6 +184,7 @@ export default function Account({
             onChange={handleFileChange}
             accept="image/*"
             className="hidden"
+            disabled={isUploading}
           />
         </div>
 
