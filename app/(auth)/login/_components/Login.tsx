@@ -38,7 +38,8 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
         throw new Error(result.error);
       }
 
-      toast.success("Login successful!"); if (onSuccess) onSuccess();
+      toast.success("Login successful!");
+      if (onSuccess) onSuccess();
       router.push("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
@@ -53,7 +54,8 @@ export default function Login({ onSuccess, onError }: LoginFormProps) {
 
   const handleSocialLogin = async (provider: 'google' | 'facebook' | 'apple') => {
     try {
-      setIsLoading(true); await signIn(provider, {
+      setIsLoading(true);
+      await signIn(provider, {
         callbackUrl: '/dashboard',
       });
       // Note: No need to handle success case here as signIn will redirect

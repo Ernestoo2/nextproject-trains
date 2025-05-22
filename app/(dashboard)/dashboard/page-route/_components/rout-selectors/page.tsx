@@ -33,34 +33,14 @@ export default function PageRoute() {
     // Fetch stations
     fetch('/api/stations')
       .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.data?.stations)) {
-          setStations(data.data.stations);
-        } else {
-          console.error('Invalid stations data format:', data);
-          setStations([]);
-        }
-      })
-      .catch(err => {
-        console.error('Error loading stations:', err);
-        setStations([]);
-      });
+      .then(data => setStations(data))
+      .catch(err => console.error('Error loading stations:', err));
 
     // Fetch train classes
     fetch('/api/train-classes')
       .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setTrainClasses(data);
-        } else {
-          console.error('Invalid train classes data format:', data);
-          setTrainClasses([]);
-        }
-      })
-      .catch(err => {
-        console.error('Error loading train classes:', err);
-        setTrainClasses([]);
-      });
+      .then(data => setTrainClasses(data))
+      .catch(err => console.error('Error loading train classes:', err));
   }, []);
 
   const handleFromChange = (stationId: string) => {
@@ -91,6 +71,14 @@ export default function PageRoute() {
   };
 
   const handleSearch = () => {
+    const searchParams: SearchParams = {
+      fromStationId: route.selectedFrom,
+      toStationId: route.selectedTo,
+      date: route.date,
+      classType: route.selectedClass,
+      passengers: route.passengerDetails
+    };
+
     // Navigate to timetable page with params
     const queryString = new URLSearchParams({
       fromStationId: route.selectedFrom,
@@ -106,7 +94,7 @@ export default function PageRoute() {
   };
 
   return (
-    <div className=" flex flex-col flex-wrap sm:flex-row sm:justify-center sm:items-center w-full gap-4">
+    <div className="flex flex-col flex-wrap sm:flex-row sm:justify-center sm:items-center w-full gap-4">
       <FromToSelector
         stations={stations}
         selectedFrom={route.selectedFrom}

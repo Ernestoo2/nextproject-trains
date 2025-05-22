@@ -3,16 +3,25 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: ["your-production-image-domain.com"],
-    // Remove unoptimized: true for Vercel deployment
+    unoptimized: true,
   },
-  // Remove output: 'standalone' for now
-  // Keep serverActions but make sure it's compatible with your Next.js version
+  output: 'standalone',
+  serverExternalPackages: ['mongoose'],
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'your-production-domain.com']
-    }
+      allowedOrigins: ['localhost:3000'],
+    },
   },
-
+  webpack: (config, { isServer }) => {
+    // Add specific handling for client components
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    return config;
+  },
   async headers() {
     return [
       {

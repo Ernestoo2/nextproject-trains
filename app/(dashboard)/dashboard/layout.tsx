@@ -1,28 +1,26 @@
-import { Suspense } from 'react';
+// app/(dashboard)/layout.tsx
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/utils/auth/next-auth";
 import Header1Ui from "../../_components/Header/Header1Ui";
 import FooterPage from "../../_components/Footer";
-import DashboardLoading from './loading';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect("/login");
+  }
+
   return (
     <div className="">
-      <Suspense fallback={<div className="animate-pulse bg-gray-200 h-16" />}>
-        <Header1Ui />
-      </Suspense>
-      <main className="">
-        <Suspense fallback={<DashboardLoading />}>
-          {children}
-        </Suspense>
-      </main>
-      <Suspense fallback={<div className="animate-pulse bg-gray-200 h-32" />}>
-        <FooterPage />
-      </Suspense>
+      <Header1Ui />
+      <main className="">{children}</main>
+      <FooterPage />
     </div>
   );
-
-
 }
