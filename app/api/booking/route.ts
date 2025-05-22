@@ -39,6 +39,8 @@ interface BookingData {
   routeId: string;
   classId: string;
   totalAmount: number;
+  status?: typeof BOOKING_STATUS;
+  paymentStatus?: typeof PAYMENT_STATUS;
   [key: string]: any;
 }
 
@@ -154,9 +156,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const body: BookingData = await request.json();
 
-    // Validate required fields
+    // Validate required fields (excluding status/paymentStatus)
     if (!body.scheduleId || !body.passengers || !body.fare || !body.class) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -207,9 +209,9 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       scheduleId: body.scheduleId,
       pnr,
-      status: BOOKING_STATUS.PENDING, // Or BOOKING_STATUS.CONFIRMED if payment is confirmed
-      paymentStatus: PAYMENT_STATUS.PENDING, // Or PAYMENT_STATUS.COMPLETED if payment is confirmed
-      passengers: updatedPassengers, // Use updated passengers with seat numbers
+      status: body.status || BOOKING_STATUS.PENDING,
+      paymentStatus: body.paymentStatus || PAYMENT_STATUS.PENDING,
+      passengers: updatedPassengers,
       fare: {
         base: body.fare.base || 0,
         taxes: body.fare.taxes || 0,
