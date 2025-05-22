@@ -10,7 +10,7 @@ import Image from "next/image";
 import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import BookingHistory from "./_components/BookingHistory"; // Import the BookingHistory component
+import BookingHistory from "./_components/BookingHistory";
 
 interface PageParams {
   userId: string;
@@ -26,9 +26,8 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
   const [loading, setLoading] = useState(true);
   const resolvedParams = React.use(params);
 
-  // State for profile editing
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoadingUpdate, setIsLoadingUpdate] = useState(false); // Renamed to avoid conflict
+  const [isLoadingUpdate, setIsLoadingUpdate] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,7 +38,6 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
     dob: userData?.dob || "",
   });
 
-  // Effect to update form data when userData changes
   useEffect(() => {
     setFormData({
       name: userData?.name || "",
@@ -76,19 +74,9 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
     if (session?.user) {
       fetchUserData();
     }
-  }, [session?.user, resolvedParams.userId]); // Added resolvedParams.userId to dependency array
+  }, [session?.user, resolvedParams.userId]);
 
-  // Handler for form input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Handler for profile update
-  const handleUpdate = async () => {
+  const handleProfileUpdate = async (updatedData: Partial<UserProfile>) => {
     if (!session?.user?.id) {
       toast.error("User ID not found");
       return;
@@ -102,7 +90,7 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updatedData),
       });
 
       const result = await response.json();
@@ -127,61 +115,45 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
     }
   };
 
-  // Handler for image upload
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
+  const handleImageUpload = async (file: File) => {
+    if (!session?.user?.id) {
+        toast.error("User ID not found");
+        return;
+      }
+      
     try {
       setIsUploading(true);
 
-      // Create FormData
       const formData = new FormData();
       formData.append('image', file);
 
-      // Upload image
-      const response = await fetch(`/api/user/${session?.user?.id}/upload-image`, {
+      const response = await fetch(`/api/user/${session.user.id}/upload-image`, {
         method: 'POST',
         body: formData,
       });
-
+      
       if (!response.ok) {
-        throw new Error('Failed to upload image');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload image');
       }
 
       const result = await response.json();
 
-      if (result.success && result.data) {
-        // Update user data with new image URL
-        setUserData(prev => ({
-          ...prev!,
-          image: result.data.imageUrl
-        }));
+      if (result.success && result.data?.imageUrl) {
+        setUserData(prev => {
+            if (!prev) return null;
+            return { ...prev, image: result.data.imageUrl };
+        });
         toast.success('Profile image updated successfully');
       } else {
-        throw new Error(result.message || 'Failed to update profile image');
+        throw new Error(result.message || 'Failed to update profile image: Invalid response data');
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+      throw error;
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const triggerImageUpload = () => {
-    fileInputRef.current?.click();
   };
 
   if (status === "loading" || loading) {
@@ -197,9 +169,8 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
     return null;
   }
 
-  // Only allow users to view their own profile
   if (session.user.id !== resolvedParams.userId && session.user.naijaRailsId !== resolvedParams.userId) {
-    router.push("/dashboard"); // Or a suitable unauthorized page
+    router.push("/dashboard");
     return null;
   }
 
@@ -222,12 +193,11 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
   return (
       <div className="min-h-screen flex flex-col">
         <main className="flex-grow">
-          {/* Profile Header */}
           <div className="w-full mx-auto relative rounded-lg bg-white">
             <div className="w-full h-48 bg-gradient-to-r from-green-400 to-green-600 rounded-t-lg"></div>
             <div className="flex flex-col justify-center items-center -mt-20 mx-auto">
               <div className="w-36 h-36 overflow-hidden bg-gray-300 border-4 border-white rounded-full">
-              {userData.image ? ( // Use userData for image
+              {userData?.image ? (
                   <Image
                   src={userData.image}
                     alt="Profile"
@@ -236,18 +206,17 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
                     className="object-cover w-full h-full"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-green-100 text-green-600 text-4xl font-bold">
-                  {userData.name?.[0]?.toUpperCase() || "?"}
+                  <div className="w-full h-full flex items-center justify-center bg-green-100 text-green-600 text-2xl font-bold">
+                  {userData?.name?.[0]?.toUpperCase() || "?"}
                   </div>
                 )}
               </div>
-            <h1 className="mt-4 text-xl font-bold">{userData.name}</h1>
-            <p className="text-gray-600">{userData.email}</p>
-             {userData.naijaRailsId && <p className="text-sm text-gray-500">ID: {userData.naijaRailsId}</p>}
+            <h1 className="mt-4 text-xl font-bold">{userData?.name}</h1>
+            <p className="text-gray-600">{userData?.email}</p>
+             {userData?.naijaRailsId && <p className="text-sm text-gray-500">ID: {userData.naijaRailsId}</p>}
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="flex justify-center mt-8 space-x-2 px-4">
             <button
               onClick={() => setActiveTab("account")}
@@ -262,7 +231,7 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
               onClick={() => setActiveTab("tickets")}
               className={`px-6 py-2 rounded-lg transition-colors ${
                 activeTab === "tickets"
-                ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200"
+                ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200"}
               }`}
             >
               Tickets/Bookings
@@ -271,16 +240,27 @@ export default function UserProfilePage({ params }: { params: Promise<PageParams
               onClick={() => setActiveTab("payment")}
               className={`px-6 py-2 rounded-lg transition-colors ${
                 activeTab === "payment"
-                ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200"
+                ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200"}
               }`}
             >
               Payment History
             </button>
           </div>
 
-          {/* Content Section */}
           <div className="max-w-7xl mx-auto p-6 mt-6">
-          {activeTab === "account" && userData && <Account user={userData} />}
+          {activeTab === "account" && userData && 
+            <Account 
+              user={userData} 
+              onProfileUpdate={handleProfileUpdate}
+              onImageUploadSuccess={(imageUrl) => {
+                setUserData(prev => {
+                    if (!prev) return null;
+                    return { ...prev, image: imageUrl };
+                });
+              }}
+              onImageFileSelect={handleImageUpload}
+            />
+          }
           {activeTab === "tickets" && <BookingHistory userId={resolvedParams.userId} />}
           {activeTab === "payment" && <PaymentHistory userId={resolvedParams.userId} />}
           </div>

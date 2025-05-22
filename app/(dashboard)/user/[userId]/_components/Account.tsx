@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserProfile } from "@/types/shared/users";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -8,9 +8,17 @@ import Image from "next/image";
 
 interface AccountProps {
   user: UserProfile;
+  onProfileUpdate: (updatedData: Partial<UserProfile>) => void;
+  onImageUploadSuccess: (imageUrl: string) => void;
+  onImageFileSelect: (file: File) => Promise<void>;
 }
 
-export default function Account({ user }: AccountProps) {
+export default function Account({
+  user,
+  onProfileUpdate,
+  onImageUploadSuccess,
+  onImageFileSelect,
+}: AccountProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingUpdate, setIsLoadingUpdate] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -23,6 +31,15 @@ export default function Account({ user }: AccountProps) {
     dob: user.dob || "",
   });
 
+  useEffect(() => {
+    setFormData({
+      name: user.name || "",
+      phone: user.phone || "",
+      address: user.address || "",
+      dob: user.dob || "",
+    });
+  }, [user]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -32,39 +49,11 @@ export default function Account({ user }: AccountProps) {
   };
 
   const handleUpdate = async () => {
-    try {
-      setIsLoadingUpdate(true);
-
-      const response = await fetch(`/api/user/${user.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || result.error || "Failed to update profile");
-      }
-
-      if (result.success && result.data) {
-        toast.success("Profile updated successfully!");
-      } else {
-        throw new Error("No data returned from server");
-      }
-
-      setIsEditing(false);
-    } catch (error) {
-      console.error(error);
-      toast.error(error instanceof Error ? error.message : "Error updating profile!");
-    } finally {
-      setIsLoadingUpdate(false);
-    }
+    onProfileUpdate(formData);
+    setIsEditing(false);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -80,28 +69,9 @@ export default function Account({ user }: AccountProps) {
     
     try {
       setIsUploading(true);
-
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await fetch(`/api/user/${user.id}/upload-image`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        toast.success('Profile image updated successfully');
-      } else {
-        throw new Error(result.message || 'Failed to update profile image');
-      }
+      await onImageFileSelect(file);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+      console.error("Error handling file selection:", error);
     } finally {
       setIsUploading(false);
     }
@@ -154,7 +124,7 @@ export default function Account({ user }: AccountProps) {
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleImageUpload}
+            onChange={handleFileChange}
             accept="image/*"
             className="hidden"
           />
@@ -241,12 +211,22 @@ export default function Account({ user }: AccountProps) {
         {isEditing && (
           <div className="flex justify-end space-x-4">
             <button
-              onClick={() => setIsEditing(false)}
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setFormData({
+                  name: user.name || "",
+                  phone: user.phone || "",
+                  address: user.address || "",
+                  dob: user.dob || "",
+                });
+              }}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleUpdate}
               disabled={isLoadingUpdate}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
