@@ -13,6 +13,13 @@ interface AccountProps {
   onImageFileSelect: (file: File) => Promise<void>;
 }
 
+interface ErrorResponse {
+  success: false;
+  message: string;
+  error?: string;
+  details?: string;
+}
+
 export default function Account({
   user,
   onProfileUpdate,
@@ -57,21 +64,39 @@ export default function Account({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Basic validation
     if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+      toast.error('Invalid file type', {
+        description: 'Please upload an image file (JPEG, PNG, etc.)',
+      });
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File too large', {
+        description: `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 10MB limit`,
+      });
       return;
     }
     
     try {
       setIsUploading(true);
       await onImageFileSelect(file);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error handling file selection:", error);
+      
+      // Handle API error response
+      if (error.response?.data) {
+        const errorData = error.response.data as ErrorResponse;
+        toast.error(errorData.message, {
+          description: errorData.details || 'Please try again',
+        });
+      } else {
+        // Handle network or other errors
+        toast.error('Upload failed', {
+          description: 'There was a problem uploading your image. Please try again.',
+        });
+      }
     } finally {
       setIsUploading(false);
     }
