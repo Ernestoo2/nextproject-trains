@@ -85,18 +85,31 @@ export default function Account({
     } catch (error: any) {
       console.error("Error handling file selection:", error);
       
-      // Handle API error response
-      if (error.response?.data) {
+      // More robust error handling
+      let userMessage = 'There was a problem uploading your image. Please try again.';
+      let errorDetails = '';
+
+      if (error.response && error.response.data) {
+        // Assuming the error response has a data property (e.g., from Axios)
         const errorData = error.response.data as ErrorResponse;
-        toast.error(errorData.message, {
-          description: errorData.details || 'Please try again',
-        });
+        if (typeof errorData === 'object' && errorData !== null && errorData.success === false) {
+             userMessage = errorData.message || userMessage;
+             errorDetails = errorData.details || '';
+        } else {
+            // Fallback if response.data exists but is not the expected JSON structure
+            userMessage = `Upload failed: Unexpected response format.`;
+            errorDetails = `Details: ${JSON.stringify(error.response.data).substring(0, 100)}...`; // Log partial unexpected data
+        }
+      } else if (error.message) {
+          // Handle errors that don't have a response (e.g., network errors)
+          userMessage = `Upload failed: ${error.message}`;
       } else {
-        // Handle network or other errors
-        toast.error('Upload failed', {
-          description: 'There was a problem uploading your image. Please try again.',
-        });
+          // Generic fallback
+          userMessage = 'An unknown error occurred during upload. Please try again.';
       }
+
+      toast.error(userMessage, { description: errorDetails });
+      
     } finally {
       setIsUploading(false);
     }
