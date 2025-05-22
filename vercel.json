@@ -23,5 +23,12 @@
     "env": {
       "NEXT_PUBLIC_VERCEL_ENV": "production"
     }
+  },
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 30,
+      "requestBodySize": "15mb"
+    }
   }
 }
